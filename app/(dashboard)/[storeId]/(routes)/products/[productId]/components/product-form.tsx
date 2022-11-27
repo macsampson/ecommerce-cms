@@ -343,8 +343,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               control={form.control}
               name="variations"
               render={({ field }) => {
-                console.log("field", field.value)
-                console.log("default values", defaultValues.variations)
+                // console.log("field", field.value)
+                // console.log("default values", defaultValues.variations)
                 const addVariation = () => {
                   const newVariation = {
                     ...currentVariation,

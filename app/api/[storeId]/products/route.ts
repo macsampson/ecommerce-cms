@@ -64,7 +64,15 @@ export async function POST(
         price,
         quantity,
         description,
-        variations,
+        variations: {
+          createMany: {
+            data: [
+              ...variations.map(
+                (variation: { name: string; price: number }) => variation
+              ),
+            ],
+          },
+        },
         categoryId,
         colorId,
         sizeId,

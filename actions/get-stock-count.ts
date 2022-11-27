@@ -5,6 +5,9 @@ export const getStockCount = async (storeId: string) => {
     where: {
       storeId,
       isArchived: false,
+      quantity: {
+        gt: 0,
+      },
     },
   })
 

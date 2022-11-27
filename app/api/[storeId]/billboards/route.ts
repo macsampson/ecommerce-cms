@@ -11,7 +11,7 @@ export async function POST(
     const { userId } = auth()
     const body = await req.json()
 
-    const { label, imageUrl } = body
+    const { label, imageUrl, landingPage } = body
 
     if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
 
@@ -35,13 +35,42 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 403 })
     }
 
-    const billboard = await prismadb.billboard.create({
-      data: {
-        label,
-        imageUrl,
-        storeId: params.storeId,
-      },
-    })
+    const operations: any[] = []
+
+    if (landingPage) {
+      operations.push(
+        prismadb.billboard.updateMany({
+          where: {
+            landingPage: true,
+          },
+          data: {
+            landingPage: false,
+          },
+        })
+      )
+    }
+
+    operations.push(
+      prismadb.billboard.create({
+        data: {
+          label,
+          imageUrl,
+          landingPage,
+          storeId: params.storeId,
+        },
+      })
+    )
+
+    const billboard = await prismadb.$transaction(operations)
+
+    // const billboard = await prismadb.billboard.create({
+    //   data: {
+    //     label,
+    //     imageUrl,
+    //     landingPage,
+    //     storeId: params.storeId,
+    //   },
+    // })
 
     return NextResponse.json(billboard)
   } catch (error) {

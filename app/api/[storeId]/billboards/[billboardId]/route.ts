@@ -28,7 +28,7 @@ export async function PATCH(
     const { userId } = auth()
     const body = await req.json()
 
-    const { label, imageUrl } = body
+    const { label, imageUrl, landingPage } = body
 
     if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
 
@@ -51,15 +51,46 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 403 })
     }
 
-    const billboard = await prismadb.billboard.updateMany({
-      where: {
-        id: params.billboardId,
-      },
-      data: {
-        label,
-        imageUrl,
-      },
-    })
+    // const billboard = await prismadb.billboard.updateMany({
+    //   where: {
+    //     id: params.billboardId,
+    //   },
+    //   data: {
+    //     label,
+    //     imageUrl,
+    //     landingPage,
+    //   },
+    // })
+
+    const operations: any[] = []
+
+    if (landingPage) {
+      operations.push(
+        prismadb.billboard.updateMany({
+          where: {
+            landingPage: true,
+          },
+          data: {
+            landingPage: false,
+          },
+        })
+      )
+    }
+
+    operations.push(
+      prismadb.billboard.updateMany({
+        where: {
+          id: params.billboardId,
+        },
+        data: {
+          label,
+          imageUrl,
+          landingPage,
+        },
+      })
+    )
+
+    const billboard = await prismadb.$transaction(operations)
 
     return NextResponse.json(billboard)
   } catch (error) {

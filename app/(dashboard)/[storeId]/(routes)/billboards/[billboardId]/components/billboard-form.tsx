@@ -18,12 +18,14 @@ import { Separator } from "@/components/ui/separator"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import ImageUpload from "@/components/ui/image-upload"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface BillboardFormProps {
   initialData: Billboard | null
@@ -34,6 +36,7 @@ const formSchema = z.object({
   imageUrl: z
     .string()
     .min(1, "Billboard description must be at least 1 character long."),
+  landingPage: z.boolean().default(false),
 })
 
 type BillboardFormValues = z.infer<typeof formSchema>
@@ -57,6 +60,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
     defaultValues: initialData || {
       label: "",
       imageUrl: "",
+      landingPage: false,
     },
   })
 
@@ -161,6 +165,27 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="landingPage"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      // @ts-ignore
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Landing Page</FormLabel>
+                    <FormDescription>
+                      Show this billboard on site landing page.
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />

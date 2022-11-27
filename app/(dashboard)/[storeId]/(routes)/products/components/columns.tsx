@@ -22,14 +22,6 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "Name",
   },
   {
-    accessorKey: "isArchived",
-    header: "Archived",
-  },
-  {
-    accessorKey: "isFeatured",
-    header: "Featured",
-  },
-  {
     accessorKey: "price",
     header: "Price",
   },
@@ -42,21 +34,37 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: "Category",
   },
   {
+    accessorKey: "isFeatured",
+    header: "Featured",
+  },
+  {
     accessorKey: "size",
     header: "Size",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-x-2">
+        {row.original.size ? row.original.size : "n/a"}
+      </div>
+    ),
   },
   {
     accessorKey: "color",
     header: "Color",
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.color}
-        <div
-          className="w-6 h-6 rounded-full border"
-          style={{ backgroundColor: row.original.color }}
-        />
+        {row.original.color ? (
+          <div
+            className="w-6 h-6 rounded-full border"
+            style={{ backgroundColor: row.original.color }}
+          />
+        ) : (
+          "n/a"
+        )}
       </div>
     ),
+  },
+  {
+    accessorKey: "isArchived",
+    header: "Archived",
   },
   {
     accessorKey: "createdAt",

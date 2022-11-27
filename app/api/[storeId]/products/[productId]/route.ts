@@ -58,10 +58,10 @@ export async function PATCH(
     if (!categoryId)
       return new NextResponse("Category ID  is required", { status: 400 })
 
-    if (!colorId)
-      return new NextResponse("Color ID is required", { status: 400 })
+    // if (!colorId)
+    //   return new NextResponse("Color ID is required", { status: 400 })
 
-    if (!sizeId) return new NextResponse("Size ID is required", { status: 400 })
+    // if (!sizeId) return new NextResponse("Size ID is required", { status: 400 })
 
     if (!params.productId)
       return new NextResponse("Product ID is required", { status: 400 })

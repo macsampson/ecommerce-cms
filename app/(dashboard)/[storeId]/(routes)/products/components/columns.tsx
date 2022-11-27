@@ -7,9 +7,9 @@ export type ProductColumn = {
   id: string
   name: string
   price: string
-  size: string
+  size: string | undefined
   category: string
-  color: string
+  color: string | undefined
   isFeatured: boolean
   isArchived: boolean
   createdAt: string

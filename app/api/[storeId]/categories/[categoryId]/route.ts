@@ -11,8 +11,11 @@ export async function GET(
       where: {
         id: params.categoryId,
       },
+      include: {
+        billboard: true,
+      },
     })
-
+    // console.log(category)
     return NextResponse.json(category)
   } catch (error) {
     console.log("[CATEGORY_GET]", error)

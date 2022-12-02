@@ -7,7 +7,7 @@ const ColorPage = async ({ params }: { params: { colorId: string } }) => {
       id: params.colorId,
     },
   })
-  console.log(color)
+  // console.log(color)
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">

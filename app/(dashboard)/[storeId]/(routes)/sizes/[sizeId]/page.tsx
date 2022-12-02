@@ -7,7 +7,7 @@ const SizePage = async ({ params }: { params: { sizeId: string } }) => {
       id: params.sizeId,
     },
   })
-  console.log(size)
+  // console.log(size)
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">

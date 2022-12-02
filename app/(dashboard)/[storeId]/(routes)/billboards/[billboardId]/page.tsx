@@ -11,7 +11,7 @@ const BillboardPage = async ({
       id: params.billboardId,
     },
   })
-  console.log(billboard)
+  // console.log(billboard)
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">

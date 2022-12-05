@@ -90,10 +90,10 @@ model Product {
   price Decimal
   isFeatured Boolean @default(false)
   isArchived Boolean @default(false)
-  sizeId String
-  size Size @relation(fields: [sizeId], references: [id])
-  colorId String
-  color Color @relation(fields: [colorId], references: [id])
+  sizeId String?
+  size Size? @relation(fields: [sizeId], references: [id])
+  colorId String?
+  color Color? @relation(fields: [colorId], references: [id])
   images Image[]
   orderItems OrderItem[]
   createdAt DateTime @default(now())

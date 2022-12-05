@@ -39,8 +39,8 @@ const formSchema = z.object({
   images: z.object({ url: z.string() }).array(),
   price: z.coerce.number().min(1),
   categoryId: z.string().min(1),
-  colorId: z.string().min(1),
-  sizeId: z.string().min(1),
+  colorId: z.string().optional(),
+  sizeId: z.string().optional(),
   isFeatured: z.boolean().default(false).optional(),
   isArchived: z.boolean().default(false).optional(),
 })
@@ -79,14 +79,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     ? {
         ...initialData,
         price: parseFloat(String(initialData?.price)),
+        colorId: initialData.colorId || undefined,
+        sizeId: initialData.sizeId || undefined,
       }
     : {
         name: "",
         images: [],
         price: 0,
         categoryId: "",
-        colorId: "",
-        sizeId: "",
+        colorId: undefined,
+        sizeId: undefined,
         isFeatured: false,
         isArchived: false,
       }
@@ -262,7 +264,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               name="sizeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Size</FormLabel>
+                  <FormLabel>
+                    Sizes <span className="text-neutral-500">(optional)</span>
+                  </FormLabel>
                   <Select
                     disabled={loading}
                     onValueChange={field.onChange}
@@ -297,7 +301,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               name="colorId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Color</FormLabel>
+                  <FormLabel>
+                    Color <span className="text-neutral-500">(optional)</span>
+                  </FormLabel>
                   <Select
                     disabled={loading}
                     onValueChange={field.onChange}

@@ -35,10 +35,10 @@ export async function POST(
     if (!categoryId)
       return new NextResponse("Category ID  is required", { status: 400 })
 
-    if (!colorId)
-      return new NextResponse("Color ID is required", { status: 400 })
+    // if (!colorId)
+    //   return new NextResponse("Color ID is required", { status: 400 })
 
-    if (!sizeId) return new NextResponse("Size ID is required", { status: 400 })
+    // if (!sizeId) return new NextResponse("Size ID is required", { status: 400 })
 
     if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 })

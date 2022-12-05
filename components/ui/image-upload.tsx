@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ImagePlus, Trash } from "lucide-react"
-import Image from "next/image"
 import { CldUploadWidget } from "next-cloudinary"
+import { useEffect, useState } from "react"
+
+import { Button } from "@/components/ui/button"
+import Image from "next/image"
+import { ImagePlus, Trash } from "lucide-react"
 
 interface ImageUploadProps {
   disabled?: boolean
@@ -19,21 +20,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   onRemove,
   value,
 }) => {
-  const [mounted, setMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    setIsMounted(true)
   }, [])
 
   const onUpload = (result: any) => {
     onChange(result.info.secure_url)
   }
 
-  if (!mounted) return null
+  if (!isMounted) {
+    return null
+  }
 
   return (
     <div>
-      <div className="mb-4 items-center gap-4">
+      <div className="mb-4 flex items-center gap-4">
         {value.map((url) => (
           <div
             key={url}
@@ -43,8 +46,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               <Button
                 type="button"
                 onClick={() => onRemove(url)}
-                variant={"destructive"}
-                size="icon"
+                variant="destructive"
+                size="sm"
               >
                 <Trash className="h-4 w-4" />
               </Button>
@@ -52,7 +55,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <Image
               fill
               className="object-cover"
-              alt="image"
+              alt="Image"
               src={url}
             />
           </div>
@@ -60,7 +63,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       </div>
       <CldUploadWidget
         onUpload={onUpload}
-        uploadPreset="ivwjxqjz"
+        uploadPreset="t4drjppf"
       >
         {({ open }) => {
           const onClick = () => {
@@ -75,7 +78,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               onClick={onClick}
             >
               <ImagePlus className="h-4 w-4 mr-2" />
-              Upload Image
             </Button>
           )
         }}

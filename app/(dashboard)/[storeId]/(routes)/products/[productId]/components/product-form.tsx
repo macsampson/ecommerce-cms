@@ -33,12 +33,14 @@ import {
 } from "@/components/ui/select"
 import ImageUpload from "@/components/ui/image-upload"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
 
 const formSchema = z.object({
   name: z.string().min(1),
   images: z.object({ url: z.string() }).array(),
   price: z.coerce.number().min(1),
   quantity: z.coerce.number().min(0),
+  description: z.string().min(1),
   categoryId: z.string().min(1),
   colorId: z.string().optional(),
   sizeId: z.string().optional(),
@@ -72,7 +74,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [loading, setLoading] = useState(false)
 
   const title = initialData ? "Edit product" : "Create product"
-  const description = initialData ? "Edit a product." : "Add a new product"
+  const formDescription = initialData ? "Edit a product." : "Add a new product"
   const toastMessage = initialData ? "Product updated." : "Product created."
   const action = initialData ? "Save changes" : "Create"
 
@@ -88,6 +90,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         images: [],
         price: 0,
         quantity: 0,
+        description: "",
         categoryId: "",
         colorId: undefined,
         sizeId: undefined,
@@ -147,7 +150,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <div className="flex items-center justify-between">
         <Heading
           title={title}
-          description={description}
+          description={formDescription}
         />
         {initialData && (
           <Button
@@ -201,6 +204,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <Input
                       disabled={loading}
                       placeholder="Product name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      disabled={loading}
+                      placeholder="Please enter a description"
                       {...field}
                     />
                   </FormControl>

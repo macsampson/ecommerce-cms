@@ -18,11 +18,14 @@ export async function POST(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
-  const { productIds } = await req.json()
+  const { items } = await req.json()
 
-  if (!productIds || productIds.length === 0) {
+  if (!items || items.length === 0) {
     return new NextResponse("Product IDs are required", { status: 400 })
   }
+
+  // create array from items that contains the first element of each element in item
+  const productIds: string[] = Object.keys(items)
 
   const products = await prismadb.product.findMany({
     where: {
@@ -36,7 +39,7 @@ export async function POST(
 
   products.forEach((product) => {
     line_items.push({
-      quantity: 1,
+      quantity: items[product.id],
       price_data: {
         currency: "usd",
         product_data: {
@@ -53,6 +56,7 @@ export async function POST(
       isPaid: false,
       orderItems: {
         create: productIds.map((productId: string) => ({
+          quantity: items[productId],
           product: {
             connect: {
               id: productId,

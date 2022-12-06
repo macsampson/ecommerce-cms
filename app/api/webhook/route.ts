@@ -5,6 +5,10 @@ import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import prismadb from "@/lib/prismadb"
 
+type ItemsObject = {
+  [key: string]: number
+}
+
 export async function POST(req: Request) {
   const body = await req.text()
   const signature = headers().get("Stripe-Signature") as string
@@ -50,18 +54,38 @@ export async function POST(req: Request) {
       },
     })
 
-    const productIds = order.orderItems.map((orderItem) => orderItem.productId)
+    // const productIds = order.orderItems.map((orderItem) => orderItem.productId)
+    const productsObject = order.orderItems.reduce(
+      (acc: ItemsObject, orderItem) => {
+        acc[orderItem.productId] = orderItem.quantity
+        return acc
+      },
+      {}
+    )
 
-    await prismadb.product.updateMany({
-      where: {
-        id: {
-          in: [...productIds],
+    // const productIds = Object.keys(productsObject)
+
+    // await prismadb.product.updateMany({
+    //   where: {
+    //     id: {
+    //       in: [...productIds],
+    //     },
+    //   },
+    //   data: {
+    //     isArchived: true,
+    //   },
+    // })
+
+    for (const [productId, quantity] of Object.entries(productsObject)) {
+      await prismadb.product.update({
+        where: { id: productId },
+        data: {
+          quantity: {
+            decrement: quantity,
+          },
         },
-      },
-      data: {
-        isArchived: true,
-      },
-    })
+      })
+    }
   }
 
   return new NextResponse(null, { status: 200 })

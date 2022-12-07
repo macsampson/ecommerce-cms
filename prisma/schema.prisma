@@ -99,6 +99,7 @@ model Product {
   orderItems OrderItem[]
   quantity Int @default(0)
   description String @db.Text 
+  variations ProductVariation[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -107,6 +108,18 @@ model Product {
   @@index([sizeId])
   @@index([colorId])
 
+}
+
+model ProductVariation {
+  id          String  @id @default(uuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String  
+  price       Decimal 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
 }
 
 model Image {

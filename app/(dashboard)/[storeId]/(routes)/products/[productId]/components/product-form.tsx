@@ -2,12 +2,19 @@
 
 import * as z from "zod"
 import axios from "axios"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "react-hot-toast"
 import { Trash } from "lucide-react"
-import { Category, Color, Image, Product, Size } from "@prisma/client"
+import {
+  Category,
+  Color,
+  Image,
+  Product,
+  ProductVariation,
+  Size,
+} from "@prisma/client"
 import { useParams, useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
@@ -34,6 +41,8 @@ import {
 import ImageUpload from "@/components/ui/image-upload"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
+import VariationInput from "./variation-input"
+import { formatter } from "@/lib/utils"
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -41,6 +50,13 @@ const formSchema = z.object({
   price: z.coerce.number().min(1),
   quantity: z.coerce.number().min(0),
   description: z.string().min(1),
+  variations: z
+    .object({
+      name: z.string().min(1),
+      price: z.coerce.number().min(1),
+    })
+    .array()
+    .default([]),
   categoryId: z.string().min(1),
   colorId: z.string().optional(),
   sizeId: z.string().optional(),
@@ -50,10 +66,19 @@ const formSchema = z.object({
 
 type ProductFormValues = z.infer<typeof formSchema>
 
+// type for product variations
+type variation = {
+  id: number
+  name: string
+  price: number
+  // isDeleted?: boolean
+}
+
 interface ProductFormProps {
   initialData:
     | (Product & {
         images: Image[]
+        variations: ProductVariation[]
       })
     | null
   categories: Category[]
@@ -73,6 +98,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [currentVariation, setCurrentVariation] = useState({
+    id: Date.now(),
+    name: "",
+    price: 0,
+    // isDeleted: false,
+  })
+
+  const [variations, setVariations] = useState<variation[]>([])
+
+  // const activeVariations = variations.filter(
+  //   (variation) => !variation.isDeleted
+  // )
+
   const title = initialData ? "Edit product" : "Create product"
   const formDescription = initialData ? "Edit a product." : "Add a new product"
   const toastMessage = initialData ? "Product updated." : "Product created."
@@ -84,6 +122,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         price: parseFloat(String(initialData?.price)),
         colorId: initialData.colorId || undefined,
         sizeId: initialData.sizeId || undefined,
+        variations:
+          initialData?.variations.map((variation) => ({
+            ...variation,
+            price: parseFloat(String(variation.price)),
+          })) || [],
       }
     : {
         name: "",
@@ -91,12 +134,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         price: 0,
         quantity: 0,
         description: "",
+        variations: [],
         categoryId: "",
         colorId: undefined,
         sizeId: undefined,
         isFeatured: false,
         isArchived: false,
       }
+
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -138,6 +184,35 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setOpen(false)
     }
   }
+
+  const addVariation = () => {
+    if (currentVariation.name && currentVariation.price) {
+      setVariations((prev) => [...prev, currentVariation])
+      setCurrentVariation({
+        id: Date.now(),
+        name: "",
+        price: 0,
+        // isDeleted: false,
+      })
+    }
+  }
+
+  // const removeVariation = (id: number) => {
+  // if variation with id is in initialData.variations, mark it as deleted, else remove it from variations
+  // const variation = defaultValues.variations.find(
+  //   (variation) => variation.id === id.toString()
+  // )
+
+  //   if (variation) {
+  //     setVariations((prev) =>
+  //       prev.map((variation) =>
+  //         variation.id === id ? { ...variation, isDeleted: true } : variation
+  //       )
+  //     )
+  //   } else {
+  //     setVariations((prev) => prev.filter((variation) => variation.id !== id))
+  //   }
+  // }
 
   return (
     <>
@@ -266,6 +341,135 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             />
             <FormField
               control={form.control}
+              name="variations"
+              render={({ field }) => {
+                console.log("field", field.value)
+                console.log("default values", defaultValues.variations)
+                const addVariation = () => {
+                  const newVariation = {
+                    ...currentVariation,
+                  }
+
+                  // Update the field.value by appending the new variation
+                  field.onChange([...field.value, currentVariation])
+
+                  // Reset the currentVariation input fields
+                  setCurrentVariation({
+                    id: Date.now(),
+                    name: "",
+                    price: 0,
+                    // isDeleted: false,
+                  })
+                }
+
+                return (
+                  <FormItem>
+                    <FormLabel>Variations</FormLabel>
+                    <FormControl>
+                      <>
+                        <div className="flex space-x-2 p-2">
+                          <Input
+                            ref={nameInputRef}
+                            className="w-4/5"
+                            placeholder="Name"
+                            value={currentVariation.name}
+                            onChange={(e) => {
+                              setCurrentVariation((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addVariation()
+                                if (nameInputRef.current) {
+                                  nameInputRef.current.focus()
+                                }
+                              }
+                            }}
+                          />
+                          <Input
+                            className="w-1/5"
+                            placeholder="$0.00"
+                            type="number"
+                            value={currentVariation.price}
+                            onChange={(e) => {
+                              setCurrentVariation((prev) => ({
+                                ...prev,
+                                price: parseFloat(e.target.value),
+                              }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addVariation()
+                                if (nameInputRef.current) {
+                                  nameInputRef.current.focus()
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            className="ml-4"
+                            size="sm"
+                            onClick={() => {
+                              addVariation()
+                              if (nameInputRef.current) {
+                                nameInputRef.current.focus()
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-col items-center space-y-4 border p-2 rounded-md">
+                          {field.value.length ? (
+                            field.value.map((variation, index) => (
+                              /* if variation is not marked as deleted, render it */
+                              // variation.isDeleted ? null : (
+                              // <div
+                              //   key={variation.name}
+                              //   className="flex items-center space-x-4 justify-between w-full px-2"
+                              // >
+                              <VariationInput
+                                key={index}
+                                variation={variation}
+                                onRemove={() => {
+                                  const newVariations = field.value.filter(
+                                    (_, i) => i !== index
+                                  )
+                                  field.onChange(newVariations)
+                                }}
+                                onVariationUpdate={(name, value) => {
+                                  const newVariations = [...field.value]
+                                  if (name === "name") {
+                                    newVariations[index].name = value
+                                  } else if (name === "price") {
+                                    newVariations[index].price =
+                                      parseFloat(value)
+                                  }
+                                  field.onChange(newVariations)
+                                }}
+                              />
+                              // </div>
+                            ))
+                          ) : (
+                            <div className="flex mx-auto items-center text-neutral-500 text-opacity-50">
+                              No variations
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
+            />
+            <FormField
+              control={form.control}
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
@@ -299,6 +503,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="sizeId"

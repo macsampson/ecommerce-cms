@@ -17,6 +17,7 @@ const BillboardsPage = async ({ params }: { params: { storeId: string } }) => {
     (billboard) => ({
       id: billboard.id,
       label: billboard.label,
+      landingPage: billboard.landingPage,
       createdAt: format(billboard.createdAt, "MMMM do, yyyy"),
     })
   )

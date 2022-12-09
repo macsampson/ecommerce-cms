@@ -113,7 +113,7 @@ model Product {
 model ProductVariation {
   id          String  @id @default(uuid())
   productId   String
-  product     Product @relation(fields: [productId], references: [id])
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   name        String  
   price       Decimal 
   createdAt   DateTime @default(now())

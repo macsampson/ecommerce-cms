@@ -28,6 +28,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
   {
     accessorKey: "quantity",
     header: "Quantity",
+    enableSorting: true,
   },
   {
     accessorKey: "category",
@@ -36,6 +37,11 @@ export const columns: ColumnDef<ProductColumn>[] = [
   {
     accessorKey: "isFeatured",
     header: "Featured",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-x-2">
+        {row.original.isFeatured ? "🟢" : "🔴"}
+      </div>
+    ),
   },
   {
     accessorKey: "size",
@@ -64,7 +70,12 @@ export const columns: ColumnDef<ProductColumn>[] = [
   },
   {
     accessorKey: "isArchived",
-    header: "Archived",
+    header: "Live",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-x-2">
+        {row.original.isArchived ? "🔴" : "🟢"}
+      </div>
+    ),
   },
   {
     accessorKey: "createdAt",

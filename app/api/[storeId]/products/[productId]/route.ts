@@ -17,6 +17,7 @@ export async function GET(
         color: true,
         size: true,
         variations: true,
+        bundles: true,
       },
     })
 
@@ -45,6 +46,7 @@ export async function PATCH(
       sizeId,
       price,
       variations,
+      bundles,
       isFeatured,
       isArchived,
     } = body
@@ -96,6 +98,9 @@ export async function PATCH(
         variations: {
           deleteMany: {},
         },
+        bundles: {
+          deleteMany: {},
+        },
         categoryId,
         colorId,
         sizeId,
@@ -122,6 +127,15 @@ export async function PATCH(
             data: [
               ...variations.map(
                 (variation: { name: string; price: number }) => variation
+              ),
+            ],
+          },
+        },
+        bundles: {
+          createMany: {
+            data: [
+              ...bundles.map(
+                (bundle: { minQuantity: number; price: number }) => bundle
               ),
             ],
           },

@@ -100,6 +100,7 @@ model Product {
   quantity Int @default(0)
   description String @db.Text 
   variations ProductVariation[]
+  bundles Bundle[] 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -116,10 +117,42 @@ model ProductVariation {
   product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   name        String  
   price       Decimal 
+  bundles     BundleItem[]
+  orderItems OrderItem[] 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([productId])
+}
+
+model Bundle {
+  id String @id @default(uuid())
+  minQuantity Int
+  price Decimal
+  bundleItems BundleItem[]
+  productId String
+  product Product @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model BundleItem {
+  id                 String            @id @default(uuid())
+  bundleId           String?           // Optional: May not be part of a predefined bundle
+  bundle             Bundle?           @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  productVariationId String
+  productVariation   ProductVariation  @relation(fields: [productVariationId], references: [id], onDelete: Cascade)
+  orderItemId        String            // This assumes every BundleItem is part of an OrderItem
+  orderItem          OrderItem         @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  quantity           Int               @default(1) // Quantity of the specific variation
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([bundleId])
+  @@index([productVariationId])
+  @@index([orderItemId])
 }
 
 model Image {
@@ -138,6 +171,7 @@ model Order {
   storeId String
   store Store @relation("StoreToOrder",fields: [storeId], references: [id])
   orderItems OrderItem[]
+  totalPrice Decimal @default(0)
   isPaid Boolean @default(false)
   phone String @default("")
   address String @default("")
@@ -151,12 +185,19 @@ model OrderItem {
   id String @id @default(uuid())
   orderId String
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  price Decimal @default(0)
   productId String
   product Product @relation(fields: [productId], references: [id])
+
+  productVariationId String?          
+  productVariation   ProductVariation? @relation(fields: [productVariationId], references: [id]) 
+  bundleItems    BundleItem[]
   quantity Int @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
   @@index([productId])
+  @@index([productVariationId])
 }
+

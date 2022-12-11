@@ -14,13 +14,35 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders })
 }
 
+// These are the types for the request body that you will receive from the frontend
+
+type ProductVariationType = {
+  id: string
+  quantity: number
+  price: number
+  name: string
+}
+
+type ItemType = {
+  quantity: number // required if variations is empty
+  price: number // required if variations is empty
+  variations: ProductVariationType[]
+}
+
+type ItemsObjectType = {
+  [key: string]: ItemType
+}
+
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
-  const { items } = await req.json()
+  // destructuring the request body as type ItemsObjectType
+  const { items }: { items: ItemsObjectType } = await req.json()
 
-  if (!items || items.length === 0) {
+  console.log(items)
+
+  if (!items) {
     return new NextResponse("Product IDs are required", { status: 400 })
   }
 
@@ -33,19 +55,29 @@ export async function POST(
         in: productIds,
       },
     },
+    include: {
+      bundles: true,
+      variations: true,
+    },
   })
+
+  // console.log(products)
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = []
 
   products.forEach((product) => {
     line_items.push({
-      quantity: items[product.id],
+      quantity: items[product.id].quantity,
       price_data: {
         currency: "usd",
         product_data: {
           name: product.name,
+          metadata: {
+            variations: JSON.stringify(items[product.id].variations),
+          },
         },
-        unit_amount: product.price.toNumber() * 100,
+        unit_amount:
+          (items[product.id].price / items[product.id].quantity) * 100,
       },
     })
   })
@@ -53,16 +85,39 @@ export async function POST(
   const order = await prismadb.order.create({
     data: {
       storeId: params.storeId,
-      isPaid: false,
+      isPaid: false, // set true as per your payment logic
+      totalPrice: Object.entries(items).reduce((total, [productId, item]) => {
+        total += item.price
+        return total
+      }, 0),
+
+      // update with actual data if available
       orderItems: {
-        create: productIds.map((productId: string) => ({
-          quantity: items[productId],
-          product: {
-            connect: {
-              id: productId,
-            },
-          },
-        })),
+        create: Object.entries(items).map(([productId, item]) => {
+          // Check if the item is a bundle (has variations)
+          const isBundle = item.variations && item.variations.length > 0
+
+          return {
+            product: { connect: { id: productId } },
+            price: item.price,
+            quantity: item.quantity, // For bundles, quantity might be handled differently
+            bundleItems: isBundle
+              ? {
+                  create: item.variations.map((variation) => ({
+                    productVariation: { connect: { id: variation.id } },
+                    quantity: variation.quantity,
+                  })),
+                }
+              : undefined,
+          }
+        }),
+      },
+    },
+    include: {
+      orderItems: {
+        include: {
+          bundleItems: true,
+        },
       },
     },
   })

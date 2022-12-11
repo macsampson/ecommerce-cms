@@ -21,6 +21,7 @@ export async function POST(
       colorId,
       sizeId,
       images,
+      bundles,
       isArchived,
       isFeatured,
     } = body
@@ -124,6 +125,7 @@ export async function GET(
         color: true,
         size: true,
         variations: true,
+        bundles: true,
       },
       orderBy: {
         createdAt: "desc",

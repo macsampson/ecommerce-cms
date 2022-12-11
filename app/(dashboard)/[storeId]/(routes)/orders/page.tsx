@@ -3,6 +3,7 @@ import { OrderClient } from "./components/client"
 import { OrderColumn } from "./components/columns"
 import { format } from "date-fns"
 import { formatter } from "@/lib/utils"
+import { revalidatePath } from "next/cache"
 
 const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
   const orders = await prismadb.order.findMany({
@@ -13,6 +14,12 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
       orderItems: {
         include: {
           product: true,
+          bundleItems: {
+            include: {
+              productVariation: true,
+            },
+          },
+          productVariation: true,
         },
       },
     },
@@ -25,12 +32,39 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
     id: order.id,
     phone: order.phone,
     address: order.address,
-    products: order.orderItems.map((item) => item.product.name).join(", "),
-    totalPrice: formatter.format(
-      order.orderItems.reduce((total, item) => {
-        return total + Number(item.product.price)
-      }, 0)
-    ),
+    // for each product, if it has bundle items, then show the product name and the bundle items
+    // otherwise, show the product name and the product variation name
+    // join all of these with a comma
+    products: order.orderItems
+      .map((item) => {
+        if (item.bundleItems.length > 0) {
+          return `${item.product.name} (${item.bundleItems
+            .map(
+              (bundleItem) =>
+                `${bundleItem.quantity}x ${bundleItem.productVariation.name}`
+            )
+            .join(", ")})`
+        } else {
+          return `${item.product.name} (${
+            item.productVariation ? item.productVariation.name : "Standard"
+          })`
+        }
+      })
+      .join(" | "),
+    variations: order.orderItems
+      .map((item) => {
+        if (item.bundleItems.length > 0) {
+          return `${item.product.name} (${item.bundleItems
+            .map((bundleItem) => bundleItem.productVariation.name)
+            .join(", ")})`
+        } else {
+          return `${item.product.name} (${
+            item.productVariation ? item.productVariation.name : "Standard"
+          })`
+        }
+      })
+      .join(", "),
+    totalPrice: formatter.format(order.totalPrice.toNumber()),
     isPaid: order.isPaid,
     createdAt: format(order.createdAt, "MMMM do, yyyy"),
   }))

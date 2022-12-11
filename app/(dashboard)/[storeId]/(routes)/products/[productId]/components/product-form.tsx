@@ -14,6 +14,7 @@ import {
   Product,
   ProductVariation,
   Size,
+  Bundle,
 } from "@prisma/client"
 import { useParams, useRouter } from "next/navigation"
 
@@ -42,6 +43,7 @@ import ImageUpload from "@/components/ui/image-upload"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import VariationInput from "./variation-input"
+import BundleInput from "./bundle"
 import { formatter } from "@/lib/utils"
 
 const formSchema = z.object({
@@ -57,6 +59,13 @@ const formSchema = z.object({
     })
     .array()
     .default([]),
+  bundles: z
+    .object({
+      minQuantity: z.coerce.number().min(1),
+      price: z.coerce.number().min(1),
+    })
+    .array()
+    .default([]),
   categoryId: z.string().min(1),
   colorId: z.string().optional(),
   sizeId: z.string().optional(),
@@ -67,11 +76,16 @@ const formSchema = z.object({
 type ProductFormValues = z.infer<typeof formSchema>
 
 // type for product variations
-type variation = {
+type VariationType = {
   id: number
   name: string
   price: number
   // isDeleted?: boolean
+}
+
+type BundleType = {
+  minQuantity: number
+  price: number
 }
 
 interface ProductFormProps {
@@ -79,6 +93,7 @@ interface ProductFormProps {
     | (Product & {
         images: Image[]
         variations: ProductVariation[]
+        bundles: Bundle[]
       })
     | null
   categories: Category[]
@@ -105,7 +120,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     // isDeleted: false,
   })
 
-  const [variations, setVariations] = useState<variation[]>([])
+  const [currentBundle, setCurrentBundle] = useState({
+    id: Date.now(),
+    minQuantity: 0,
+    price: 0,
+    // isDeleted: false,
+  })
+
+  const [variations, setVariations] = useState<VariationType[]>([])
+  const [bundles, setBundles] = useState<BundleType[]>([])
 
   // const activeVariations = variations.filter(
   //   (variation) => !variation.isDeleted
@@ -127,6 +150,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             ...variation,
             price: parseFloat(String(variation.price)),
           })) || [],
+        bundles:
+          initialData?.bundles.map((bundle) => ({
+            ...bundle,
+            price: parseFloat(String(bundle.price)),
+          })) || [],
       }
     : {
         name: "",
@@ -135,6 +163,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         quantity: 0,
         description: "",
         variations: [],
+        bundles: [],
         categoryId: "",
         colorId: undefined,
         sizeId: undefined,
@@ -458,6 +487,137 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           ) : (
                             <div className="flex mx-auto items-center text-neutral-500 text-opacity-50">
                               No variations
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="bundles"
+              render={({ field }) => {
+                // console.log("field", field.value)
+                // console.log("default values", defaultValues.variations)
+                const addBundle = () => {
+                  const newBundle = {
+                    ...currentBundle,
+                  }
+                  // console.log("current bundle", currentBundle)
+                  // Update the field.value by appending the new Bundle
+                  field.onChange([...field.value, currentBundle])
+
+                  // Reset the currentBundle input fields
+                  setCurrentBundle({
+                    id: Date.now(),
+                    minQuantity: 0,
+                    price: 0,
+                    // isDeleted: false,
+                  })
+                }
+
+                return (
+                  <FormItem>
+                    <FormLabel>Bundles</FormLabel>
+                    <FormControl>
+                      <>
+                        <div className="flex space-x-2 p-2">
+                          <Input
+                            ref={nameInputRef}
+                            className="w-1/6"
+                            placeholder="Min Qty"
+                            type="number"
+                            min="1"
+                            // value={currentBundle.minQuantity}
+                            onChange={(e) => {
+                              setCurrentBundle((prev) => ({
+                                ...prev,
+                                minQuantity: parseInt(e.target.value),
+                              }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addBundle()
+                                if (nameInputRef.current) {
+                                  nameInputRef.current.focus()
+                                }
+                              }
+                            }}
+                          />
+                          <Input
+                            className="w-1/5"
+                            placeholder="$0.00"
+                            type="number"
+                            value={currentBundle.price}
+                            onChange={(e) => {
+                              setCurrentBundle((prev) => ({
+                                ...prev,
+                                price: parseFloat(e.target.value),
+                              }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addBundle()
+                                if (nameInputRef.current) {
+                                  nameInputRef.current.focus()
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            className="ml-4"
+                            size="sm"
+                            onClick={() => {
+                              addBundle()
+                              if (nameInputRef.current) {
+                                nameInputRef.current.focus()
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-col items-center space-y-4 border p-2 rounded-md">
+                          {field.value.length ? (
+                            field.value.map((bundle, index) => (
+                              /* if bundle is not marked as deleted, render it */
+                              // bundle.isDeleted ? null : (
+                              // <div
+                              //   key={bundle.name}
+                              //   className="flex items-center space-x-4 justify-between w-full px-2"
+                              // >
+                              <BundleInput
+                                key={index}
+                                bundle={bundle}
+                                onRemove={() => {
+                                  const newBundle = field.value.filter(
+                                    (_, i) => i !== index
+                                  )
+                                  field.onChange(newBundle)
+                                }}
+                                onBundleUpdate={(name, value) => {
+                                  const newBundle = [...field.value]
+                                  if (name === "quantity") {
+                                    newBundle[index].minQuantity =
+                                      parseInt(value)
+                                  } else if (name === "price") {
+                                    newBundle[index].price = parseFloat(value)
+                                  }
+                                  field.onChange(newBundle)
+                                }}
+                              />
+                              // </div>
+                            ))
+                          ) : (
+                            <div className="flex mx-auto items-center text-neutral-500 text-opacity-50">
+                              No bundles
                             </div>
                           )}
                         </div>

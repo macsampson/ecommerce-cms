@@ -33,6 +33,13 @@ export const columns: ColumnDef<OrderColumn>[] = [
   {
     accessorKey: "isPaid",
     header: "Paid",
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-x-2">
+          {row.original.isPaid ? "🟢" : "🔴"}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "createdAt",

@@ -32,7 +32,7 @@ interface BillboardFormProps {
 }
 
 const formSchema = z.object({
-  label: z.string().min(1, "Billboard name must be at least 1 character long."),
+  label: z.string().optional(),
   imageUrl: z
     .string()
     .min(1, "Billboard description must be at least 1 character long."),

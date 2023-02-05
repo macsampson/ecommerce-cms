@@ -24,7 +24,7 @@ export const columns: ColumnDef<BillboardColumn>[] = [
     header: "Landing Page",
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.landingPage ? "Active" : ""}
+        {row.original.landingPage ? "🟢" : ""}
       </div>
     ),
   },

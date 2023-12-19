@@ -7,6 +7,15 @@ export interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
+    // State to track the height of the textarea
+    const [textAreaHeight, setTextAreaHeight] = React.useState("auto")
+
+    // Event handler for textarea change
+    const handleChange = (event: any) => {
+      setTextAreaHeight("auto")
+      setTextAreaHeight(`${event.target.scrollHeight}px`)
+    }
+
     return (
       <textarea
         className={cn(
@@ -14,6 +23,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           className
         )}
         ref={ref}
+        style={{ height: textAreaHeight }}
+        onChange={handleChange}
         {...props}
       />
     )

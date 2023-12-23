@@ -56,26 +56,29 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
     : {
         images: [],
       }
-
+  // console.log("initialData", initialData)
   const form = useForm<CarouselValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData,
   })
 
   const onSubmit = async (values: CarouselValues) => {
-    console.log("values", values)
+    console.log("values: ", values)
+
     // const { images } = values
     // console.log("images", images)
     if (values.images.length === 0) {
       toast.error("You must upload at least one image.")
       return
     }
-    if (initialData) {
-      await axios.patch(`/api/${params.storeId}/billboards/carousel`, values)
-    } else {
-      await axios.post(`/api/${params.storeId}/billboards/carousel`, values)
-    }
+
+    const data = await axios.post(
+      `/api/${params.storeId}/billboards/carousel`,
+      values
+    )
+
     router.refresh()
+    // console.log("data", data)
   }
   // console.log("these are the params", params)
 

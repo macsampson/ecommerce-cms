@@ -22,10 +22,26 @@ const BillboardsPage = async ({ params }: { params: { storeId: string } }) => {
     })
   )
 
+  const carouselImages = await prismadb.carouselImage.findMany({
+    where: {
+      storeId: params.storeId,
+    },
+  })
+
+  // const formattedCarouselImages = carouselImages.map((image) => ({
+  //   order: image.order,
+  //   // label: image.label,
+  //   imageUrl: image.imageUrl,
+  //   createdAt: format(image.createdAt, "MMMM do, yyyy"),
+  // }))
+
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <BillboardClient data={formattedBillboards} />
+        <BillboardClient
+          billboardData={formattedBillboards}
+          carouselImages={carouselImages}
+        />
       </div>
     </div>
   )

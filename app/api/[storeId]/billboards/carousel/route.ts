@@ -41,6 +41,12 @@ export async function POST(
     if (!images)
       return new NextResponse("Image URL is required", { status: 400 })
 
+    await prismadb.carouselImage.deleteMany({
+      where: {
+        storeId: params.storeId,
+      },
+    })
+
     // create many carousel images
     const carouselImages = await prismadb.carouselImage.createMany({
       data: images.map((image: { imageUrl: string }) => ({

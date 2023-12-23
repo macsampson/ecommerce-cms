@@ -9,22 +9,81 @@ import { Separator } from "@/components/ui/separator"
 import { BillboardColumn, columns } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
 import ApiList from "@/components/ui/api-list"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormControl,
+} from "@/components/ui/form"
+
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import axios from "axios"
+
+import ImageUpload from "@/components/ui/image-upload"
+import { toast } from "react-hot-toast"
+
+import * as z from "zod"
+
+import { CarouselImage } from "@prisma/client"
 
 interface BillboardClientProps {
-  data: BillboardColumn[]
+  billboardData: BillboardColumn[]
+  carouselImages: CarouselImage[]
 }
 
-export const BillboardClient: React.FC<BillboardClientProps> = ({ data }) => {
+const formSchema = z.object({
+  images: z.object({ imageUrl: z.string() }).array(),
+})
+
+type CarouselValues = z.infer<typeof formSchema>
+
+export const BillboardClient: React.FC<BillboardClientProps> = ({
+  billboardData,
+  carouselImages,
+}) => {
   const router = useRouter()
   const params = useParams()
 
-  //   console.log("these are the params", params)
+  const initialData = carouselImages
+    ? {
+        images: carouselImages.map((image) => ({
+          imageUrl: image.imageUrl,
+        })),
+      }
+    : {
+        images: [],
+      }
+
+  const form = useForm<CarouselValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData,
+  })
+
+  const onSubmit = async (values: CarouselValues) => {
+    console.log("values", values)
+    // const { images } = values
+    // console.log("images", images)
+    if (values.images.length === 0) {
+      toast.error("You must upload at least one image.")
+      return
+    }
+    if (initialData) {
+      await axios.patch(`/api/${params.storeId}/billboards/carousel`, values)
+    } else {
+      await axios.post(`/api/${params.storeId}/billboards/carousel`, values)
+    }
+    router.refresh()
+  }
+  // console.log("these are the params", params)
 
   return (
     <>
       <div className="flex items-center justify-between">
         <Heading
-          title={`Billboards (${data.length})`}
+          title={`Billboards (${billboardData.length})`}
           description="Manage your billboards"
         />
 
@@ -36,11 +95,59 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({ data }) => {
         </Button>
       </div>
       <Separator />
+
       <DataTable
         columns={columns}
-        data={data}
+        data={billboardData}
         searchKey="label"
       />
+      <Separator />
+      <Heading
+        title="Carousel"
+        description="Carousel of billboards"
+      />
+      <Separator />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 w-full"
+        >
+          <FormField
+            control={form.control}
+            name="images"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Images</FormLabel>
+                <FormControl>
+                  <ImageUpload
+                    value={field.value.map((image) => image.imageUrl)}
+                    // disabled={loading}
+                    onChange={(url) =>
+                      field.onChange([...field.value, { imageUrl: url }])
+                    }
+                    onRemove={(url) =>
+                      field.onChange([
+                        ...field.value.filter(
+                          (current) => current.imageUrl !== url
+                        ),
+                      ])
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            variant="default"
+          >
+            Save
+          </Button>
+        </form>
+      </Form>
+
+      <Separator />
       <Heading
         title="API"
         description="API calls for billboards"

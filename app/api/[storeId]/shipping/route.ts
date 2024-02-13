@@ -79,6 +79,7 @@ export async function POST(req: Request) {
     return acc + (bundlePrice ? bundlePrice : price.toNumber()) * totalQuantity
   }, 0)
 
+  // keycap weight is 10g
   const totalWeight = totalQuantity * 0.01
 
   // create line items for shippo from cart items

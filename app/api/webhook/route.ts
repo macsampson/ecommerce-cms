@@ -43,6 +43,9 @@ export async function POST(req: Request) {
 
   const addressString = addressComponents.filter((c) => c !== null).join(", ")
 
+  // console.log("webhook received")
+  // console.log(event)
+
   if (event.type === "checkout.session.completed") {
     const order = await prismadb.order.update({
       where: {
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
       data: {
         isPaid: true,
         address: addressString,
-        phone: session?.customer_details?.phone || "",
+        emailAddress: session?.customer_details?.email || "",
       },
       include: {
         orderItems: true,

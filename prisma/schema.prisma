@@ -190,7 +190,7 @@ model Order {
   orderItems OrderItem[]
   totalPrice Decimal @default(0)
   isPaid Boolean @default(false)
-  phone String @default("")
+  emailAddress String @default("")
   address String @default("")
   shipping Shipping?
   shippingAddress String @default("")

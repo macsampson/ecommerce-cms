@@ -251,6 +251,14 @@ export async function POST(
         currency: currency,
         product_data: {
           name: product.name,
+          // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
+          description: Object.entries(items[product.id].variations)
+            .reduce((acc, [_, variation]) => {
+              // Add a semicolon and space separator between variations
+              return acc + variation.quantity + " " + variation.name + "; "
+            }, "")
+            .slice(0, -2), // Remove the last semicolon and space for cleanliness
+
           metadata: {
             // variations: JSON.stringify(items[product.id].variations),
           },

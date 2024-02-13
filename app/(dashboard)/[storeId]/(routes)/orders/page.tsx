@@ -9,6 +9,7 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
   const orders = await prismadb.order.findMany({
     where: {
       storeId: params.storeId,
+      isPaid: true,
     },
     include: {
       orderItems: {
@@ -50,7 +51,7 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
 
     return {
       id: order.id,
-      phone: order.phone,
+      emailAddress: order.emailAddress,
       address: order.address,
       shippingAddress: order.shippingAddress,
       // for each product, if it has bundle items, then show the product name and the bundle items
@@ -72,7 +73,7 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
         .join(", "),
       totalPrice: formatter.format(order.totalPrice.toNumber()),
       isPaid: order.isPaid,
-      createdAt: format(order.createdAt, "MMMM do, yyyy"),
+      createdAt: format(order.createdAt, "yyyy-MM-dd hh:mm a"),
     }
   })
 

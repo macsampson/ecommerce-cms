@@ -235,8 +235,7 @@ export async function POST(
     shippingAddress.city,
     shippingAddress.state,
     shippingAddress.zip,
-    shippingAddress.country, // Make sure to include the country
-    shippingAddress.email,
+    shippingAddress.country,
   ]
 
   const shippingAddressComponents = shippingAddressObject

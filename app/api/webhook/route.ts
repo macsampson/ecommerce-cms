@@ -55,6 +55,7 @@ export async function POST(req: Request) {
         isPaid: true,
         address: addressString,
         emailAddress: session?.customer_details?.email || "",
+        totalPrice: session.amount_total ? session.amount_total / 100 : 0,
       },
       include: {
         orderItems: true,

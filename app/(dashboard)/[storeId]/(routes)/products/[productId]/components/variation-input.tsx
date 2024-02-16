@@ -5,7 +5,7 @@ import { formatter } from "@/lib/utils"
 import { useState } from "react"
 
 interface VariationInputProps {
-  variation: { name: string; price: number }
+  variation: { name: string; price: number; quantity: number }
   onRemove: () => void
   onVariationUpdate: (name: string, value: string) => void
 }
@@ -42,6 +42,14 @@ const VariationInput: React.FC<VariationInputProps> = ({
           onVariationUpdate("name", e.target.value)
         }}
         onKeyDown={handleKeyDown}
+      />
+      <Input
+        className="text-sm font-medium text-right w-1/5"
+        placeholder="add quantity"
+        value={variation?.quantity.toString()}
+        onChange={(e) => {
+          onVariationUpdate("quantity", e.target.value)
+        }}
       />
       <Input
         className="text-sm font-medium text-right w-1/5 "

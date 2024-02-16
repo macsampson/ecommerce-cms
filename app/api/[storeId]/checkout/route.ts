@@ -244,6 +244,8 @@ export async function POST(
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = []
 
+  // console.log("items: ", items)
+  // console.log("products: ", products)
   products.forEach((product) => {
     line_items.push({
       quantity: items[product.id].quantity,
@@ -252,13 +254,18 @@ export async function POST(
         product_data: {
           name: product.name,
           // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
-          description: Object.entries(items[product.id].variations)
-            .reduce((acc, [_, variation]) => {
-              // Add a semicolon and space separator between variations
-              return acc + variation.quantity + " " + variation.name + "; "
-            }, "")
-            .slice(0, -2), // Remove the last semicolon and space for cleanliness
-
+          description:
+            Object.keys(items[product.id].variations).length > 0
+              ? Object.entries(items[product.id].variations)
+                  .reduce((acc, [_, variation]) => {
+                    // Add a semicolon and space separator between variations
+                    return (
+                      acc + variation.quantity + " " + variation.name + "; "
+                    )
+                  }, "")
+                  .slice(0, -2) // Remove the last semicolon and space for cleanliness
+              : "Standard",
+          // Remove the last semicolon and space for cleanliness
           metadata: {
             // variations: JSON.stringify(items[product.id].variations),
           },
@@ -282,6 +289,7 @@ export async function POST(
         create: Object.entries(items).flatMap(([productId, item]) => {
           // If the item is a bundle, create an orderItem for each variation
           if (Object.keys(item.variations).length > 0) {
+            // console.log("bundle item: ", item)
             return Object.entries(item.variations).map(
               ([variationId, variation]) => ({
                 product: { connect: { id: productId } },
@@ -292,6 +300,7 @@ export async function POST(
             )
           } else {
             // If the item is not a bundle, create a single orderItem
+            // console.log("non bundle item: ", item)
             return [
               {
                 product: { connect: { id: productId } },

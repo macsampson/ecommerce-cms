@@ -134,6 +134,7 @@ model ProductVariation {
   product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   name        String  
   price       Decimal 
+  quantity    Int     @default(0)
   bundles     BundleItem[]
   orderItems OrderItem[] 
   createdAt   DateTime @default(now())
@@ -207,7 +208,6 @@ model OrderItem {
   price Decimal @default(0)
   productId String
   product Product @relation(fields: [productId], references: [id])
-
   productVariationId String?          
   productVariation   ProductVariation? @relation(fields: [productVariationId], references: [id]) 
   bundleItems    BundleItem[]

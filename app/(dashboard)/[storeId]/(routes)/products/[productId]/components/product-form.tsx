@@ -56,6 +56,7 @@ const formSchema = z.object({
     .object({
       name: z.string().min(1),
       price: z.coerce.number().min(1),
+      quantity: z.coerce.number().min(0),
     })
     .array()
     .default([]),
@@ -80,6 +81,7 @@ type VariationType = {
   id: number
   name: string
   price: number
+  quantity: number
   // isDeleted?: boolean
 }
 
@@ -117,6 +119,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     id: Date.now(),
     name: "",
     price: 0,
+    quantity: 0,
     // isDeleted: false,
   })
 
@@ -129,6 +132,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [variations, setVariations] = useState<VariationType[]>([])
   const [bundles, setBundles] = useState<BundleType[]>([])
+
+  // Calculate the total quantity of variations
+  const totalVariationQuantity = initialData?.variations.reduce(
+    (acc, variation) => acc + variation.quantity,
+    0
+  )
+
+  // console.log("totalVariationQuantity", totalVariationQuantity)
 
   // const activeVariations = variations.filter(
   //   (variation) => !variation.isDeleted
@@ -143,12 +154,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     ? {
         ...initialData,
         price: parseFloat(String(initialData?.price)),
+        quantity:
+          initialData.variations?.length > 0
+            ? totalVariationQuantity
+            : initialData.quantity,
         colorId: initialData.colorId || undefined,
         sizeId: initialData.sizeId || undefined,
         variations:
           initialData?.variations.map((variation) => ({
             ...variation,
             price: parseFloat(String(variation.price)),
+            quantity: parseInt(String(variation.quantity)),
           })) || [],
         bundles:
           initialData?.bundles.map((bundle) => ({
@@ -171,6 +187,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         isArchived: false,
       }
 
+  // console.log("defaultValues", defaultValues)
+  // console.log("variationl length", initialData?.variations.length)
+
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<ProductFormValues>({
@@ -179,6 +198,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   })
 
   const onSubmit = async (data: ProductFormValues) => {
+    console.log("data", data)
     try {
       setLoading(true)
       if (initialData) {
@@ -221,6 +241,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         id: Date.now(),
         name: "",
         price: 0,
+        quantity: 0,
         // isDeleted: false,
       })
     }
@@ -359,9 +380,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormControl>
                     <Input
                       type="number"
-                      disabled={loading}
+                      disabled={loading || variations.length > 0}
                       placeholder="0"
-                      {...field}
+                      // set to total quantity of variations if variations exist
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -387,6 +410,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     id: Date.now(),
                     name: "",
                     price: 0,
+                    quantity: 0,
                     // isDeleted: false,
                   })
                 }
@@ -406,6 +430,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                               setCurrentVariation((prev) => ({
                                 ...prev,
                                 name: e.target.value,
+                              }))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addVariation()
+                                if (nameInputRef.current) {
+                                  nameInputRef.current.focus()
+                                }
+                              }
+                            }}
+                          />
+                          <Input
+                            title="Quantity"
+                            className="w-1/5"
+                            placeholder="please add quantity"
+                            type="number"
+                            value={currentVariation.quantity}
+                            onChange={(e) => {
+                              setCurrentVariation((prev) => ({
+                                ...prev,
+                                quantity: parseInt(e.target.value),
                               }))
                             }}
                             onKeyDown={(e) => {
@@ -478,6 +524,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                                   } else if (name === "price") {
                                     newVariations[index].price =
                                       parseFloat(value)
+                                  } else if (name === "quantity") {
+                                    newVariations[index].quantity =
+                                      parseInt(value)
                                   }
                                   field.onChange(newVariations)
                                 }}

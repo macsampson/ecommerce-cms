@@ -8,7 +8,7 @@ import prismadb from "@/lib/prismadb"
 import shippoClient from "@/lib/shippo"
 
 type ItemsObject = {
-  [key: string]: number
+  [productId: string]: number | { [variationId: string]: number }
 }
 
 export async function POST(req: Request) {
@@ -104,13 +104,15 @@ export async function POST(req: Request) {
     // })
 
     // const productIds = order.orderItems.map((orderItem) => orderItem.productId)
-    const productsObject = order.orderItems.reduce(
-      (acc: ItemsObject, orderItem) => {
-        acc[orderItem.productId] = orderItem.quantity
-        return acc
-      },
-      {}
-    )
+    // const productsObject = order.orderItems.reduce(
+    //   (acc: ItemsObject, orderItem) => {
+    //     acc[orderItem.productId] = orderItem.quantity
+    //     return acc
+    //   },
+    //   {}
+    // )
+
+    // create a products object with the product id as the key and an object with the variation id and quantity as the value
 
     // const productIds = Object.keys(productsObject)
 
@@ -125,16 +127,60 @@ export async function POST(req: Request) {
     //   },
     // })
 
-    for (const [productId, quantity] of Object.entries(productsObject)) {
-      await prismadb.product.update({
-        where: { id: productId },
-        data: {
-          quantity: {
-            decrement: quantity,
-          },
-        },
+    // update the quantity of each product or product variation in the order
+    // console.log("order: ", order)
+    await Promise.all(
+      order.orderItems.map(async (orderItem) => {
+        if (orderItem.productVariationId) {
+          const productVariation = await prismadb.productVariation.findUnique({
+            where: {
+              id: orderItem.productVariationId,
+            },
+          })
+
+          if (productVariation) {
+            await prismadb.productVariation.update({
+              where: {
+                id: orderItem.productVariationId,
+              },
+              data: {
+                quantity: {
+                  decrement: orderItem.quantity,
+                },
+              },
+            })
+
+            await prismadb.product.update({
+              where: {
+                id: orderItem.productId,
+              },
+              data: {
+                quantity: {
+                  decrement: orderItem.quantity,
+                },
+              },
+            })
+          }
+        } else {
+          const product = await prismadb.product.findUnique({
+            where: {
+              id: orderItem.productId,
+            },
+          })
+
+          if (product) {
+            await prismadb.product.update({
+              where: {
+                id: orderItem.productId,
+              },
+              data: {
+                quantity: product.quantity - orderItem.quantity,
+              },
+            })
+          }
+        }
       })
-    }
+    )
 
     // TODO: create shipment with shippo
     const shippingID = session.shipping_cost?.shipping_rate

@@ -105,6 +105,10 @@ export async function GET(
     const colorId = searchParams.get("colorId") || undefined
     const sizeId = searchParams.get("sizeId") || undefined
     const isFeatured = searchParams.get("isFeatured")
+    const amountToFetch = searchParams.get("amountToFetch") || undefined
+    const excludeProductId = searchParams.get("excludeProductId") || undefined
+
+    console.log("searchParams: ", searchParams)
 
     if (!params.storeId) {
       return new NextResponse("Store ID is required", { status: 400 })
@@ -118,6 +122,7 @@ export async function GET(
         sizeId,
         isFeatured: isFeatured ? true : undefined,
         isArchived: false,
+        id: excludeProductId ? { not: excludeProductId } : undefined,
       },
       include: {
         images: true,
@@ -131,6 +136,10 @@ export async function GET(
         createdAt: "desc",
       },
     })
+
+    if (amountToFetch) {
+      return NextResponse.json(products.slice(0, Number(amountToFetch)))
+    }
 
     return NextResponse.json(products)
   } catch (error) {

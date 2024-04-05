@@ -1,240 +1,255 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "postgresql"
+  url      = env("DIRECT_URL")
 }
 
 model Store {
-  id String @id @default(uuid())
-  name String
-  userId String
-  billboards Billboard[] @relation("StoreToBillboard")
-  carouselImages CarouselImage[] @relation("StoreToCarouselImage")
-  categories Category[] @relation("StoreToCategory")
-  sizes Size[] @relation("StoreToSize")
-  colors Color[] @relation("StoreToColor")
-  products Product[] @relation("StoreToProduct")
-  orders Order[] @relation("StoreToOrder")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id(map: "idx_31202_primary") @default(uuid()) @db.VarChar(191)
+  name      String   @map("name") @db.VarChar(191)
+  userId    String   @map("userid") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+
+  billboards     Billboard[]
+  carouselImages CarouselImage[]
+  categories     Category[]
+  sizes          Size[]
+  colors         Color[]
+  products       Product[]
+  orders         Order[]
+
+  @@map("store")
 }
 
 model Billboard {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToBillboard", fields: [storeId], references: [id])
-  label String
-  imageUrl String
-  categories Category[] 
-  landingPage Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id(map: "idx_31112_primary") @default(uuid()) @db.VarChar(191)
+  storeId     String   @map("storeid") @db.VarChar(191)
+  label       String   @map("label") @db.VarChar(191)
+  imageUrl    String   @map("imageurl") @db.VarChar(191)
+  createdAt   DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  landingPage Boolean  @default(false) @map("landingpage")
 
-  @@index([storeId])
+  store      Store      @relation(fields: [storeId], references: [id])
+  categories Category[]
+
+  @@index([storeId], map: "idx_31112_billboard_storeid_idx")
+  @@map("billboard")
 }
 
 model CarouselImage {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToCarouselImage", fields: [storeId], references: [id])
-  // productId String
-  // product Product @relation(fields: [productId], references: [id])
-  // order Int
-  imageUrl String
-  imageCredit String @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id(map: "idx_31130_primary") @default(uuid()) @db.VarChar(191)
+  imageUrl    String   @map("imageurl") @db.VarChar(191)
+  createdAt   DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  storeId     String   @map("storeid") @db.VarChar(191)
+  imageCredit String   @default("") @map("imagecredit") @db.VarChar(191)
 
-  // @@index([productId])
-  @@index([storeId])
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@index([storeId], map: "idx_31130_carouselimage_storeid_idx")
+  @@map("carouselimage")
 }
 
 model Category {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToCategory", fields: [storeId], references: [id])
-  billboardId String
-  billboard Billboard @relation( fields: [billboardId], references: [id])
-  products Product[] @relation("CategoryToProduct")
-  name String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id(map: "idx_31137_primary") @default(uuid()) @db.VarChar(191)
+  storeId     String   @map("storeid") @db.VarChar(191)
+  billboardId String   @map("billboardid") @db.VarChar(191)
+  name        String   @map("name") @db.VarChar(191)
+  createdAt   DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  @@index([storeId])
-  @@index([billboardId])
+  store     Store     @relation(fields: [storeId], references: [id])
+  billboard Billboard @relation(fields: [billboardId], references: [id])
+  products  Product[]
+
+  @@index([billboardId], map: "idx_31137_category_billboardid_idx")
+  @@index([storeId], map: "idx_31137_category_storeid_idx")
+  @@map("category")
 }
 
 model Size {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToSize", fields: [storeId], references: [id])
+  id        String   @id(map: "idx_31196_primary") @default(uuid()) @db.VarChar(191)
+  storeId   String   @map("storeid") @db.VarChar(191)
+  name      String   @map("name") @db.VarChar(191)
+  value     String   @map("value") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  name String
-  value String
+  store    Store     @relation(fields: [storeId], references: [id])
   products Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@index([storeId])
+  @@index([storeId], map: "idx_31196_size_storeid_idx")
+  @@map("size")
 }
 
 model Color {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToColor", fields: [storeId], references: [id])
-  name String
-  value String
-  products Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id(map: "idx_31143_primary") @default(uuid()) @db.VarChar(191)
+  storeId   String   @map("storeid") @db.VarChar(191)
+  name      String   @map("name") @db.VarChar(191)
+  value     String   @map("value") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  @@index([storeId])
+  store    Store     @relation(fields: [storeId], references: [id])
+  products Product[]
+
+  @@index([storeId], map: "idx_31143_color_storeid_idx")
+  @@map("color")
 }
 
 model Product {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToProduct", fields: [storeId], references: [id])
-  categoryId String
-  category Category @relation("CategoryToProduct",fields: [categoryId], references: [id])
-  name String
-  price Decimal
-  isFeatured Boolean @default(false)
-  isArchived Boolean @default(false)
-  sizeId String?
-  size Size? @relation(fields: [sizeId], references: [id])
-  colorId String?
-  color Color? @relation(fields: [colorId], references: [id])
-  images Image[]
-  // carouselImages CarouselImage[]
+  id          String   @id(map: "idx_31174_primary") @default(uuid()) @db.VarChar(191)
+  storeId     String   @map("storeid") @db.VarChar(191)
+  categoryId  String   @map("categoryid") @db.VarChar(191)
+  name        String   @map("name") @db.VarChar(191)
+  price       Decimal  @map("price")
+  isFeatured  Boolean  @default(false) @map("isfeatured")
+  isArchived  Boolean  @default(false) @map("isarchived")
+  sizeId      String?  @map("sizeid") @db.VarChar(191)
+  colorId     String?  @map("colorid") @db.VarChar(191)
+  quantity    Int      @default(0) @map("quantity")
+  createdAt   DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  description String   @map("description")
+
+  store      Store              @relation(fields: [storeId], references: [id])
+  category   Category           @relation(fields: [categoryId], references: [id])
+  size       Size?              @relation(fields: [sizeId], references: [id])
+  color      Color?             @relation(fields: [colorId], references: [id])
+  images     Image[]
   orderItems OrderItem[]
-  quantity Int @default(0)
-  description String @db.Text 
   variations ProductVariation[]
-  bundles Bundle[] 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  bundles    Bundle[]
 
-  @@index([storeId])
-  @@index([categoryId])
-  @@index([sizeId])
-  @@index([colorId])
-
+  @@index([categoryId], map: "idx_31174_product_categoryid_idx")
+  @@index([colorId], map: "idx_31174_product_colorid_idx")
+  @@index([sizeId], map: "idx_31174_product_sizeid_idx")
+  @@index([storeId], map: "idx_31174_product_storeid_idx")
+  @@map("product")
 }
 
 model ProductVariation {
-  id          String  @id @default(uuid())
-  productId   String
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name        String  
-  price       Decimal 
-  quantity    Int     @default(0)
-  bundles     BundleItem[]
-  orderItems OrderItem[] 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id(map: "idx_31183_primary") @default(uuid()) @db.VarChar(191)
+  productId String   @map("productid") @db.VarChar(191)
+  name      String   @map("name") @db.VarChar(191)
+  price     Decimal  @map("price")
+  createdAt DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  quantity  Int      @default(0) @map("quantity")
 
-  @@index([productId])
+  orderItems  OrderItem[]
+  product     Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  bundleItems BundleItem[]
+
+  @@index([productId], map: "idx_31183_productvariation_productid_idx")
+  @@map("productvariation")
 }
 
 model Bundle {
-  id String @id @default(uuid())
-  minQuantity Int
-  price Decimal
-  bundleItems BundleItem[]
-  productId String
-  product Product @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id(map: "idx_31119_primary") @default(uuid()) @db.VarChar(191)
+  minQuantity Int      @map("minquantity")
+  price       Decimal  @map("price")
+  productId   String   @map("productid") @db.VarChar(191)
+  createdAt   DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  @@index([productId])
+  product     Product      @relation(fields: [productId], references: [id])
+  bundleItems BundleItem[]
+
+  @@index([productId], map: "idx_31119_bundle_productid_idx")
+  @@map("bundle")
 }
 
 model BundleItem {
-  id                 String            @id @default(uuid())
-  bundleId           String?           // Optional: May not be part of a predefined bundle
-  bundle             Bundle?           @relation(fields: [bundleId], references: [id], onDelete: SetNull)
-  productVariationId String
-  productVariation   ProductVariation  @relation(fields: [productVariationId], references: [id], onDelete: Cascade)
-  orderItemId        String            // This assumes every BundleItem is part of an OrderItem
-  orderItem          OrderItem         @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  quantity           Int               @default(1) // Quantity of the specific variation
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  id                 String   @id(map: "idx_31123_primary") @default(uuid()) @db.VarChar(191)
+  bundleId           String?  @map("bundleid") @db.VarChar(191)
+  productVariationId String   @map("productvariationid") @db.VarChar(191)
+  orderItemId        String   @map("orderitemid") @db.VarChar(191)
+  quantity           Int      @default(1) @map("quantity")
+  createdAt          DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  @@index([bundleId])
-  @@index([productVariationId])
-  @@index([orderItemId])
+  bundle           Bundle?          @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  productVariation ProductVariation @relation(fields: [productVariationId], references: [id], onDelete: Cascade)
+  orderItem        OrderItem        @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([bundleId], map: "idx_31123_bundleitem_bundleid_idx")
+  @@index([orderItemId], map: "idx_31123_bundleitem_orderitemid_idx")
+  @@index([productVariationId], map: "idx_31123_bundleitem_productvariationid_idx")
+  @@map("bundleitem")
 }
 
 model Image {
-  id String @id @default(uuid())
-  productId String
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id(map: "idx_31149_primary") @default(uuid()) @db.VarChar(191)
+  productId String   @map("productid") @db.VarChar(191)
+  url       String   @map("url") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
 
-  @@index([productId])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "idx_31149_image_productid_idx")
+  @@map("image")
 }
 
 model Order {
-  id String @id @default(uuid())
-  storeId String
-  store Store @relation("StoreToOrder",fields: [storeId], references: [id])
-  orderItems OrderItem[]
-  totalPrice Decimal @default(0)
-  isPaid Boolean @default(false)
-  emailAddress String @default("")
-  address String @default("")
-  shipping Shipping?
-  shippingAddress String @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id(map: "idx_31155_primary") @default(uuid()) @db.VarChar(191)
+  storeId         String   @map("storeid") @db.VarChar(191)
+  isPaid          Boolean  @default(false) @map("ispaid")
+  address         String   @default("") @map("address") @db.VarChar(191)
+  createdAt       DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  totalPrice      Decimal  @default(0.000000000000000000000000000000) @map("totalprice")
+  shippingAddress String   @default("") @map("shippingaddress") @db.VarChar(191)
+  emailAddress    String   @default("") @map("emailaddress") @db.VarChar(191)
 
-  @@index([storeId])
+  orderItems OrderItem[]
+  store      Store       @relation(fields: [storeId], references: [id])
+  shipping   Shipping?
+
+  @@index([storeId], map: "idx_31155_order_storeid_idx")
+  @@map("order")
 }
 
 model OrderItem {
-  id String @id @default(uuid())
-  orderId String
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  price Decimal @default(0)
-  productId String
-  product Product @relation(fields: [productId], references: [id])
-  productVariationId String?          
-  productVariation   ProductVariation? @relation(fields: [productVariationId], references: [id]) 
-  bundleItems    BundleItem[]
-  quantity Int @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id(map: "idx_31166_primary") @default(uuid()) @db.VarChar(191)
+  orderId            String   @map("orderid") @db.VarChar(191)
+  productId          String   @map("productid") @db.VarChar(191)
+  createdAt          DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
+  quantity           Int      @default(1) @map("quantity")
+  productVariationId String?  @map("productvariationid") @db.VarChar(191)
+  price              Decimal  @default(0.000000000000000000000000000000) @map("price")
 
-  @@index([orderId])
-  @@index([productId])
-  @@index([productVariationId])
+  order            Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product           @relation(fields: [productId], references: [id])
+  productVariation ProductVariation? @relation(fields: [productVariationId], references: [id])
+  bundleItems      BundleItem[]
+
+  @@index([orderId], map: "idx_31166_orderitem_orderid_idx")
+  @@index([productId], map: "idx_31166_orderitem_productid_idx")
+  @@index([productVariationId], map: "idx_31166_orderitem_productvariationid_idx")
+  @@map("orderitem")
 }
-
 
 model Shipping {
-  id String @id
-  orderId String @unique
+  id                String    @id(map: "idx_31190_primary") @db.VarChar(191)
+  orderId           String    @unique(map: "idx_31190_shipping_orderid_key") @db.VarChar(191)
+  carrier           String    @map("carrier") @db.VarChar(191)
+  serviceLevel      String    @map("servicelevel") @db.VarChar(191)
+  rate              Decimal   @map("rate")
+  trackingNumber    String?   @map("trackingnumber") @db.VarChar(191)
+  estimatedDelivery DateTime? @map("estimateddelivery") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("createdat") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updatedat") @db.Timestamptz(6)
+
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  carrier String // e.g., "UPS", "FedEx"
-  serviceLevel String // e.g., "Ground", "2-day shipping"
-  rate Decimal // the cost of shipping
-  trackingNumber String? // optional, can be added later
-  estimatedDelivery DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@index([orderId])
+  @@index([orderId], map: "idx_31190_shipping_orderid_idx")
+  @@map("shipping")
 }
-
-

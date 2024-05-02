@@ -362,7 +362,7 @@ export async function POST(
       url: session.url,
     },
     {
-      headers: corsHeaders(req.headers.get("Origin") || ""),
+      headers: corsHeaders1,
     }
   )
 }

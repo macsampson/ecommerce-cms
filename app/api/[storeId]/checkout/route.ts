@@ -35,20 +35,34 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",") : [] as string[]
 
 
+
+
 const corsHeaders = (origin: string) => ({
   "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : "",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 });
 
+const corsHeaders1 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+
 // const allowedCountries: string[] = ["US", "CA"]
 
 export async function OPTIONS(req: Request) {
   const origin = req.headers.get("Origin") || ""
 
-  return NextResponse.json({}, { headers: corsHeaders(origin) })
-}
+  
+  console.log("origin: ", origin)
+  console.log("corsHeaders: ", corsHeaders(origin))
 
+  return NextResponse.json({}, { status: 200, headers: corsHeaders1 })
+
+
+}
 // These are the types for the request body that you will receive from the frontend
 
 type ProductVariationType = {

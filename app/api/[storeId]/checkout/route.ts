@@ -31,16 +31,22 @@ import prismadb from "@/lib/prismadb"
 //   email: "pocketcaps@gmail.com",
 // }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",") : [] as string[]
+
+
+const corsHeaders = (origin: string) => ({
+  "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : "",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
-}
+});
 
 // const allowedCountries: string[] = ["US", "CA"]
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders })
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get("Origin") || ""
+
+  return NextResponse.json({}, { headers: corsHeaders(origin) })
 }
 
 // These are the types for the request body that you will receive from the frontend
@@ -342,7 +348,7 @@ export async function POST(
       url: session.url,
     },
     {
-      headers: corsHeaders,
+      headers: corsHeaders(req.headers.get("Origin") || ""),
     }
   )
 }

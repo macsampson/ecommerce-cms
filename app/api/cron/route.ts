@@ -5,14 +5,15 @@ import prismadb from '@/lib/prismadb'
 // This cron job checks for unpaid orders made in the last hour and reincrements the product quantities
 export async function POST(req: NextRequest) {
   try {
-    // Query for unpaid orders made in the last hour
+    // Query for unpaid orders made in the last hour using timestamptz
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+
     const orders = await prismadb.order.findMany({
       where: {
         isPaid: false,
         isAbandoned: false,
         createdAt: {
-          gte: oneHourAgo,
+          lt: oneHourAgo,
         },
       },
       include: {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
         },
       },
     })
-
+    // console.log('Found orders:', orders)
     // Reincrement product quantities and mark orders as abandoned
     for (const order of orders) {
       // Mark the order as abandoned
@@ -43,7 +44,11 @@ export async function POST(req: NextRequest) {
         })
       }
     }
-
+    if (orders.length === 0) {
+      console.log('No orders found')
+    } else {
+      console.log('Checked and released reserved inventory')
+    }
     return NextResponse.json(
       {
         message: 'Checked and released reserved inventory',

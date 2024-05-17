@@ -1,9 +1,9 @@
 // pages/api/check-orders.ts
-import { NextApiRequest, NextApiResponse } from 'next'
+import { NextRequest, NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 
 // This cron job checks for unpaid orders made in the last hour and reincrements the product quantities
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest) {
   try {
     // Query for unpaid orders made in the last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
@@ -37,11 +37,17 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    res.status(200).json({ success: true })
+    return NextResponse.json(
+      {
+        message: 'Checked and released reserved inventory',
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Error checking and releasing reserved inventory:', error)
-    res
-      .status(500)
-      .json({ error: 'Failed to check and release reserved inventory' })
+    return NextResponse.json(
+      { error: 'Error checking and releasing reserved inventory' },
+      { status: 500 }
+    )
   }
 }

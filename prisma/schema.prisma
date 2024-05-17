@@ -201,7 +201,7 @@ model Order {
   id              String   @id(map: "idx_31155_primary") @default(uuid()) @db.VarChar(191)
   storeId         String   @map("storeid") @db.VarChar(191)
   isPaid          Boolean  @default(false) @map("ispaid")
-  address         String   @default("") @map("address") @db.VarChar(191)
+  billingAddress         String   @default("") @map("address") @db.VarChar(191)
   createdAt       DateTime @default(now()) @map("createdat") @db.Timestamptz(6)
   updatedAt       DateTime @updatedAt @map("updatedat") @db.Timestamptz(6)
   totalPrice      Decimal  @default(0.000000000000000000000000000000) @map("totalprice")
@@ -225,7 +225,7 @@ model OrderItem {
   quantity           Int      @default(1) @map("quantity")
   productVariationId String?  @map("productvariationid") @db.VarChar(191)
   price              Decimal  @default(0.000000000000000000000000000000) @map("price")
-
+  name              String   @default("") @map("name") @db.VarChar(191)
   order            Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product          Product           @relation(fields: [productId], references: [id])
   productVariation ProductVariation? @relation(fields: [productVariationId], references: [id])

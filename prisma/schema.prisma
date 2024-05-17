@@ -207,7 +207,7 @@ model Order {
   totalPrice      Decimal  @default(0.000000000000000000000000000000) @map("totalprice")
   shippingAddress String   @default("") @map("shippingaddress") @db.VarChar(191)
   emailAddress    String   @default("") @map("emailaddress") @db.VarChar(191)
-
+  isAbandoned     Boolean  @default(false) @map("isabandoned")
   orderItems OrderItem[]
   store      Store       @relation(fields: [storeId], references: [id])
   shipping   Shipping?

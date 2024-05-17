@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     const orders = await prismadb.order.findMany({
       where: {
         isPaid: false,
+        isAbandoned: false,
         createdAt: {
           gte: oneHourAgo,
         },
@@ -23,8 +24,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Reincrement product quantities
+    // Reincrement product quantities and mark orders as abandoned
     for (const order of orders) {
+      // Mark the order as abandoned
+      await prismadb.order.update({
+        where: { id: order.id },
+        data: { isAbandoned: true },
+      })
+
       for (const item of order.orderItems) {
         await prismadb.product.update({
           where: { id: item.productId },

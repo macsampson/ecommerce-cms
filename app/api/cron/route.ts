@@ -1,9 +1,9 @@
 // pages/api/check-orders.ts
-import { NextApiResponse } from 'next'
+import { NextApiRequest, NextApiResponse } from 'next'
 import prismadb from '@/lib/prismadb'
 
 // This cron job checks for unpaid orders made in the last hour and reincrements the product quantities
-export async function POST(res: NextApiResponse) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Query for unpaid orders made in the last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)

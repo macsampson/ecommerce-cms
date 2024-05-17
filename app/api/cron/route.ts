@@ -39,7 +39,9 @@ export async function POST(res: NextApiResponse) {
 
     res.status(200).json({ success: true })
   } catch (error) {
-    console.error('Error checking orders:', error)
-    res.status(500).json({ error: 'Failed to check orders' })
+    console.error('Error checking and releasing reserved inventory:', error)
+    res
+      .status(500)
+      .json({ error: 'Failed to check and release reserved inventory' })
   }
 }

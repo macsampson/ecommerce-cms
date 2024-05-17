@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef } from '@tanstack/react-table'
 // import { CellAction } from "./cell-action"
 
 export type OrderColumn = {
@@ -16,43 +16,43 @@ export type OrderColumn = {
 
 export const columns: ColumnDef<OrderColumn>[] = [
   {
-    accessorKey: "products",
-    header: "Products",
+    accessorKey: 'id',
+    header: 'Order ID',
   },
   {
-    accessorKey: "shippingAddress",
-    header: "Shipping Address",
+    accessorKey: 'products',
+    header: 'Products',
+  },
+  {
+    accessorKey: 'shippingAddress',
+    header: 'Shipping Address',
   },
 
   {
-    accessorKey: "address",
-    header: "Billing Address",
-  },
-  // {
-  //   accessorKey: "phone",
-  //   header: "Phone",
-  // },
-  {
-    accessorKey: "emailAddress",
-    header: "Email",
+    accessorKey: 'address',
+    header: 'Billing Address',
   },
   {
-    accessorKey: "totalPrice",
-    header: "Total Price",
+    accessorKey: 'emailAddress',
+    header: 'Email',
   },
   {
-    accessorKey: "isPaid",
-    header: "Paid",
+    accessorKey: 'totalPrice',
+    header: 'Total Price',
+  },
+  {
+    accessorKey: 'isPaid',
+    header: 'Paid',
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-x-2">
-          {row.original.isPaid ? "🟢" : "🔴"}
+          {row.original.isPaid ? '🟢' : '🔴'}
         </div>
       )
     },
   },
   {
-    accessorKey: "createdAt",
-    header: "Date Created",
+    accessorKey: 'createdAt',
+    header: 'Date Created',
   },
 ]

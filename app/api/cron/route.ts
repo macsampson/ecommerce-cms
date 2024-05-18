@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 
 // This cron job checks for unpaid orders made in the last hour and reincrements the product quantities
-export async function POST(req: NextRequest) {
+// TODO: implement a solution to clear by store id - currently all stores in the database are checked?
+export async function GET(req: NextRequest) {
   try {
     // Query for unpaid orders made in the last hour using timestamptz
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-
     const orders = await prismadb.order.findMany({
       where: {
         isPaid: false,

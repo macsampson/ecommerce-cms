@@ -311,7 +311,9 @@ export async function POST(
                     .slice(0, -2) // Remove the last semicolon and space for cleanliness
                 : 'Standard',
           },
-          unit_amount: (Number(orderItem.price) / orderItem.quantity) * 100,
+          unit_amount: Math.round(
+            (Number(orderItem.price) / orderItem.quantity) * 100
+          ),
         },
       }))
     } catch (error) {
@@ -330,6 +332,12 @@ export async function POST(
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping?canceled=1`,
           metadata: {
             orderId: order.id,
+          },
+          payment_intent_data: {
+            metadata: {
+              orderId: order.id,
+              shippingRateId: selectedRate.object_id,
+            },
           },
           shipping_options: [
             {

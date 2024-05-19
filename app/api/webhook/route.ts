@@ -61,154 +61,46 @@ export async function POST(req: Request) {
   }
 
   // Listen for the payment_intent.succeeded event
-  if (event.type === 'checkout.session.async_payment_succeeded') {
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent
+    // console.log(paymentIntent)
+    const orderId = paymentIntent.metadata.orderId
+
     await prismadb.order.update({
       where: {
-        id: session?.metadata?.orderId,
+        id: orderId,
       },
       data: {
         isPaid: true,
       },
     })
 
-    // const order = await prismadb.order.create({
-    //   data: {
-    //     storeId: params.storeId,
-    //     isPaid: false, // set true as per your payment logic
-    //     totalPrice: Object.entries(items).reduce((total, [_, item]) => {
-    //       return total + item.price
-    //     }, 0),
-    //     orderItems: {
-    //       create: Object.entries(items).flatMap(([productId, item]) => {
-    //         // If the item is a bundle, create an orderItem for each variation
-    //         if (Object.keys(item.variations).length > 0) {
-    //           return Object.entries(item.variations).map(
-    //             ([variationId, variation]) => ({
-    //               product: { connect: { id: productId } },
-    //               price: variation.price,
-    //               quantity: variation.quantity, // Quantity per variation
-    //               productVariation: { connect: { id: variationId } },
-    //             })
-    //           )
-    //         } else {
-    //           // If the item is not a bundle, create a single orderItem
-    //           return [
-    //             {
-    //               product: { connect: { id: productId } },
-    //               price: item.price,
-    //               quantity: item.quantity,
-    //             },
-    //           ]
-    //         }
-    //       }),
-    //     },
-    //   },
-    //   include: {
-    //     orderItems: {
-    //       include: {
-    //         bundleItems: true,
-    //       },
-    //     },
-    //   },
-    // })
+    // let shippingRate: Stripe.ShippingRate | undefined
+    // try {
+    //   const shippingID = session.shipping_cost?.shipping_rate
 
-    // const productIds = order.orderItems.map((orderItem) => orderItem.productId)
-    // const productsObject = order.orderItems.reduce(
-    //   (acc: ItemsObject, orderItem) => {
-    //     acc[orderItem.productId] = orderItem.quantity
-    //     return acc
-    //   },
-    //   {}
-    // )
+    //   shippingRate = await stripe.shippingRates.retrieve(shippingID as string)
+    // } catch (error) {
+    //   console.log(
+    //     'Error retrieving shipping rate, so cannot create shipping label:',
+    //     error
+    //   )
+    // }
 
-    // create a products object with the product id as the key and an object with the variation id and quantity as the value
+    const shippingRateId = paymentIntent.metadata.shippingRateId
 
-    // const productIds = Object.keys(productsObject)
-
-    // await prismadb.product.updateMany({
-    //   where: {
-    //     id: {
-    //       in: [...productIds],
-    //     },
-    //   },
-    //   data: {
-    //     isArchived: true,
-    //   },
-    // })
-
-    // update the quantity of each product or product variation in the order
-    // console.log("order: ", order)
-    // await Promise.all(
-    //   order.orderItems.map(async (orderItem) => {
-    //     if (orderItem.productVariationId) {
-    //       const productVariation = await prismadb.productVariation.findUnique({
-    //         where: {
-    //           id: orderItem.productVariationId,
-    //         },
-    //       })
-
-    //       if (productVariation) {
-    //         await prismadb.productVariation.update({
-    //           where: {
-    //             id: orderItem.productVariationId,
-    //           },
-    //           data: {
-    //             quantity: {
-    //               decrement: orderItem.quantity,
-    //             },
-    //           },
-    //         })
-
-    //         await prismadb.product.update({
-    //           where: {
-    //             id: orderItem.productId,
-    //           },
-    //           data: {
-    //             quantity: {
-    //               decrement: orderItem.quantity,
-    //             },
-    //           },
-    //         })
-    //       }
-    //     } else {
-    //       const product = await prismadb.product.findUnique({
-    //         where: {
-    //           id: orderItem.productId,
-    //         },
-    //       })
-
-    //       if (product) {
-    //         await prismadb.product.update({
-    //           where: {
-    //             id: orderItem.productId,
-    //           },
-    //           data: {
-    //             quantity: product.quantity - orderItem.quantity,
-    //           },
-    //         })
-    //       }
-    //     }
-    //   })
-    // )
-
-    const shippingID = session.shipping_cost?.shipping_rate
-
-    const shippingRate = await stripe.shippingRates.retrieve(
-      shippingID as string
-    )
-    // console.log("retrieved from stripe: ", shippingRate)
-    // console.log("shipping id: ", shippingRate.metadata.id)
-
-    try {
-      shippoClient.transaction.create({
-        rate: shippingRate.metadata.id,
-        label_file_type: 'PDF',
-        async: false,
-      })
-      // console.log(transaction)
-    } catch (error) {
-      // TODO: create webhook to alert admin of failed shipping label creation
-      console.log(error)
+    if (shippingRateId) {
+      try {
+        shippoClient.transaction.create({
+          rate: shippingRateId,
+          label_file_type: 'PDF',
+          async: false,
+        })
+        // console.log(transaction)
+      } catch (error) {
+        // TODO: create webhook to alert admin of failed shipping label creation
+        console.log('Error creating shipping label:', error)
+      }
     }
   }
 

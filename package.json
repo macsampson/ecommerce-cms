@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "supabase start && next dev --port 3000",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.25.4",

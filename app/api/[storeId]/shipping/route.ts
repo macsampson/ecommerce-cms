@@ -1,40 +1,34 @@
-import { Product, ProductVariation } from "@prisma/client"
-import { NextRequest, NextResponse } from "next/server"
+import { Product, ProductVariation } from '@prisma/client'
+import { NextRequest, NextResponse } from 'next/server'
 import shippo, {
   CreateParcelRequest,
-  CreateCustomsDeclarationRequest,
-} from "shippo" // Shippo client initialization
+  CreateCustomsDeclarationRequest
+} from 'shippo' // Shippo client initialization
 
-import shippoClient from "@/lib/shippo"
+import shippoClient from '@/lib/shippo'
 
 const addressFromCanada = {
-  name: "Pocket Caps",
-  company: "PocketCaps",
-  street1: "4730 Lougheed Hwy",
-  city: "Burnaby",
-  state: "BC",
-  zip: "v6e 0m9",
-  country: "CA", // iso2 country code
-  phone: "+17788289009",
-  email: "pocketcaps@gmail.com",
+  name: 'Pocket Caps',
+  company: 'PocketCaps',
+  street1: '4730 Lougheed Hwy',
+  city: 'Burnaby',
+  state: 'BC',
+  zip: 'v6e 0m9',
+  country: 'CA', // iso2 country code
+  phone: '+17788289009',
+  email: 'pocketcaps@gmail.com'
 }
 
 const addressFromUS = {
-  name: "Pocket Caps",
-  company: "PocketCaps",
-  street1: "532 19th Ave",
-  city: "Seattle",
-  state: "WA",
-  zip: "98122",
-  country: "US", // iso2 country code
-  phone: "",
-  email: "pocketcaps@gmail.com",
-}
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  name: 'Pocket Caps',
+  company: 'PocketCaps',
+  street1: '532 19th Ave',
+  city: 'Seattle',
+  state: 'WA',
+  zip: '98122',
+  country: 'US', // iso2 country code
+  phone: '',
+  email: 'pocketcaps@gmail.com'
 }
 
 // const SHIPPO_LIVE_RATES_ENDPOINT = "https://api.goshippo.com/live-rates"
@@ -59,13 +53,13 @@ type CartItemType = {
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders })
+  return NextResponse.json({})
 }
 
 export async function POST(req: Request) {
   const {
     address,
-    cartItems,
+    cartItems
   }: { address: AddressType; cartItems: CartItemType[] } = await req.json()
 
   const totalQuantity = cartItems.reduce((acc, cartItem) => {
@@ -119,69 +113,69 @@ export async function POST(req: Request) {
   // console.log(carrierAccounts)
 
   const parcel = {
-    length: "18",
-    width: "12",
-    height: "5",
-    distance_unit: "cm",
-    weight: "10",
-    mass_unit: "g",
+    length: '18',
+    width: '12',
+    height: '5',
+    distance_unit: 'cm',
+    weight: '10',
+    mass_unit: 'g'
   } as CreateParcelRequest
 
   const customsDeclaration = {
     certify: true,
-    certify_signer: "PocketCaps",
-    contents_explanation: "Keyboard Keycap",
-    contents_type: "MERCHANDISE",
-    eel_pfc: "NOEEI_30_36",
-    incoterm: "DDP",
+    certify_signer: 'PocketCaps',
+    contents_explanation: 'Keyboard Keycap',
+    contents_type: 'MERCHANDISE',
+    eel_pfc: 'NOEEI_30_36',
+    incoterm: 'DDP',
     is_vat_collected: null,
     items: [
       {
-        description: "Keyboard Keycap",
-        mass_unit: "g",
+        description: 'Keyboard Keycap',
+        mass_unit: 'g',
         // "metadata": "Order ID \"123454\"",
         net_weight: totalWeight.toString(),
-        origin_country: "CA",
+        origin_country: 'CA',
         quantity: totalQuantity,
-        tarrif_number: "3926.90",
+        tarrif_number: '3926.90',
         value_amount: totalValue.toString(),
-        value_currency: "USD",
-      },
+        value_currency: 'USD'
+      }
     ],
-    non_delivery_option: "RETURN",
+    non_delivery_option: 'RETURN',
     address_importer: {
-      name: "Mackenzie Sampson",
-      company: "PocketCaps",
-      street1: "4730 Lougheed Hwy",
-      street2: "Unit 302",
-      city: "Burnaby",
-      state: "BC",
-      zip: "v5c0m9",
-      country: "CA",
-      phone: "+17788289009",
-      email: "pocketcaps@gmail.com",
-      is_residential: true,
+      name: 'Mackenzie Sampson',
+      company: 'PocketCaps',
+      street1: '4730 Lougheed Hwy',
+      street2: 'Unit 302',
+      city: 'Burnaby',
+      state: 'BC',
+      zip: 'v5c0m9',
+      country: 'CA',
+      phone: '+17788289009',
+      email: 'pocketcaps@gmail.com',
+      is_residential: true
     },
-    test: true,
+    test: true
   } as CreateCustomsDeclarationRequest
 
   const shipmentObject = {
     address_from: addressFromCanada,
     address_to: {
       // Only state and zip might be sufficient for an estimate
-      name: address.firstName + " " + address.lastName,
+      name: address.firstName + ' ' + address.lastName,
       street1: address.street,
       city: address.city,
       state: address.state,
       zip: address.zip,
       country: address.country,
       email: address.email,
-      phone: address.phone,
+      phone: address.phone
     },
     parcels: [parcel],
     async: false,
     // carrier_accounts: ["dca6c762810f40658ae52cf86b455efd"],
-    customs_declaration: customsDeclaration,
+    customs_declaration: customsDeclaration
     // parcels: ["dca6c762810f40658ae52cf86b455efd"],
     // line_items: lineItems,
   }
@@ -191,12 +185,11 @@ export async function POST(req: Request) {
   try {
     const shipment = await shippoClient.shipment.create(shipmentObject)
     // console.log(shipment)
-    return NextResponse.json(shipment, { status: 200, headers: corsHeaders })
+    return NextResponse.json(shipment, { status: 200 })
   } catch (error) {
     console.log(error)
-    return new NextResponse("Error fetching shipping rates", {
-      status: 500,
-      headers: corsHeaders,
+    return new NextResponse('Error fetching shipping rates', {
+      status: 500
     })
   }
 

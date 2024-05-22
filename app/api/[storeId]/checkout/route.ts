@@ -33,17 +33,17 @@ import { headers } from 'next/headers'
 //   email: "pocketcaps@gmail.com",
 // }
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ([] as string[])
+// const allowedOrigins = process.env.ALLOWED_ORIGINS
+//   ? process.env.ALLOWED_ORIGINS.split(',')
+//   : ([] as string[])
 
-// console.log('allowedOrigins: ', allowedOrigins)
+// // console.log('allowedOrigins: ', allowedOrigins)
 
-const corsHeaders = (origin: string) => ({
-  'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-})
+// const corsHeaders = (origin: string) => ({
+//   'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '',
+//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+//   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+// })
 // const allowedCountries: string[] = ["US", "CA"]
 
 export async function OPTIONS(req: Request) {
@@ -54,7 +54,7 @@ export async function OPTIONS(req: Request) {
   //   console.log(corsHeaders(origin))
   // }
 
-  return NextResponse.json({}, { headers: corsHeaders(origin) })
+  return new NextResponse()
 }
 // These are the types for the request body that you will receive from the frontend
 
@@ -107,7 +107,7 @@ export async function POST(
     cartItems,
     selectedRate,
     shippingAddress,
-    currency,
+    currency
   }: {
     cartItems: cartItemsObjectType
     selectedRate: ShippoRate
@@ -151,7 +151,7 @@ export async function POST(
     shippingAddress.city,
     shippingAddress.state,
     shippingAddress.zip,
-    shippingAddress.country,
+    shippingAddress.country
   ]
 
   const shippingAddressComponents = shippingAddressObject
@@ -167,13 +167,13 @@ export async function POST(
       const dbProducts = await prismadb.product.findMany({
         where: {
           id: {
-            in: productIds,
-          },
+            in: productIds
+          }
         },
         include: {
           bundles: true,
-          variations: true,
-        },
+          variations: true
+        }
       })
 
       // Check if all products exist and reserve the stock
@@ -209,13 +209,13 @@ export async function POST(
 
                 await prisma.productVariation.update({
                   where: {
-                    id: cartVariation.id,
+                    id: cartVariation.id
                   },
                   data: {
                     quantity: {
-                      decrement: cartVariation.quantity,
-                    },
-                  },
+                      decrement: cartVariation.quantity
+                    }
+                  }
                 })
               }
             )
@@ -224,13 +224,13 @@ export async function POST(
 
         await prisma.product.update({
           where: {
-            id: dbProduct.id,
+            id: dbProduct.id
           },
           data: {
             quantity: {
-              decrement: 1,
-            },
-          },
+              decrement: 1
+            }
+          }
         })
       }
 
@@ -252,7 +252,7 @@ export async function POST(
                     product: { connect: { id: productId } },
                     price: variation.price,
                     quantity: variation.quantity, // Quantity per variation
-                    productVariation: { connect: { id: variationId } },
+                    productVariation: { connect: { id: variationId } }
                   })
                 )
               } else {
@@ -262,20 +262,20 @@ export async function POST(
                   {
                     product: { connect: { id: productId } },
                     price: item.price,
-                    quantity: item.quantity,
-                  },
+                    quantity: item.quantity
+                  }
                 ]
               }
-            }),
-          },
+            })
+          }
         },
         include: {
           orderItems: {
             include: {
-              bundleItems: true,
-            },
-          },
-        },
+              bundleItems: true
+            }
+          }
+        }
       })
     })
 
@@ -283,7 +283,7 @@ export async function POST(
       return new NextResponse(
         'Failed to process order due to inventory issues',
         {
-          status: 400,
+          status: 400
         }
       )
     }
@@ -309,12 +309,12 @@ export async function POST(
                       )
                     }, '')
                     .slice(0, -2) // Remove the last semicolon and space for cleanliness
-                : 'Standard',
+                : 'Standard'
           },
           unit_amount: Math.round(
             (Number(orderItem.price) / orderItem.quantity) * 100
-          ),
-        },
+          )
+        }
       }))
     } catch (error) {
       console.log('Error creating line items: ', error)
@@ -328,16 +328,16 @@ export async function POST(
           mode: 'payment',
           billing_address_collection: 'required',
           currency,
-          success_url: `${process.env.FRONTEND_STORE_URL}/shipping?success=1`,
-          cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping?canceled=1`,
+          success_url: `${process.env.FRONTEND_STORE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.FRONTEND_STORE_URL}/checkout/canceled`,
           metadata: {
-            orderId: order.id,
+            orderId: order.id
           },
           payment_intent_data: {
             metadata: {
               orderId: order.id,
-              shippingRateId: selectedRate.object_id,
-            },
+              shippingRateId: selectedRate.object_id
+            }
           },
           shipping_options: [
             {
@@ -347,7 +347,7 @@ export async function POST(
                   amount: Math.round(
                     parseFloat(selectedRate.amount_local) * 100
                   ),
-                  currency: selectedRate.currency_local,
+                  currency: selectedRate.currency_local
                 },
 
                 display_name:
@@ -357,22 +357,17 @@ export async function POST(
                   id: selectedRate.object_id,
                   provider: selectedRate.provider,
                   servicelevel: selectedRate.servicelevel.name,
-                  estimated_days: selectedRate.estimated_days,
-                },
-              },
-            },
-          ],
+                  estimated_days: selectedRate.estimated_days
+                }
+              }
+            }
+          ]
         })
 
         // Return the session URL to the frontend
-        return NextResponse.json(
-          {
-            url: session.url,
-          },
-          {
-            headers: corsHeaders(req.headers.get('Origin') || ''),
-          }
-        )
+        return NextResponse.json({
+          url: session.url
+        })
       } catch (error) {
         console.log('Error creating stipe checkout session: ', error)
       }
@@ -380,8 +375,7 @@ export async function POST(
   } catch (error: any) {
     // create a new NextResponse with the error message, cors headers, and status 500
     return new NextResponse(error.message, {
-      status: 500,
-      headers: corsHeaders(req.headers.get('Origin') || ''),
+      status: 500
     })
   }
 }

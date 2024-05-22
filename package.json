@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "supabase start && next dev --port 3000",
+    "dev": "supabase start && next dev --port 3000 && cd /mnt/o/stripe_1.18.0_windows_x86_64 && .\\stripe.exe listen --forward-to localhost:3000/api/webhook",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

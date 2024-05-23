@@ -8,6 +8,7 @@ import { Rate as ShippoRate } from 'shippo'
 import prismadb from '@/lib/prismadb'
 import { all } from 'axios'
 import { headers } from 'next/headers'
+import { Decimal } from '@prisma/client/runtime/library'
 
 // const addressFromCanada = {
 //   name: "Pocket Caps",
@@ -72,6 +73,31 @@ type ItemType = {
   name: string
 }
 
+//  cartItems:  {
+//   'prod_id': {
+//     name: 'Mooncake',
+//     quantity: 3,
+//     price: 51,
+//     variations: {
+//       'var_id': [Object],
+//       'var_id': [Object]
+//     }
+//   }
+//  }
+
+type orderItemType = {
+  id: string
+  orderId: string
+  productId: string
+  createdAt: Date
+  updatedAt: Date
+  quantity: number
+  productVariationId: string | null
+  price: Decimal
+  name: string
+  bundleItems: any[]
+}
+
 type cartItemsObjectType = {
   [key: string]: ItemType
 }
@@ -118,6 +144,8 @@ export async function POST(
   if (!cartItems) {
     return new NextResponse('Product IDs are required', { status: 400 })
   }
+
+  // console.log('cartItems: ', cartItems)
   // create stripe shipping options from shippo selected rate
 
   // let shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = []
@@ -290,32 +318,44 @@ export async function POST(
 
     //  Create line cartItems for the checkout session
     // const line_cartItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
+    // group order items by product id
+    const groupedOrderItems = order.orderItems.reduce((acc, orderItem) => {
+      if (acc[orderItem.productId]) {
+        acc[orderItem.productId].push(orderItem)
+      } else {
+        acc[orderItem.productId] = [orderItem]
+      }
+      return acc
+    }, {} as { [key: string]: orderItemType[] })
+
+    // console.log('order items: ', groupedOrderItems)
+
     let line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = []
     try {
-      line_items = order.orderItems.map((orderItem) => ({
-        quantity: orderItem.quantity,
-        price_data: {
-          currency: currency,
-          product_data: {
-            name: cartItems[orderItem.productId].name,
-            // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
-            description:
-              Object.keys(cartItems[orderItem.productId].variations).length > 0
-                ? Object.entries(cartItems[orderItem.productId].variations)
-                    .reduce((acc, [_, variation]) => {
-                      // Add a semicolon and space separator between variations
-                      return (
-                        acc + variation.quantity + ' ' + variation.name + '; '
-                      )
-                    }, '')
-                    .slice(0, -2) // Remove the last semicolon and space for cleanliness
-                : 'Standard'
-          },
-          unit_amount: Math.round(
-            (Number(orderItem.price) / orderItem.quantity) * 100
-          )
-        }
-      }))
+      line_items = Object.entries(groupedOrderItems).map(
+        ([id, orderItems]) => ({
+          quantity: orderItems.reduce((acc, item) => acc + item.quantity, 0),
+          price_data: {
+            currency: currency,
+            product_data: {
+              name: cartItems[id].name,
+              // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
+              description:
+                Object.keys(cartItems[id].variations).length > 0
+                  ? Object.entries(cartItems[id].variations)
+                      .reduce((acc, [_, variation]) => {
+                        // Add a semicolon and space separator between variations
+                        return (
+                          acc + variation.quantity + ' ' + variation.name + '; '
+                        )
+                      }, '')
+                      .slice(0, -2) // Remove the last semicolon and space for cleanliness
+                  : 'Standard'
+            },
+            unit_amount: (cartItems[id].price / cartItems[id].quantity) * 100
+          }
+        })
+      )
     } catch (error) {
       console.log('Error creating line items: ', error)
     }
@@ -329,7 +369,7 @@ export async function POST(
           billing_address_collection: 'required',
           currency,
           success_url: `${process.env.FRONTEND_STORE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${process.env.FRONTEND_STORE_URL}/checkout/canceled`,
+          cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
             orderId: order.id
           },

@@ -1,0 +1,17 @@
+name: Vercel Build Status
+
+on:
+  deployment_status:
+
+jobs:
+  notification:
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.environment == 'production'
+    steps:
+      - name: Send notification to Discord
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          username: PocketCaps CMS
+          color: 0x0000ff

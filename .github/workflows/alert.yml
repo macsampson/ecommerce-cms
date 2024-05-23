@@ -18,7 +18,8 @@ jobs:
           fields: 'environment:${{ github.event.deployment_status.environment }}|status:${{ github.event.deployment_status.state }}'
           color: ${{ (github.event.deployment_status.state == 'success' && '3066993') || (github.event.deployment_status.state == 'failure' && '15158332') || '15844367' }}
           # title: 'Deployment Status'
-          description: >
+          description: |
+            @here
             Deployment of ${{ github.repository }} to ${{ github.event.deployment_status.environment }} was a ${{ github.event.deployment_status.state }}.
             [View Deployment](${{ github.event.deployment_status.target_url }})
           image: ${{ (github.event.deployment_status.state == 'success' && 'https://media.giphy.com/media/fSvqyvXn1M3btN8sDh/giphy.gif') || (github.event.deployment_status.state == 'failure' && 'https://media.giphy.com/media/SsjyaYH2gkNCE/giphy.gif') || '' }}

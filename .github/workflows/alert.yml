@@ -13,11 +13,11 @@ jobs:
         if: always()
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          username: PocketCaps CMS
+          username: CMS
           status: ${{ github.event.deployment_status.state }}
           fields: 'environment:${{ github.event.deployment_status.environment }}|status:${{ github.event.deployment_status.state }}'
           color: ${{ (github.event.deployment_status.state == 'success' && '3066993') || (github.event.deployment_status.state == 'failure' && '15158332') || '15844367' }}
-          title: 'Deployment Status Update'
-          text: >
+          # title: 'Deployment Status'
+          description: >
             Deployment of ${{ github.repository }} to ${{ github.event.deployment_status.environment }} was ${{ github.event.deployment_status.state }}.
             [View Deployment](${{ github.event.deployment_status.target_url }})

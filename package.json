@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "supabase start && next dev --port 3000 && cd /mnt/o/stripe_1.18.0_windows_x86_64 && .\\stripe.exe listen --forward-to localhost:3000/api/webhook",
+    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && cd /mnt/o/stripe_1.18.0_windows_x86_64 && ./stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../pocketcaps && bun run dev\"",
+    "cron": "node cron.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -53,11 +54,14 @@
     "@types/react-dom": "^18",
     "@types/shippo": "^1.7.5",
     "autoprefixer": "^10",
+    "concurrently": "^8.2.2",
     "eslint": "^8",
     "eslint-config-next": "13.5.4",
     "postcss": "^8",
     "prisma": "^5.14.0",
     "tailwindcss": "^3",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5",
+    "wait-on": "^7.2.0"
   }
 }

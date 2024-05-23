@@ -23,7 +23,7 @@ const BundleInput: React.FC<BundleInputProps> = ({
 
   const formattedPrice = isPriceFocused ? price : displayPrice
 
-  console.log("bundle", bundle)
+  // console.log("bundle", bundle)
 
   // function to prevent default behavior of the input when the user presses enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

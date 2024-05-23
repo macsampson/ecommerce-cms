@@ -1,4 +1,4 @@
-# name: Vercel Build Status
+name: CMS Build Status
 
 on:
   deployment_status:

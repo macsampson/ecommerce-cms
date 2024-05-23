@@ -14,4 +14,10 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           username: PocketCaps CMS
-          color: 0x0000ff
+          status: ${{ github.event.deployment_status.state }}
+          fields: 'environment:${{ github.event.deployment_status.environment }}|status:${{ github.event.deployment_status.state }}'
+          color: ${{ (github.event.deployment_status.state == 'success' && '3066993') || (github.event.deployment_status.state == 'failure' && '15158332') || '15844367' }}
+          title: 'Deployment Status Update'
+          text: >
+            Deployment of ${{ github.repository }} to ${{ github.event.deployment_status.environment }} was ${{ github.event.deployment_status.state }}.
+            [View Deployment](${{ github.event.deployment_status.target_url }})

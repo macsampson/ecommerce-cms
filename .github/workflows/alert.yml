@@ -1,4 +1,4 @@
-name: Vercel Build Status
+# name: Vercel Build Status
 
 on:
   deployment_status:
@@ -19,5 +19,5 @@ jobs:
           color: ${{ (github.event.deployment_status.state == 'success' && '3066993') || (github.event.deployment_status.state == 'failure' && '15158332') || '15844367' }}
           # title: 'Deployment Status'
           description: >
-            Deployment of ${{ github.repository }} to ${{ github.event.deployment_status.environment }} was ${{ github.event.deployment_status.state }}.
+            Deployment of ${{ github.repository }} to ${{ github.event.deployment_status.environment }} was a ${{ github.event.deployment_status.state }}.
             [View Deployment](${{ github.event.deployment_status.target_url }})

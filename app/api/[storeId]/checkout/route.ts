@@ -371,7 +371,8 @@ export async function POST(
           success_url: `${process.env.FRONTEND_STORE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
-            orderId: order.id
+            orderId: order.id,
+            shippingAddress: JSON.stringify(shippingAddress)
           },
           payment_intent_data: {
             metadata: {

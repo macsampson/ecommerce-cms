@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
+import axios from 'axios'
 
 import { stripe } from '@/lib/stripe'
 import prismadb from '@/lib/prismadb'
@@ -10,6 +11,28 @@ import shippoClient from '@/lib/shippo'
 // type ItemsObject = {
 //   [productId: string]: number | { [variationId: string]: number }
 // }
+
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL!
+
+type AddressType = {
+  firstName: string
+  lastName: string
+  street: string
+  city: string
+  state: string
+  zip: string
+  country: string
+}
+
+function parseShippingAddress(shippingAddressJson: string): string {
+  const shippingAddress: AddressType = JSON.parse(shippingAddressJson)
+  const shippingAddressObject = `${shippingAddress.firstName} ${shippingAddress.lastName}
+    ${shippingAddress.street}
+    ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zip}
+    ${shippingAddress.country}`
+
+  return shippingAddressObject
+}
 
 export async function POST(req: Request) {
   const body = await req.text()
@@ -28,6 +51,7 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session
+  // console.log('Session:', session)
   // TODO: implement currency conversion
   // const currency = session?.currency
   const billingAddress = session?.customer_details?.address
@@ -38,7 +62,7 @@ export async function POST(req: Request) {
     billingAddress?.city,
     billingAddress?.state,
     billingAddress?.postal_code,
-    billingAddress?.country,
+    billingAddress?.country
   ]
 
   const addressString = billingAddressComponents
@@ -49,15 +73,67 @@ export async function POST(req: Request) {
   if (event.type === 'checkout.session.completed') {
     await prismadb.order.update({
       where: {
-        id: session?.metadata?.orderId,
+        id: session?.metadata?.orderId
       },
       data: {
         // isPaid: true,
         billingAddress: addressString,
         emailAddress: session?.customer_details?.email || '',
-        totalPrice: session.amount_total ? session.amount_total / 100 : 0,
-      },
+        totalPrice: session.amount_total ? session.amount_total / 100 : 0
+      }
     })
+
+    // Send Discord notification
+    try {
+      const productDetails = await prismadb.orderItem.findMany({
+        where: {
+          orderId: session.metadata?.orderId
+        },
+        include: {
+          product: true,
+          productVariation: true
+        }
+      })
+
+      const parsedProductDetails = productDetails
+        .map((product) => {
+          return `${product.product.name} (${product.productVariation?.name}) x${product.quantity}`
+        })
+        .join('\n')
+
+      const shippingAddress = parseShippingAddress(
+        session.metadata?.shippingAddress || ''
+      )
+
+      const discordMessage = {
+        embeds: [
+          {
+            title: 'New Order! 🎉',
+            description: `**Order ID:**
+            ${session?.metadata?.orderId}
+            \n**Products:**
+            ${parsedProductDetails}
+            \n**Total:** 
+            $${session.amount_total ? session.amount_total / 100 : 0}
+            \n**Buyer's Name:**
+            ${session?.customer_details?.name}
+            \n**Shipping Address:**
+            ${shippingAddress}
+            \n**Email:**
+            ${session?.customer_details?.email}`,
+            color: 65280, // Color code in decimal (equivalent to #00ff00)
+            timestamp: new Date().toISOString(),
+            image: {
+              url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeG5sb211bTZkdzdmMTdtemRqZGo3bTRwb2Myb2QxcjhqdHVud29rMCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/QkqD1bx6bWtihO5als/giphy.gif'
+            }
+          }
+        ]
+      }
+
+      await axios.post(DISCORD_WEBHOOK_URL, discordMessage)
+    } catch (error) {
+      console.log('Error sending Discord notification:', error)
+    }
   }
 
   // Listen for the payment_intent.succeeded event
@@ -68,11 +144,11 @@ export async function POST(req: Request) {
 
     await prismadb.order.update({
       where: {
-        id: orderId,
+        id: orderId
       },
       data: {
-        isPaid: true,
-      },
+        isPaid: true
+      }
     })
 
     // let shippingRate: Stripe.ShippingRate | undefined
@@ -94,7 +170,7 @@ export async function POST(req: Request) {
         shippoClient.transaction.create({
           rate: shippingRateId,
           label_file_type: 'PDF',
-          async: false,
+          async: false
         })
         // console.log(transaction)
       } catch (error) {

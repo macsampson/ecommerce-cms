@@ -1,13 +1,9 @@
 import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
-import { CreateParcelRequest } from 'shippo'
 
 import { stripe } from '@/lib/stripe'
-import shippoClient from '@/lib/shippo'
 import { Rate as ShippoRate } from 'shippo'
 import prismadb from '@/lib/prismadb'
-import { all } from 'axios'
-import { headers } from 'next/headers'
 import { Decimal } from '@prisma/client/runtime/library'
 
 // const addressFromCanada = {

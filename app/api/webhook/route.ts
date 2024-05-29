@@ -12,7 +12,7 @@ import shippoClient from '@/lib/shippo'
 //   [productId: string]: number | { [variationId: string]: number }
 // }
 
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL!
+const DISCORD_ORDER_WEBHOOK_URL = process.env.DISCORD_ORDER_WEBHOOK_URL!
 
 type AddressType = {
   firstName: string
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
         ]
       }
 
-      await axios.post(DISCORD_WEBHOOK_URL, discordMessage)
+      await axios.post(DISCORD_ORDER_WEBHOOK_URL, discordMessage)
     } catch (error) {
       console.log('Error sending Discord notification:', error)
     }

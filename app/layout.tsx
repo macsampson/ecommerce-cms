@@ -1,19 +1,19 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { ClerkProvider } from "@clerk/nextjs"
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { ClerkProvider } from '@clerk/nextjs'
 
-import { ToasterProvider } from "@/providers/toast-provider"
-import { ModalProvider } from "@/providers/modal-provider"
+import { ToasterProvider } from '@/providers/toast-provider'
+import { ModalProvider } from '@/providers/modal-provider'
 
-import "./globals.css"
-import prismadb from "@/lib/prismadb"
-import { ThemeProvider } from "@/providers/theme-provider"
+import './globals.css'
+import prismadb from '@/lib/prismadb'
+import { ThemeProvider } from '@/providers/theme-provider'
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
-  description: "Admin Dashboard",
+  title: 'Admin Dashboard',
+  description: 'Admin Dashboard',
 }
 
 export default function RootLayout({
@@ -25,11 +25,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-          >
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <ToasterProvider />
             <ModalProvider />
             {children}

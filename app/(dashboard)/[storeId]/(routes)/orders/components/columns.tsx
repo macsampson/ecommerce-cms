@@ -8,6 +8,7 @@ export type OrderColumn = {
   emailAddress: string
   address: string
   isPaid: boolean
+  isAbandoned: boolean
   totalPrice: string
   products: string
   createdAt: string
@@ -17,28 +18,28 @@ export type OrderColumn = {
 export const columns: ColumnDef<OrderColumn>[] = [
   {
     accessorKey: 'id',
-    header: 'Order ID',
+    header: 'Order ID'
   },
   {
     accessorKey: 'products',
-    header: 'Products',
+    header: 'Products'
   },
   {
     accessorKey: 'shippingAddress',
-    header: 'Shipping Address',
+    header: 'Shipping Address'
   },
 
   {
     accessorKey: 'address',
-    header: 'Billing Address',
+    header: 'Billing Address'
   },
   {
     accessorKey: 'emailAddress',
-    header: 'Email',
+    header: 'Email'
   },
   {
     accessorKey: 'totalPrice',
-    header: 'Total Price',
+    header: 'Total Price'
   },
   {
     accessorKey: 'isPaid',
@@ -46,13 +47,24 @@ export const columns: ColumnDef<OrderColumn>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-x-2">
-          {row.original.isPaid ? '🟢' : '🔴'}
+          {row.original.isPaid ? '💵' : '❌'}
         </div>
       )
-    },
+    }
+  },
+  {
+    accessorKey: 'isAbandoned',
+    header: 'Abandoned',
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-x-2">
+          {row.original.isAbandoned ? '🅰️' : '🛒'}
+        </div>
+      )
+    }
   },
   {
     accessorKey: 'createdAt',
-    header: 'Date Created',
-  },
+    header: 'Date Created'
+  }
 ]

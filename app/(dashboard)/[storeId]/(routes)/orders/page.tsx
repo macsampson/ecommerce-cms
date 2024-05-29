@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache'
 const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
   const orders = await prismadb.order.findMany({
     where: {
-      storeId: params.storeId,
+      storeId: params.storeId
       // isPaid: true,
     },
     include: {
@@ -17,16 +17,16 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
           product: true,
           bundleItems: {
             include: {
-              productVariation: true,
-            },
+              productVariation: true
+            }
           },
-          productVariation: true,
-        },
-      },
+          productVariation: true
+        }
+      }
     },
     orderBy: {
-      createdAt: 'desc',
-    },
+      createdAt: 'desc'
+    }
   })
 
   const formattedOrders: OrderColumn[] = orders.map((order) => {
@@ -73,7 +73,8 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
         .join(', '),
       totalPrice: formatter.format(order.totalPrice.toNumber()),
       isPaid: order.isPaid,
-      createdAt: format(order.createdAt, 'yyyy-MM-dd hh:mm a'),
+      isAbandoned: order.isAbandoned,
+      createdAt: format(order.createdAt, 'yyyy-MM-dd hh:mm a')
     }
   })
 

@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import { ColumnDef } from "@tanstack/react-table"
-import { CellAction } from "./cell-action"
+import { ColumnDef } from '@tanstack/react-table'
+import { CellAction } from './cell-action'
 
 export type ProductColumn = {
   id: string
@@ -14,34 +14,36 @@ export type ProductColumn = {
   isFeatured: boolean
   isArchived: boolean
   createdAt: string
+  updatedAt: string
 }
 
 export const columns: ColumnDef<ProductColumn>[] = [
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: 'name',
+    header: 'Name',
+    enableSorting: true
   },
   {
-    accessorKey: "price",
-    header: "Price",
+    accessorKey: 'price',
+    header: 'Price'
   },
   {
-    accessorKey: "quantity",
-    header: "Quantity",
-    enableSorting: true,
+    accessorKey: 'quantity',
+    header: 'Quantity',
+    enableSorting: true
   },
   {
-    accessorKey: "category",
-    header: "Category",
+    accessorKey: 'category',
+    header: 'Category'
   },
   {
-    accessorKey: "isFeatured",
-    header: "Featured",
+    accessorKey: 'isFeatured',
+    header: 'Featured',
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.isFeatured ? "🟢" : "🔴"}
+        {row.original.isFeatured ? '🟢' : '🔴'}
       </div>
-    ),
+    )
   },
   // {
   //   accessorKey: "size",
@@ -69,20 +71,24 @@ export const columns: ColumnDef<ProductColumn>[] = [
   //   ),
   // },
   {
-    accessorKey: "isArchived",
-    header: "Live",
+    accessorKey: 'isArchived',
+    header: 'Live',
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.isArchived ? "🔴" : "🟢"}
+        {row.original.isArchived ? '🔴' : '🟢'}
       </div>
-    ),
+    )
   },
   {
-    accessorKey: "createdAt",
-    header: "Date Created",
+    accessorKey: 'createdAt',
+    header: 'Date Created'
   },
   {
-    id: "action",
-    cell: ({ row }) => <CellAction data={row.original} />,
+    accessorKey: 'updatedAt',
+    header: 'Last Updated'
   },
+  {
+    id: 'action',
+    cell: ({ row }) => <CellAction data={row.original} />
+  }
 ]

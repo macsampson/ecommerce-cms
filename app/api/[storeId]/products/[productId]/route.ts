@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs'
 import { NextResponse } from 'next/server'
 
 import { Decimal } from '@prisma/client/runtime/library'
+import axios from 'axios'
 
 // Function to format prices to 2 decimal places
 function formatPrice(price: Decimal): string {
@@ -163,20 +164,10 @@ export async function PATCH(
     })
 
     // call webhook to update product on frontend
-    const webhookBody = JSON.stringify({ tag: 'product' })
-    const res = await fetch(REVALIDATE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + process.env.REVALIDATE_TOKEN
-      },
-      body: webhookBody
-    })
 
-    if (!res.ok) {
-      console.log('Failed to revalidate cache', res.statusText)
-      return new NextResponse('Failed to revalidate cache', { status: 500 })
-    }
+    await axios.post(REVALIDATE_URL, {
+      tag: 'product'
+    })
 
     return NextResponse.json(product)
   } catch (error) {

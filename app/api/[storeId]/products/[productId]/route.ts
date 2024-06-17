@@ -172,7 +172,10 @@ export async function PATCH(
       body: JSON.stringify({ tag: 'product' })
     })
 
-    // console.log('Revalidate response:', res)
+    if (!res.ok) {
+      console.log('Failed to revalidate cache', res.statusText)
+      return new NextResponse('Failed to revalidate cache', { status: 500 })
+    }
 
     return NextResponse.json(product)
   } catch (error) {

@@ -163,13 +163,14 @@ export async function PATCH(
     })
 
     // call webhook to update product on frontend
+    const webhookBody = JSON.stringify({ tag: 'product' })
     const res = await fetch(REVALIDATE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + process.env.REVALIDATE_TOKEN
       },
-      body: JSON.stringify({ tag: 'product' })
+      body: webhookBody
     })
 
     if (!res.ok) {

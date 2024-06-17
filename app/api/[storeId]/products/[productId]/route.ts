@@ -165,9 +165,18 @@ export async function PATCH(
 
     // call webhook to update product on frontend
 
-    await axios.post(REVALIDATE_URL, {
-      tag: 'product'
-    })
+    await axios.post(
+      REVALIDATE_URL,
+      {
+        tag: 'product'
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+        }
+      }
+    )
 
     return NextResponse.json(product)
   } catch (error) {

@@ -3,7 +3,7 @@ import { OrderClient } from './components/client'
 import { OrderColumn } from './components/columns'
 import { format } from 'date-fns'
 import { formatter } from '@/lib/utils'
-import { revalidatePath } from 'next/cache'
+// import { revalidatePath } from 'next/cache'
 
 const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
   const orders = await prismadb.order.findMany({
@@ -15,11 +15,6 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
       orderItems: {
         include: {
           product: true,
-          bundleItems: {
-            include: {
-              productVariation: true
-            }
-          },
           productVariation: true
         }
       }
@@ -60,15 +55,7 @@ const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
       products: productString,
       variations: order.orderItems
         .map((item) => {
-          if (item.bundleItems.length > 0) {
-            return `${item.product.name} (${item.bundleItems
-              .map((bundleItem) => bundleItem.productVariation.name)
-              .join(', ')})`
-          } else {
-            return `${item.product.name} (${
-              item.productVariation ? item.productVariation.name : 'Standard'
-            })`
-          }
+          return item.productVariation ? item.productVariation.name : 'Standard'
         })
         .join(', '),
       totalPrice: formatter.format(order.totalPrice.toNumber()),

@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { formatter } from "@/lib/utils"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { formatter } from '@/lib/utils'
 
-import { useState } from "react"
+import { useState } from 'react'
 
 interface BundleInputProps {
-  bundle: { minQuantity: number; price: number }
+  bundle: { minQuantity: number; discount: number }
   onRemove: () => void
   onBundleUpdate: (key: string, value: string) => void
 }
@@ -13,21 +13,21 @@ interface BundleInputProps {
 const BundleInput: React.FC<BundleInputProps> = ({
   bundle,
   onRemove,
-  onBundleUpdate,
+  onBundleUpdate
 }) => {
-  const quantity = bundle?.minQuantity || ""
-  const displayPrice = formatter.format(bundle?.price || 0)
+  const quantity = bundle?.minQuantity || ''
+  const displayDiscount = bundle?.discount ? bundle?.discount + '%' : '0%'
 
-  const [price, setPrice] = useState(bundle?.price.toString())
-  const [isPriceFocused, setIsPriceFocused] = useState(false)
+  const [discount, setDiscount] = useState(bundle?.discount.toString())
+  const [isDiscountFocused, setIsDiscountFocused] = useState(false)
 
-  const formattedPrice = isPriceFocused ? price : displayPrice
+  const formattedDiscount = isDiscountFocused ? discount : displayDiscount
 
   // console.log("bundle", bundle)
 
   // function to prevent default behavior of the input when the user presses enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault()
       //blur the input to trigger the onBlur event
       e.currentTarget.blur()
@@ -41,33 +41,28 @@ const BundleInput: React.FC<BundleInputProps> = ({
         placeholder="Min Quantity"
         value={quantity}
         onChange={(e) => {
-          onBundleUpdate("quantity", e.target.value)
+          onBundleUpdate('quantity', e.target.value)
         }}
         onKeyDown={handleKeyDown}
       />
       <Input
         className="text-sm font-medium text-right w-1/2 "
-        placeholder="$0.00"
-        value={formattedPrice}
+        placeholder="0%"
+        value={formattedDiscount}
         onFocus={() => {
-          setIsPriceFocused(true)
+          setIsDiscountFocused(true)
         }}
         onChange={(e) => {
-          setPrice(e.target.value)
+          setDiscount(e.target.value)
         }}
         onBlur={() => {
-          setIsPriceFocused(false)
-          const numberValue = parseFloat(price.replace(/[^0-9.-]+/g, ""))
-          onBundleUpdate("price", numberValue.toString())
+          setIsDiscountFocused(false)
+          const numberValue = parseFloat(discount.replace(/[^0-9.-]+/g, ''))
+          onBundleUpdate('discount', numberValue.toString())
         }}
         onKeyDown={handleKeyDown}
       />
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={onRemove}
-      >
+      <Button type="button" variant="destructive" size="sm" onClick={onRemove}>
         -
       </Button>
     </div>

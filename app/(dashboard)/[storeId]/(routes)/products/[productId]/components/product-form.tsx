@@ -1,12 +1,12 @@
-"use client"
+'use client'
 
-import * as z from "zod"
-import axios from "axios"
-import { useRef, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { toast } from "react-hot-toast"
-import { Trash } from "lucide-react"
+import * as z from 'zod'
+import axios from 'axios'
+import { useRef, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-hot-toast'
+import { Trash } from 'lucide-react'
 import {
   Category,
   Color,
@@ -14,12 +14,12 @@ import {
   Product,
   ProductVariation,
   Size,
-  Bundle,
-} from "@prisma/client"
-import { useParams, useRouter } from "next/navigation"
+  Bundle
+} from '@prisma/client'
+import { useParams, useRouter } from 'next/navigation'
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -27,24 +27,24 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
-import { Heading } from "@/components/ui/heading"
-import { AlertModal } from "@/components/modals/alert-modal"
+  FormMessage
+} from '@/components/ui/form'
+import { Separator } from '@/components/ui/separator'
+import { Heading } from '@/components/ui/heading'
+import { AlertModal } from '@/components/modals/alert-modal'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import ImageUpload from "@/components/ui/image-upload"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
-import VariationInput from "./variation-input"
-import BundleInput from "./bundle"
-import { formatter } from "@/lib/utils"
+  SelectValue
+} from '@/components/ui/select'
+import ImageUpload from '@/components/ui/image-upload'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
+import VariationInput from './variation-input'
+import BundleInput from './bundle'
+import { formatter } from '@/lib/utils'
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -56,14 +56,14 @@ const formSchema = z.object({
     .object({
       name: z.string().min(1),
       price: z.coerce.number().min(1),
-      quantity: z.coerce.number().min(0),
+      quantity: z.coerce.number().min(0)
     })
     .array()
     .default([]),
   bundles: z
     .object({
       minQuantity: z.coerce.number().min(1),
-      price: z.coerce.number().min(1),
+      discount: z.coerce.number().min(1)
     })
     .array()
     .default([]),
@@ -71,7 +71,7 @@ const formSchema = z.object({
   colorId: z.string().optional(),
   sizeId: z.string().optional(),
   isFeatured: z.boolean().default(false).optional(),
-  isArchived: z.boolean().default(false).optional(),
+  isArchived: z.boolean().default(false).optional()
 })
 
 type ProductFormValues = z.infer<typeof formSchema>
@@ -87,7 +87,7 @@ type VariationType = {
 
 type BundleType = {
   minQuantity: number
-  price: number
+  discount: number
 }
 
 interface ProductFormProps {
@@ -107,7 +107,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   initialData,
   categories,
   sizes,
-  colors,
+  colors
 }) => {
   const params = useParams()
   const router = useRouter()
@@ -117,16 +117,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [currentVariation, setCurrentVariation] = useState({
     id: Date.now(),
-    name: "",
+    name: '',
     price: 0,
-    quantity: 0,
+    quantity: 0
     // isDeleted: false,
   })
 
   const [currentBundle, setCurrentBundle] = useState({
     id: Date.now(),
     minQuantity: 0,
-    price: 0,
+    discount: 0
     // isDeleted: false,
   })
 
@@ -145,10 +145,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   //   (variation) => !variation.isDeleted
   // )
 
-  const title = initialData ? "Edit product" : "Create product"
-  const formDescription = initialData ? "Edit a product." : "Add a new product"
-  const toastMessage = initialData ? "Product updated." : "Product created."
-  const action = initialData ? "Save changes" : "Create"
+  const title = initialData ? 'Edit product' : 'Create product'
+  const formDescription = initialData ? 'Edit a product.' : 'Add a new product'
+  const toastMessage = initialData ? 'Product updated.' : 'Product created.'
+  const action = initialData ? 'Save changes' : 'Create'
 
   const defaultValues = initialData
     ? {
@@ -164,27 +164,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           initialData?.variations.map((variation) => ({
             ...variation,
             price: parseFloat(String(variation.price)),
-            quantity: parseInt(String(variation.quantity)),
+            quantity: parseInt(String(variation.quantity))
           })) || [],
         bundles:
           initialData?.bundles.map((bundle) => ({
             ...bundle,
-            price: parseFloat(String(bundle.price)),
-          })) || [],
+            minQuantity: parseInt(String(bundle.minQuantity)),
+            discount: parseFloat(String(bundle.discount))
+          })) || []
       }
     : {
-        name: "",
+        name: '',
         images: [],
         price: 0,
         quantity: 0,
-        description: "",
+        description: '',
         variations: [],
         bundles: [],
-        categoryId: "",
+        categoryId: '',
         colorId: undefined,
         sizeId: undefined,
         isFeatured: false,
-        isArchived: false,
+        isArchived: false
       }
 
   // console.log("defaultValues", defaultValues)
@@ -194,11 +195,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues
   })
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log("data", data)
+    console.log('data', data)
     try {
       setLoading(true)
       if (initialData) {
@@ -213,7 +214,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       router.push(`/${params.storeId}/products`)
       toast.success(toastMessage)
     } catch (error: any) {
-      toast.error("Something went wrong.")
+      toast.error('Something went wrong.')
     } finally {
       setLoading(false)
     }
@@ -225,9 +226,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       await axios.delete(`/api/${params.storeId}/products/${params.productId}`)
       router.refresh()
       router.push(`/${params.storeId}/products`)
-      toast.success("Product deleted.")
+      toast.success('Product deleted.')
     } catch (error: any) {
-      toast.error("Something went wrong.")
+      toast.error('Something went wrong.')
     } finally {
       setLoading(false)
       setOpen(false)
@@ -239,9 +240,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setVariations((prev) => [...prev, currentVariation])
       setCurrentVariation({
         id: Date.now(),
-        name: "",
+        name: '',
         price: 0,
-        quantity: 0,
+        quantity: 0
         // isDeleted: false,
       })
     }
@@ -273,10 +274,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         loading={loading}
       />
       <div className="flex items-center justify-between">
-        <Heading
-          title={title}
-          description={formDescription}
-        />
+        <Heading title={title} description={formDescription} />
         {initialData && (
           <Button
             disabled={loading}
@@ -309,7 +307,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     }
                     onRemove={(url) =>
                       field.onChange([
-                        ...field.value.filter((current) => current.url !== url),
+                        ...field.value.filter((current) => current.url !== url)
                       ])
                     }
                   />
@@ -399,7 +397,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 // console.log("default values", defaultValues.variations)
                 const addVariation = () => {
                   const newVariation = {
-                    ...currentVariation,
+                    ...currentVariation
                   }
 
                   // Update the field.value by appending the new variation
@@ -408,9 +406,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   // Reset the currentVariation input fields
                   setCurrentVariation({
                     id: Date.now(),
-                    name: "",
+                    name: '',
                     price: 0,
-                    quantity: 0,
+                    quantity: 0
                     // isDeleted: false,
                   })
                 }
@@ -429,11 +427,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                             onChange={(e) => {
                               setCurrentVariation((prev) => ({
                                 ...prev,
-                                name: e.target.value,
+                                name: e.target.value
                               }))
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                              if (e.key === 'Enter') {
                                 e.preventDefault()
                                 addVariation()
                                 if (nameInputRef.current) {
@@ -451,11 +449,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                             onChange={(e) => {
                               setCurrentVariation((prev) => ({
                                 ...prev,
-                                quantity: parseInt(e.target.value),
+                                quantity: parseInt(e.target.value)
                               }))
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                              if (e.key === 'Enter') {
                                 e.preventDefault()
                                 addVariation()
                                 if (nameInputRef.current) {
@@ -472,11 +470,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                             onChange={(e) => {
                               setCurrentVariation((prev) => ({
                                 ...prev,
-                                price: parseFloat(e.target.value),
+                                price: parseFloat(e.target.value)
                               }))
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                              if (e.key === 'Enter') {
                                 e.preventDefault()
                                 addVariation()
                                 if (nameInputRef.current) {
@@ -519,12 +517,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                                 }}
                                 onVariationUpdate={(name, value) => {
                                   const newVariations = [...field.value]
-                                  if (name === "name") {
+                                  if (name === 'name') {
                                     newVariations[index].name = value
-                                  } else if (name === "price") {
+                                  } else if (name === 'price') {
                                     newVariations[index].price =
                                       parseFloat(value)
-                                  } else if (name === "quantity") {
+                                  } else if (name === 'quantity') {
                                     newVariations[index].quantity =
                                       parseInt(value)
                                   }
@@ -554,7 +552,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 // console.log("default values", defaultValues.variations)
                 const addBundle = () => {
                   const newBundle = {
-                    ...currentBundle,
+                    ...currentBundle
                   }
                   // console.log("current bundle", currentBundle)
                   // Update the field.value by appending the new Bundle
@@ -564,7 +562,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   setCurrentBundle({
                     id: Date.now(),
                     minQuantity: 0,
-                    price: 0,
+                    discount: 0
                     // isDeleted: false,
                   })
                 }
@@ -585,11 +583,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                             onChange={(e) => {
                               setCurrentBundle((prev) => ({
                                 ...prev,
-                                minQuantity: parseInt(e.target.value),
+                                minQuantity: parseInt(e.target.value)
                               }))
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                              if (e.key === 'Enter') {
                                 e.preventDefault()
                                 addBundle()
                                 if (nameInputRef.current) {
@@ -600,17 +598,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           />
                           <Input
                             className="w-1/5"
-                            placeholder="$0.00"
+                            placeholder="0%"
                             type="number"
-                            value={currentBundle.price}
+                            value={currentBundle.discount}
                             onChange={(e) => {
                               setCurrentBundle((prev) => ({
                                 ...prev,
-                                price: parseFloat(e.target.value),
+                                discount: parseFloat(e.target.value)
                               }))
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                              if (e.key === 'Enter') {
                                 e.preventDefault()
                                 addBundle()
                                 if (nameInputRef.current) {
@@ -653,11 +651,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                                 }}
                                 onBundleUpdate={(name, value) => {
                                   const newBundle = [...field.value]
-                                  if (name === "quantity") {
+                                  if (name === 'quantity') {
                                     newBundle[index].minQuantity =
                                       parseInt(value)
-                                  } else if (name === "price") {
-                                    newBundle[index].price = parseFloat(value)
+                                  } else if (name === 'discount') {
+                                    newBundle[index].discount =
+                                      parseFloat(value)
                                   }
                                   field.onChange(newBundle)
                                 }}
@@ -699,10 +698,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </FormControl>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id}
-                        >
+                        <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -737,10 +733,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </FormControl>
                     <SelectContent>
                       {sizes.map((size) => (
-                        <SelectItem
-                          key={size.id}
-                          value={size.id}
-                        >
+                        <SelectItem key={size.id} value={size.id}>
                           {size.name}
                         </SelectItem>
                       ))}
@@ -774,10 +767,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </FormControl>
                     <SelectContent>
                       {colors.map((color) => (
-                        <SelectItem
-                          key={color.id}
-                          value={color.id}
-                        >
+                        <SelectItem key={color.id} value={color.id}>
                           {color.name}
                         </SelectItem>
                       ))}
@@ -830,11 +820,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
           </div>
-          <Button
-            disabled={loading}
-            className="ml-auto"
-            type="submit"
-          >
+          <Button disabled={loading} className="ml-auto" type="submit">
             {action}
           </Button>
         </form>

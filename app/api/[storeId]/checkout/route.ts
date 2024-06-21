@@ -56,7 +56,6 @@ export async function OPTIONS(req: Request) {
 // These are the types for the request body that you will receive from the frontend
 
 type ProductVariationType = {
-  id: string
   quantity: number
   price: number
   name: string
@@ -65,10 +64,11 @@ type ProductVariationType = {
 type ItemType = {
   quantity: number // required if variations is empty
   price: number // required if variations is empty
-  variations: ProductVariationType[]
+  variations: Record<string, ProductVariationType>
   name: string
 }
 
+// Example of the cartItems object that you will receive from the frontend
 //  cartItems:  {
 //   'prod_id': {
 //     name: 'Mooncake',
@@ -91,7 +91,7 @@ type orderItemType = {
   productVariationId: string | null
   price: Decimal
   name: string
-  bundleItems: any[]
+  // bundleItems: any[]
 }
 
 type cartItemsObjectType = {
@@ -127,11 +127,13 @@ export async function POST(
   // destructuring the request body as type cartItemsObjectType
   const {
     cartItems,
+    totalPrice,
     selectedRate,
     shippingAddress,
     currency
   }: {
     cartItems: cartItemsObjectType
+    totalPrice: number
     selectedRate: ShippoRate
     shippingAddress: AddressType
     currency: string
@@ -184,6 +186,7 @@ export async function POST(
 
   // create array from cartItems that contains the first element of each element in item
   const productIds: string[] = Object.keys(cartItems)
+  // console.log('productIds: ', productIds)
 
   // Start transaction
   try {
@@ -214,30 +217,30 @@ export async function POST(
         if (Object.keys(cartItem.variations).length > 0) {
           await Promise.all(
             Object.entries(cartItem.variations).map(
-              async ([_, cartVariation]) => {
+              async ([variationId, variation]) => {
                 const dbVariation = dbProduct.variations.find(
-                  (v) => v.id === cartVariation.id
+                  (v) => v.id === variationId
                 )
 
                 if (!dbVariation) {
                   throw new Error(
-                    `Product ${dbProduct.name} does not have variation ${cartVariation.id}`
+                    `Product ${dbProduct.name} does not have variation ${variation.name}`
                   )
                 }
 
-                if (dbVariation.quantity < cartVariation.quantity) {
+                if (dbVariation.quantity < variation.quantity) {
                   throw new Error(
-                    `Insufficient stock for ${cartVariation.name} variation of ${dbProduct.name}`
+                    `Insufficient stock for ${variation.name} variation of ${dbProduct.name}`
                   )
                 }
 
                 await prisma.productVariation.update({
                   where: {
-                    id: cartVariation.id
+                    id: variationId
                   },
                   data: {
                     quantity: {
-                      decrement: cartVariation.quantity
+                      decrement: variation.quantity
                     }
                   }
                 })
@@ -263,14 +266,12 @@ export async function POST(
         data: {
           storeId: params.storeId,
           isPaid: false, // set true as per your payment logic
-          totalPrice: Object.entries(cartItems).reduce((total, [_, item]) => {
-            return total + item.price
-          }, 0),
+          totalPrice: totalPrice,
           shippingAddress: shippingAddressComponents,
           orderItems: {
             create: Object.entries(cartItems).flatMap(([productId, item]) => {
               // If the item is a bundle, create an orderItem for each variation
-              if (Object.keys(item.variations).length > 0) {
+              if (Object.keys(item.variations).length) {
                 return Object.entries(item.variations).map(
                   ([variationId, variation]) => ({
                     product: { connect: { id: productId } },
@@ -294,11 +295,7 @@ export async function POST(
           }
         },
         include: {
-          orderItems: {
-            include: {
-              bundleItems: true
-            }
-          }
+          orderItems: true
         }
       })
     })
@@ -336,19 +333,18 @@ export async function POST(
             product_data: {
               name: cartItems[id].name,
               // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
-              description:
-                Object.keys(cartItems[id].variations).length > 0
-                  ? Object.entries(cartItems[id].variations)
-                      .reduce((acc, [_, variation]) => {
-                        // Add a semicolon and space separator between variations
-                        return (
-                          acc + variation.quantity + ' ' + variation.name + '; '
-                        )
-                      }, '')
-                      .slice(0, -2) // Remove the last semicolon and space for cleanliness
-                  : 'Standard'
+              description: Object.keys(cartItems[id].variations).length
+                ? Object.entries(cartItems[id].variations)
+                    .reduce((acc, [_, variation]) => {
+                      // Add a semicolon and space separator between variations
+                      return (
+                        acc + variation.quantity + ' ' + variation.name + '; '
+                      )
+                    }, '')
+                    .slice(0, -2) // Remove the last semicolon and space for cleanliness
+                : 'Standard'
             },
-            unit_amount: (cartItems[id].price / cartItems[id].quantity) * 100
+            unit_amount: cartItems[id].price * 100
           }
         })
       )

@@ -155,7 +155,7 @@ export async function PATCH(
           createMany: {
             data: [
               ...bundles.map(
-                (bundle: { minQuantity: number; price: number }) => bundle
+                (bundle: { minQuantity: number; discount: number }) => bundle
               )
             ]
           }

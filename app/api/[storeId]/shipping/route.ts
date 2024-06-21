@@ -46,10 +46,11 @@ type AddressType = {
 }
 
 type CartItemType = {
-  item: Product
+  name: string
+  price: number
   totalQuantity: number
   variations?: ProductVariation[]
-  bundlePrice?: number
+  bundles?: { minQuantity: number; discount: number }[]
 }
 
 export async function OPTIONS() {
@@ -68,9 +69,9 @@ export async function POST(req: Request) {
   }, 0)
 
   const totalValue = cartItems.reduce((acc, cartItem) => {
-    const { item, totalQuantity, bundlePrice } = cartItem
-    const { price } = item
-    return acc + (bundlePrice ? bundlePrice : price.toNumber()) * totalQuantity
+    const { price, totalQuantity, bundles } = cartItem
+
+    return acc + price * totalQuantity
   }, 0)
 
   // keycap weight is 10g

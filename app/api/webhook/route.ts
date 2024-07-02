@@ -14,6 +14,8 @@ import shippoClient from '@/lib/shippo'
 
 const DISCORD_ORDER_WEBHOOK_URL = process.env.DISCORD_ORDER_WEBHOOK_URL!
 
+const REVALIDATE_URL = process.env.FRONTEND_STORE_URL + '/api/revalidate'
+
 type AddressType = {
   firstName: string
   lastName: string
@@ -178,6 +180,20 @@ export async function POST(req: Request) {
         console.log('Error creating shipping label:', error)
       }
     }
+
+    // revalidate product data
+    await axios.post(
+      REVALIDATE_URL,
+      {
+        tag: 'product'
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+        }
+      }
+    )
   }
 
   return new NextResponse(null, { status: 200 })

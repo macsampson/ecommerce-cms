@@ -1,21 +1,11 @@
 'use client'
 
-import * as z from 'zod'
+import React, { useRef, useState, useEffect } from 'react'
 import axios from 'axios'
-import { useRef, useState } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'react-hot-toast'
 import { Trash } from 'lucide-react'
-import {
-  Category,
-  Color,
-  Image,
-  Product,
-  ProductVariation,
-  Size,
-  Bundle
-} from '@prisma/client'
 import { useParams, useRouter } from 'next/navigation'
 
 import { Input } from '@/components/ui/input'
@@ -42,53 +32,26 @@ import {
 import ImageUpload from '@/components/ui/image-upload'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
-import VariationInput from './variation-input'
-import BundleInput from './bundle'
-import { formatter } from '@/lib/utils'
+import VariationInput from './variationInput'
+import BundleInput from './bundleInput'
+import {
+  formSchema,
+  ProductFormValues,
+  VariationType,
+  BundleType
+} from './productFormSchema'
 
-const formSchema = z.object({
-  name: z.string().min(1),
-  images: z.object({ url: z.string() }).array(),
-  price: z.coerce.number().min(1),
-  quantity: z.coerce.number().min(0),
-  description: z.string().min(1),
-  variations: z
-    .object({
-      name: z.string().min(1),
-      price: z.coerce.number().min(1),
-      quantity: z.coerce.number().min(0)
-    })
-    .array()
-    .default([]),
-  bundles: z
-    .object({
-      minQuantity: z.coerce.number().min(1),
-      discount: z.coerce.number().min(1)
-    })
-    .array()
-    .default([]),
-  categoryId: z.string().min(1),
-  colorId: z.string().optional(),
-  sizeId: z.string().optional(),
-  isFeatured: z.boolean().default(false).optional(),
-  isArchived: z.boolean().default(false).optional()
-})
+import {
+  Category,
+  Color,
+  Image,
+  Product,
+  ProductVariation,
+  Size,
+  Bundle
+} from '@prisma/client'
 
-type ProductFormValues = z.infer<typeof formSchema>
-
-// type for product variations
-type VariationType = {
-  id: number
-  name: string
-  price: number
-  quantity: number
-  // isDeleted?: boolean
-}
-
-type BundleType = {
-  minQuantity: number
-  discount: number
-}
+import { formatPriceDisplay, parsePriceInput } from '@/lib/utils'
 
 interface ProductFormProps {
   initialData:
@@ -109,41 +72,35 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   sizes,
   colors
 }) => {
+  // console.log('initialData', initialData)
+
   const params = useParams()
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const [currentVariation, setCurrentVariation] = useState({
-    id: Date.now(),
-    name: '',
-    price: 0,
-    quantity: 0
-    // isDeleted: false,
-  })
+  const [variations, setVariations] = useState<VariationType[]>(
+    initialData?.variations.map((v) => ({
+      id: v.id,
+      name: v.name,
+      price: Number(v.price),
+      quantity: v.quantity
+    })) || []
+  )
 
-  const [currentBundle, setCurrentBundle] = useState({
-    id: Date.now(),
-    minQuantity: 0,
-    discount: 0
-    // isDeleted: false,
-  })
+  const [bundles, setBundles] = useState<BundleType[]>(
+    initialData?.bundles.map((b) => ({
+      id: b.id,
+      minQuantity: b.minQuantity,
+      discount: Number(b.discount)
+    })) || []
+  )
 
-  const [variations, setVariations] = useState<VariationType[]>([])
-  const [bundles, setBundles] = useState<BundleType[]>([])
-
-  // Calculate the total quantity of variations
-  const totalVariationQuantity = initialData?.variations.reduce(
+  const totalVariationQuantity = variations.reduce(
     (acc, variation) => acc + variation.quantity,
     0
   )
-
-  // console.log("totalVariationQuantity", totalVariationQuantity)
-
-  // const activeVariations = variations.filter(
-  //   (variation) => !variation.isDeleted
-  // )
 
   const title = initialData ? 'Edit product' : 'Create product'
   const formDescription = initialData ? 'Edit a product.' : 'Add a new product'
@@ -154,10 +111,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     ? {
         ...initialData,
         price: parseFloat(String(initialData?.price)),
-        quantity:
-          initialData.variations?.length > 0
-            ? totalVariationQuantity
-            : initialData.quantity,
+        quantity: totalVariationQuantity || initialData.quantity,
         colorId: initialData.colorId || undefined,
         sizeId: initialData.sizeId || undefined,
         variations:
@@ -188,10 +142,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         isArchived: false
       }
 
-  // console.log("defaultValues", defaultValues)
-  // console.log("variationl length", initialData?.variations.length)
-
   const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    form.setValue('quantity', totalVariationQuantity)
+    form.setValue('variations', variations)
+    // console.log('variations', variations)
+  }, [variations])
+
+  useEffect(() => {
+    form.setValue('bundles', bundles)
+    // console.log('bundles', bundles)
+  }, [bundles])
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -199,7 +161,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   })
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log('data', data)
+    // console.log('data', data)
     try {
       setLoading(true)
       if (initialData) {
@@ -211,7 +173,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         await axios.post(`/api/${params.storeId}/products`, data)
       }
       router.refresh()
-      router.push(`/${params.storeId}/products`)
+      // router.push(`/${params.storeId}/products`)
       toast.success(toastMessage)
     } catch (error: any) {
       toast.error('Something went wrong.')
@@ -234,36 +196,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setOpen(false)
     }
   }
-
-  const addVariation = () => {
-    if (currentVariation.name && currentVariation.price) {
-      setVariations((prev) => [...prev, currentVariation])
-      setCurrentVariation({
-        id: Date.now(),
-        name: '',
-        price: 0,
-        quantity: 0
-        // isDeleted: false,
-      })
-    }
-  }
-
-  // const removeVariation = (id: number) => {
-  // if variation with id is in initialData.variations, mark it as deleted, else remove it from variations
-  // const variation = defaultValues.variations.find(
-  //   (variation) => variation.id === id.toString()
-  // )
-
-  //   if (variation) {
-  //     setVariations((prev) =>
-  //       prev.map((variation) =>
-  //         variation.id === id ? { ...variation, isDeleted: true } : variation
-  //       )
-  //     )
-  //   } else {
-  //     setVariations((prev) => prev.filter((variation) => variation.id !== id))
-  //   }
-  // }
 
   return (
     <>
@@ -380,9 +312,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       type="number"
                       disabled={loading || variations.length > 0}
                       placeholder="0"
-                      // set to total quantity of variations if variations exist
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(e) => {
+                        field.onChange(parseInt(e.target.value))
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -393,24 +326,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               control={form.control}
               name="variations"
               render={({ field }) => {
-                // console.log("field", field.value)
-                // console.log("default values", defaultValues.variations)
-                const addVariation = () => {
-                  const newVariation = {
-                    ...currentVariation
-                  }
-
-                  // Update the field.value by appending the new variation
-                  field.onChange([...field.value, currentVariation])
-
-                  // Reset the currentVariation input fields
-                  setCurrentVariation({
-                    id: Date.now(),
-                    name: '',
-                    price: 0,
-                    quantity: 0
-                    // isDeleted: false,
-                  })
+                const addVariationHandler = (variation: VariationType) => {
+                  const newVariations = [...field.value, variation]
+                  field.onChange(newVariations)
+                  setVariations(newVariations)
                 }
 
                 return (
@@ -418,125 +337,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <FormLabel>Variations</FormLabel>
                     <FormControl>
                       <>
-                        <div className="flex space-x-2 p-2">
-                          <Input
-                            ref={nameInputRef}
-                            className="w-4/5"
-                            placeholder="Name"
-                            value={currentVariation.name}
-                            onChange={(e) => {
-                              setCurrentVariation((prev) => ({
-                                ...prev,
-                                name: e.target.value
-                              }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                addVariation()
-                                if (nameInputRef.current) {
-                                  nameInputRef.current.focus()
-                                }
-                              }
-                            }}
-                          />
-                          <Input
-                            title="Quantity"
-                            className="w-1/5"
-                            placeholder="please add quantity"
-                            type="number"
-                            value={currentVariation.quantity}
-                            onChange={(e) => {
-                              setCurrentVariation((prev) => ({
-                                ...prev,
-                                quantity: parseInt(e.target.value)
-                              }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                addVariation()
-                                if (nameInputRef.current) {
-                                  nameInputRef.current.focus()
-                                }
-                              }
-                            }}
-                          />
-                          <Input
-                            className="w-1/5"
-                            placeholder="$0.00"
-                            type="number"
-                            value={currentVariation.price}
-                            onChange={(e) => {
-                              setCurrentVariation((prev) => ({
-                                ...prev,
-                                price: parseFloat(e.target.value)
-                              }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                addVariation()
-                                if (nameInputRef.current) {
-                                  nameInputRef.current.focus()
-                                }
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            className="ml-4"
-                            size="sm"
-                            onClick={() => {
-                              addVariation()
-                              if (nameInputRef.current) {
-                                nameInputRef.current.focus()
-                              }
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-col items-center space-y-4 border p-2 rounded-md">
-                          {field.value.length ? (
-                            field.value.map((variation, index) => (
-                              /* if variation is not marked as deleted, render it */
-                              // variation.isDeleted ? null : (
-                              // <div
-                              //   key={variation.name}
-                              //   className="flex items-center space-x-4 justify-between w-full px-2"
-                              // >
-                              <VariationInput
-                                key={index}
-                                variation={variation}
-                                onRemove={() => {
-                                  const newVariations = field.value.filter(
-                                    (_, i) => i !== index
-                                  )
-                                  field.onChange(newVariations)
-                                }}
-                                onVariationUpdate={(name, value) => {
-                                  const newVariations = [...field.value]
-                                  if (name === 'name') {
-                                    newVariations[index].name = value
-                                  } else if (name === 'price') {
-                                    newVariations[index].price =
-                                      parseFloat(value)
-                                  } else if (name === 'quantity') {
-                                    newVariations[index].quantity =
-                                      parseInt(value)
-                                  }
-                                  field.onChange(newVariations)
-                                }}
-                              />
-                              // </div>
-                            ))
-                          ) : (
-                            <div className="flex mx-auto items-center text-neutral-500 text-opacity-50">
-                              No variations
-                            </div>
-                          )}
-                        </div>
+                        <VariationInput
+                          onAdd={addVariationHandler}
+                          variations={variations}
+                          setVariations={setVariations}
+                        />
                       </>
                     </FormControl>
                     <FormMessage />
@@ -548,23 +353,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               control={form.control}
               name="bundles"
               render={({ field }) => {
-                // console.log("field", field.value)
-                // console.log("default values", defaultValues.variations)
-                const addBundle = () => {
-                  const newBundle = {
-                    ...currentBundle
-                  }
-                  // console.log("current bundle", currentBundle)
-                  // Update the field.value by appending the new Bundle
-                  field.onChange([...field.value, currentBundle])
-
-                  // Reset the currentBundle input fields
-                  setCurrentBundle({
-                    id: Date.now(),
-                    minQuantity: 0,
-                    discount: 0
-                    // isDeleted: false,
-                  })
+                const addBundleHandler = (bundle: BundleType) => {
+                  const newBundles = [...field.value, bundle]
+                  field.onChange(newBundles)
+                  setBundles(newBundles)
                 }
 
                 return (
@@ -572,103 +364,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <FormLabel>Bundles</FormLabel>
                     <FormControl>
                       <>
-                        <div className="flex space-x-2 p-2">
-                          <Input
-                            ref={nameInputRef}
-                            className="w-1/6"
-                            placeholder="Min Qty"
-                            type="number"
-                            min="1"
-                            // value={currentBundle.minQuantity}
-                            onChange={(e) => {
-                              setCurrentBundle((prev) => ({
-                                ...prev,
-                                minQuantity: parseInt(e.target.value)
-                              }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                addBundle()
-                                if (nameInputRef.current) {
-                                  nameInputRef.current.focus()
-                                }
-                              }
-                            }}
-                          />
-                          <Input
-                            className="w-1/5"
-                            placeholder="0%"
-                            type="number"
-                            value={currentBundle.discount}
-                            onChange={(e) => {
-                              setCurrentBundle((prev) => ({
-                                ...prev,
-                                discount: parseFloat(e.target.value)
-                              }))
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                addBundle()
-                                if (nameInputRef.current) {
-                                  nameInputRef.current.focus()
-                                }
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            className="ml-4"
-                            size="sm"
-                            onClick={() => {
-                              addBundle()
-                              if (nameInputRef.current) {
-                                nameInputRef.current.focus()
-                              }
-                            }}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-col items-center space-y-4 border p-2 rounded-md">
-                          {field.value.length ? (
-                            field.value.map((bundle, index) => (
-                              /* if bundle is not marked as deleted, render it */
-                              // bundle.isDeleted ? null : (
-                              // <div
-                              //   key={bundle.name}
-                              //   className="flex items-center space-x-4 justify-between w-full px-2"
-                              // >
-                              <BundleInput
-                                key={index}
-                                bundle={bundle}
-                                onRemove={() => {
-                                  const newBundle = field.value.filter(
-                                    (_, i) => i !== index
-                                  )
-                                  field.onChange(newBundle)
-                                }}
-                                onBundleUpdate={(name, value) => {
-                                  const newBundle = [...field.value]
-                                  if (name === 'quantity') {
-                                    newBundle[index].minQuantity =
-                                      parseInt(value)
-                                  } else if (name === 'discount') {
-                                    newBundle[index].discount =
-                                      parseFloat(value)
-                                  }
-                                  field.onChange(newBundle)
-                                }}
-                              />
-                              // </div>
-                            ))
-                          ) : (
-                            <div className="flex mx-auto items-center text-neutral-500 text-opacity-50">
-                              No bundles
-                            </div>
-                          )}
-                        </div>
+                        <BundleInput
+                          onAdd={addBundleHandler}
+                          bundles={bundles}
+                          setBundles={setBundles}
+                        />
                       </>
                     </FormControl>
                     <FormMessage />

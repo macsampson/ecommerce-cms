@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 
 import { Decimal } from '@prisma/client/runtime/library'
 import axios from 'axios'
+// import { v4 as uuidv4 } from 'uuid'
 
 // Function to format prices to 2 decimal places
 function formatPrice(price: Decimal): string {
@@ -71,6 +72,8 @@ export async function PATCH(
       isArchived
     } = body
 
+    console.log('body: ', body)
+
     if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!name) return new NextResponse('Name is required', { status: 400 })
@@ -83,14 +86,6 @@ export async function PATCH(
 
     if (!categoryId)
       return new NextResponse('Category ID  is required', { status: 400 })
-
-    // if (!quantity)
-    //   return new NextResponse("Quantity  is required", { status: 400 })
-
-    // if (!colorId)
-    //   return new NextResponse("Color ID is required", { status: 400 })
-
-    // if (!sizeId) return new NextResponse("Size ID is required", { status: 400 })
 
     if (!params.productId)
       return new NextResponse('Product ID is required', { status: 400 })
@@ -106,6 +101,50 @@ export async function PATCH(
       return new NextResponse('Unauthorized', { status: 403 })
     }
 
+    const existingProduct = await prismadb.product.findUnique({
+      where: {
+        id: params.productId
+      },
+      include: {
+        variations: true,
+        bundles: true,
+        images: true
+      }
+    })
+
+    // Assign UUIDs to images and bundles if they don't already have them
+    const imagesWithUuid = images.map(
+      (image: { url: string; id?: string }) => ({
+        ...image,
+        id: image.id || Math.random().toString(36).substring(7)
+      })
+    )
+
+    const bundlesWithUuid = bundles.map(
+      (bundle: { minQuantity: number; discount: number; id?: string }) => ({
+        ...bundle,
+        id: bundle.id || Math.random().toString(36).substring(7)
+      })
+    )
+
+    console.log('existingProduct', existingProduct)
+
+    if (!existingProduct) {
+      return new NextResponse('Product not found', { status: 404 })
+    }
+
+    const variationsToUpdate = variations.filter(
+      (variation: { id: string }) => variation.id
+    )
+
+    console.log('variationsToUpdate', variationsToUpdate)
+
+    const variationsToCreate = variations.filter(
+      (variation: { id: string }) => !variation.id
+    )
+
+    console.log('variationsToCreate', variationsToCreate)
+
     await prismadb.product.update({
       where: {
         id: params.productId
@@ -115,51 +154,105 @@ export async function PATCH(
         price,
         quantity,
         description,
-        variations: {
-          deleteMany: {}
-        },
-        bundles: {
-          deleteMany: {}
-        },
         categoryId,
         colorId,
         sizeId,
-        images: {
-          deleteMany: {}
-        },
         isArchived,
         isFeatured
       }
     })
 
-    const product = await prismadb.product.update({
+    await prismadb.productVariation.deleteMany({
+      where: {
+        productId: params.productId,
+        id: {
+          notIn: variationsToUpdate.map(
+            (variation: { id: string }) => variation.id
+          )
+        }
+      }
+    })
+
+    await prismadb.image.deleteMany({
+      where: {
+        productId: params.productId,
+        id: {
+          notIn: imagesWithUuid.map((image: { id: string }) => image.id)
+        }
+      }
+    })
+
+    await prismadb.bundle.deleteMany({
+      where: {
+        productId: params.productId,
+        id: {
+          notIn: bundlesWithUuid.map((bundle: { id: string }) => bundle.id)
+        }
+      }
+    })
+
+    for (const variation of variationsToUpdate) {
+      await prismadb.productVariation.update({
+        where: {
+          id: variation.id
+        },
+        data: {
+          name: variation.name,
+          price: variation.price,
+          quantity: variation.quantity
+        }
+      })
+    }
+
+    if (variationsToCreate.length) {
+      await prismadb.productVariation.createMany({
+        data: [
+          ...variationsToCreate.map(
+            (variation: { name: string; price: number; quantity: number }) => ({
+              name: variation.name,
+              price: variation.price,
+              productId: params.productId,
+              quantity: variation.quantity
+            })
+          )
+        ]
+      })
+    }
+
+    // Create new bundles
+    if (bundlesWithUuid.length > 0) {
+      await prismadb.bundle.createMany({
+        data: bundlesWithUuid.map(
+          (bundle: { minQuantity: number; discount: number; id: string }) => ({
+            ...bundle,
+            productId: params.productId
+          })
+        )
+      })
+    }
+
+    // Create new images
+    if (imagesWithUuid.length > 0) {
+      await prismadb.image.createMany({
+        data: imagesWithUuid.map((image: { url: string; id: string }) => ({
+          url: image.url,
+          id: image.id,
+          productId: params.productId
+        }))
+      })
+    }
+
+    const updatedProduct = await prismadb.product.findUnique({
       where: {
         id: params.productId
       },
-      data: {
-        images: {
-          createMany: {
-            data: [...images.map((image: { url: string }) => image)]
-          }
-        },
-        variations: {
-          createMany: {
-            data: [
-              ...variations.map(
-                (variation: { name: string; price: number }) => variation
-              )
-            ]
-          }
-        },
-        bundles: {
-          createMany: {
-            data: [
-              ...bundles.map(
-                (bundle: { minQuantity: number; discount: number }) => bundle
-              )
-            ]
-          }
-        }
+      include: {
+        images: true,
+        category: true,
+        color: true,
+        size: true,
+        variations: true,
+        bundles: true
       }
     })
 
@@ -178,7 +271,7 @@ export async function PATCH(
       }
     )
 
-    return NextResponse.json(product)
+    return NextResponse.json(updatedProduct)
   } catch (error) {
     console.log('[PRODUCT_PATCH]', error)
     return new NextResponse('Internal Server Error', { status: 500 })

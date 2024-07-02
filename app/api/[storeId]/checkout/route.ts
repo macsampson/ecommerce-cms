@@ -221,7 +221,7 @@ export async function POST(
                 const dbVariation = dbProduct.variations.find(
                   (v) => v.id === variationId
                 )
-
+                // console.log('variationId: ', variationId)
                 if (!dbVariation) {
                   throw new Error(
                     `Product ${dbProduct.name} does not have variation ${variation.name}`
@@ -344,7 +344,7 @@ export async function POST(
                     .slice(0, -2) // Remove the last semicolon and space for cleanliness
                 : 'Standard'
             },
-            unit_amount: cartItems[id].price * 100
+            unit_amount: Math.round(cartItems[id].price * 100)
           }
         })
       )

@@ -74,6 +74,9 @@ const BundleInput: React.FC<BundleInputProps> = ({
               addBundle()
             }
           }}
+          onFocus={(e) => {
+            e.target.select()
+          }}
         />
         <Button type="button" className="ml-4" size="sm" onClick={addBundle}>
           Add

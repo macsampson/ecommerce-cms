@@ -1,33 +1,34 @@
-"use client"
+'use client'
 
-import { PlusIcon } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { PlusIcon } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
 
-import { Button } from "@/components/ui/button"
-import { Heading } from "@/components/ui/heading"
-import { Separator } from "@/components/ui/separator"
-import { BillboardColumn, columns } from "./columns"
-import { DataTable } from "@/components/ui/data-table"
-import ApiList from "@/components/ui/api-list"
+import { Button } from '@/components/ui/button'
+import { Heading } from '@/components/ui/heading'
+import { Separator } from '@/components/ui/separator'
+import { BillboardColumn, columns } from './columns'
+import { DataTable } from '@/components/ui/data-table'
+import ApiList from '@/components/ui/api-list'
 import {
   Form,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormControl,
-} from "@/components/ui/form"
+  FormControl
+} from '@/components/ui/form'
 
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import axios from "axios"
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import axios from 'axios'
 
-import ImageUpload from "@/components/ui/image-upload"
-import { toast } from "react-hot-toast"
+import ImageUpload from '@/components/ui/image-upload'
+import { toast } from 'react-hot-toast'
 
-import * as z from "zod"
+import * as z from 'zod'
 
-import { CarouselImage } from "@prisma/client"
+import { CarouselImage } from '@prisma/client'
+import { Input } from '@/components/ui/input'
 
 interface BillboardClientProps {
   billboardData: BillboardColumn[]
@@ -36,13 +37,14 @@ interface BillboardClientProps {
 
 const formSchema = z.object({
   images: z.object({ imageUrl: z.string() }).array(),
+  imageCredits: z.string().optional()
 })
 
 type CarouselValues = z.infer<typeof formSchema>
 
 export const BillboardClient: React.FC<BillboardClientProps> = ({
   billboardData,
-  carouselImages,
+  carouselImages
 }) => {
   const router = useRouter()
   const params = useParams()
@@ -50,25 +52,25 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
   const initialData = carouselImages
     ? {
         images: carouselImages.map((image) => ({
-          imageUrl: image.imageUrl,
-        })),
+          imageUrl: image.imageUrl
+        }))
       }
     : {
-        images: [],
+        images: []
       }
   // console.log("initialData", initialData)
   const form = useForm<CarouselValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: initialData
   })
 
   const onSubmit = async (values: CarouselValues) => {
-    console.log("values: ", values)
+    console.log('values: ', values)
 
     // const { images } = values
     // console.log("images", images)
     if (values.images.length === 0) {
-      toast.error("You must upload at least one image.")
+      toast.error('You must upload at least one image.')
       return
     }
 
@@ -99,16 +101,9 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
       </div>
       <Separator />
 
-      <DataTable
-        columns={columns}
-        data={billboardData}
-        searchKey="label"
-      />
+      <DataTable columns={columns} data={billboardData} searchKey="label" />
       <Separator />
-      <Heading
-        title="Carousel"
-        description="Carousel of billboards"
-      />
+      <Heading title="Carousel" description="Carousel of billboards" />
       <Separator />
       <Form {...form}>
         <form
@@ -132,7 +127,7 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
                       field.onChange([
                         ...field.value.filter(
                           (current) => current.imageUrl !== url
-                        ),
+                        )
                       ])
                     }
                   />
@@ -141,25 +136,16 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
               </FormItem>
             )}
           />
-          <Button
-            type="submit"
-            variant="default"
-          >
+          <Button type="submit" variant="default">
             Save
           </Button>
         </form>
       </Form>
 
       <Separator />
-      <Heading
-        title="API"
-        description="API calls for billboards"
-      />
+      <Heading title="API" description="API calls for billboards" />
       <Separator />
-      <ApiList
-        entityName="billboards"
-        entityIdName="billboardId"
-      />
+      <ApiList entityName="billboards" entityIdName="billboardId" />
     </>
   )
 }

@@ -48,7 +48,7 @@ type AddressType = {
 type CartItemType = {
   name: string
   price: number
-  totalQuantity: number
+  cartQuantity: number
   variations?: ProductVariation[]
   bundles?: { minQuantity: number; discount: number }[]
 }
@@ -64,12 +64,12 @@ export async function POST(req: Request) {
   }: { address: AddressType; cartItems: CartItemType[] } = await req.json()
 
   const totalQuantity = cartItems.reduce((acc, cartItem) => {
-    const { totalQuantity } = cartItem
-    return acc + totalQuantity
+    const { cartQuantity } = cartItem
+    return acc + cartQuantity
   }, 0)
 
   const totalValue = cartItems.reduce((acc, cartItem) => {
-    const { price, totalQuantity, bundles } = cartItem
+    const { price, cartQuantity, bundles } = cartItem
 
     return acc + price * totalQuantity
   }, 0)

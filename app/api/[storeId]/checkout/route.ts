@@ -56,13 +56,13 @@ export async function OPTIONS(req: Request) {
 // These are the types for the request body that you will receive from the frontend
 
 type ProductVariationType = {
-  quantity: number
+  cartQuantity: number
   price: number
   name: string
 }
 
 type ItemType = {
-  quantity: number // required if variations is empty
+  cartQuantity: number // required if variations is empty
   price: number // required if variations is empty
   variations: Record<string, ProductVariationType>
   name: string
@@ -208,7 +208,7 @@ export async function POST(
       for (const dbProduct of dbProducts) {
         const cartItem = cartItems[dbProduct.id]
 
-        if (dbProduct.quantity < cartItem.quantity) {
+        if (dbProduct.quantity < cartItem.cartQuantity) {
           console.log(`Not enough stock for product: ${dbProduct.name}`)
           throw new Error(`Not enough stock for product: ${dbProduct.name}`)
         }
@@ -228,7 +228,7 @@ export async function POST(
                   )
                 }
 
-                if (dbVariation.quantity < variation.quantity) {
+                if (dbVariation.quantity < variation.cartQuantity) {
                   throw new Error(
                     `Insufficient stock for ${variation.name} variation of ${dbProduct.name}`
                   )
@@ -240,7 +240,7 @@ export async function POST(
                   },
                   data: {
                     quantity: {
-                      decrement: variation.quantity
+                      decrement: variation.cartQuantity
                     }
                   }
                 })
@@ -276,7 +276,7 @@ export async function POST(
                   ([variationId, variation]) => ({
                     product: { connect: { id: productId } },
                     price: variation.price,
-                    quantity: variation.quantity, // Quantity per variation
+                    quantity: variation.cartQuantity, // Quantity per variation
                     productVariation: { connect: { id: variationId } }
                   })
                 )
@@ -287,7 +287,7 @@ export async function POST(
                   {
                     product: { connect: { id: productId } },
                     price: item.price,
-                    quantity: item.quantity
+                    quantity: item.cartQuantity
                   }
                 ]
               }
@@ -338,7 +338,11 @@ export async function POST(
                     .reduce((acc, [_, variation]) => {
                       // Add a semicolon and space separator between variations
                       return (
-                        acc + variation.quantity + ' ' + variation.name + '; '
+                        acc +
+                        variation.cartQuantity +
+                        ' ' +
+                        variation.name +
+                        '; '
                       )
                     }, '')
                     .slice(0, -2) // Remove the last semicolon and space for cleanliness

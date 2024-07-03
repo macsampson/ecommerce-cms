@@ -15,7 +15,7 @@ const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
       color: true
     },
     orderBy: {
-      createdAt: 'desc'
+      quantity: 'desc'
     }
   })
 

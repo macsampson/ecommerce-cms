@@ -294,7 +294,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       type="number"
                       disabled={loading}
                       placeholder="9.99"
-                      {...field}
+                      value={field.value.toFixed(2)}
                     />
                   </FormControl>
                   <FormMessage />

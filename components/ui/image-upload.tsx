@@ -1,24 +1,26 @@
-"use client"
+'use client'
 
-import { CldUploadWidget } from "next-cloudinary"
-import { useEffect, useState } from "react"
+import { CldUploadWidget } from 'next-cloudinary'
+import { useEffect, useState } from 'react'
 
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import { ImagePlus, Trash } from "lucide-react"
+import { Button } from '@/components/ui/button'
+import Image from 'next/image'
+import { ImagePlus, Trash } from 'lucide-react'
+import { Input } from './input'
+import { FormField } from './form'
 
 interface ImageUploadProps {
   disabled?: boolean
-  onChange: (value: string) => void
+  onChange: (value: { id?: string; url: string; credit: string }[]) => void
   onRemove: (value: string) => void
-  value: string[]
+  value: { url: string; credit: string }[]
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   disabled,
   onChange,
   onRemove,
-  value,
+  value
 }) => {
   const [isMounted, setIsMounted] = useState(false)
 
@@ -27,7 +29,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   }, [])
 
   const onUpload = (result: any) => {
-    onChange(result.info.secure_url)
+    const newImage = { url: result.info.secure_url, credit: '' }
+    onChange([...value, newImage])
+  }
+
+  const handleCreditChange = (url: string, credit: string) => {
+    const updatedValue = value.map((item) =>
+      item.url === url ? { ...item, credit } : item
+    )
+    onChange(updatedValue)
   }
 
   if (!isMounted) {
@@ -36,35 +46,43 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-4">
-        {value.map((url) => (
-          <div
-            key={url}
-            className="relative w-[200px] h-[200px] rounded-md overflow-hidden"
-          >
-            <div className="z-10 absolute top-2 right-2">
-              <Button
-                type="button"
-                onClick={() => onRemove(url)}
-                variant="destructive"
-                size="sm"
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
+      <div className="mb-4 flex items-center gap-5">
+        <div className="border-2 flex w-full flex-wrap gap-5 p-5 rounded-md">
+          {value.map(({ url, credit }) => (
+            <div
+              key={url}
+              className="relative flex flex-col rounded-md overflow-hidden border p-2"
+            >
+              <div className="relative">
+                <Button
+                  className="z-10 absolute top-2 right-2"
+                  type="button"
+                  onClick={() => onRemove(url)}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+                <Image
+                  // sizes="(max-width: 200px) 100vw, 200px"
+                  width={300}
+                  height={300}
+                  className="object-cover mb-2 rounded-md"
+                  alt="Image"
+                  src={url}
+                />
+              </div>
+              <Input
+                className="mt-auto"
+                placeholder="credit?"
+                value={credit}
+                onChange={(e) => handleCreditChange(url, e.target.value)}
+              />
             </div>
-            <Image
-              fill
-              className="object-cover"
-              alt="Image"
-              src={url}
-            />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-      <CldUploadWidget
-        onUpload={onUpload}
-        uploadPreset="ivwjxqjz"
-      >
+      <CldUploadWidget onUpload={onUpload} uploadPreset="ivwjxqjz">
         {({ open }) => {
           const onClick = () => {
             open()

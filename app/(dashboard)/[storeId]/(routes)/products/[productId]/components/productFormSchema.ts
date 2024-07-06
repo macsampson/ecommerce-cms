@@ -2,7 +2,13 @@ import * as z from 'zod'
 
 export const formSchema = z.object({
   name: z.string().min(1),
-  images: z.object({ url: z.string() }).array(),
+  images: z
+    .object({
+      id: z.string().optional(),
+      url: z.string(),
+      credit: z.string()
+    })
+    .array(),
   price: z.coerce.number().min(1),
   quantity: z.coerce.number().min(0),
   description: z.string().min(1),

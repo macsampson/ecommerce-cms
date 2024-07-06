@@ -72,7 +72,7 @@ export async function PATCH(
       isArchived
     } = body
 
-    console.log('body: ', body)
+    // console.log('images', images)
 
     if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
 
@@ -113,12 +113,12 @@ export async function PATCH(
     })
 
     // Assign UUIDs to images and bundles if they don't already have them
-    const imagesWithUuid = images.map(
-      (image: { url: string; id?: string }) => ({
-        ...image,
-        id: image.id || Math.random().toString(36).substring(7)
-      })
-    )
+    // const imagesWithUuid = images.map(
+    //   (image: { url: string; id?: string }) => ({
+    //     ...image,
+    //     id: image.id || Math.random().toString(36).substring(7)
+    //   })
+    // )
 
     const bundlesWithUuid = bundles.map(
       (bundle: { minQuantity: number; discount: number; id?: string }) => ({
@@ -127,7 +127,7 @@ export async function PATCH(
       })
     )
 
-    console.log('existingProduct', existingProduct)
+    // console.log('existingProduct', existingProduct)
 
     if (!existingProduct) {
       return new NextResponse('Product not found', { status: 404 })
@@ -173,14 +173,63 @@ export async function PATCH(
       }
     })
 
+    const existingImageIds = images
+      .filter((image: { id?: string }) => image.id)
+      .map((image: { id?: string }) => image.id) as string[]
+
+    // Delete images that are no longer in the array
     await prismadb.image.deleteMany({
       where: {
         productId: params.productId,
         id: {
-          notIn: imagesWithUuid.map((image: { id: string }) => image.id)
+          notIn: existingImageIds
         }
       }
     })
+
+    // get all images and console log
+    const allImages = await prismadb.image.findMany({
+      where: {
+        id: {
+          in: existingImageIds
+        }
+      }
+    })
+
+    // console.log('allImages', allImages)
+
+    // Update existing images
+    for (const image of images) {
+      if (image.id) {
+        await prismadb.image.update({
+          where: { id: image.id },
+          data: {
+            credit: image.credit
+          }
+        })
+      }
+    }
+
+    // Create new images
+    const newImages = images.filter((image: { id?: string }) => !image.id)
+    if (newImages.length > 0) {
+      await prismadb.image.createMany({
+        data: newImages.map((image: { url: string; credit: string }) => ({
+          url: image.url,
+          credit: image.credit,
+          productId: params.productId
+        }))
+      })
+    }
+
+    // await prismadb.image.deleteMany({
+    //   where: {
+    //     productId: params.productId,
+    //     id: {
+    //       notIn: imagesWithUuid.map((image: { id: string }) => image.id)
+    //     }
+    //   }
+    // })
 
     await prismadb.bundle.deleteMany({
       where: {
@@ -232,15 +281,18 @@ export async function PATCH(
     }
 
     // Create new images
-    if (imagesWithUuid.length > 0) {
-      await prismadb.image.createMany({
-        data: imagesWithUuid.map((image: { url: string; id: string }) => ({
-          url: image.url,
-          id: image.id,
-          productId: params.productId
-        }))
-      })
-    }
+    // if (imagesWithUuid.length > 0) {
+    //   await prismadb.image.createMany({
+    //     data: imagesWithUuid.map(
+    //       (image: { url: string; id: string; credit: string }) => ({
+    //         url: image.url,
+    //         id: image.id,
+    //         credit: image.credit,
+    //         productId: params.productId
+    //       })
+    //     )
+    //   })
+    // }
 
     const updatedProduct = await prismadb.product.findUnique({
       where: {

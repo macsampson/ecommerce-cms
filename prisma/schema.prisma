@@ -128,57 +128,38 @@ model Product {
 }
 
 model ProductVariation {
-  id          String       @id @default(uuid())
-  productId   String       @map("product_id")
-  name        String       @map("name")
-  price       Decimal      @map("price") @db.Decimal(10, 2)
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  quantity    Int          @default(0) @map("quantity")
-  // bundleItems BundleItem[]
-  orderItems  OrderItem[]
-  product     Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id         String      @id @default(uuid())
+  productId  String      @map("product_id")
+  name       String      @map("name")
+  price      Decimal     @map("price") @db.Decimal(10, 2)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  quantity   Int         @default(0) @map("quantity")
+  orderItems OrderItem[]
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("product_variation")
 }
 
 model Bundle {
-  id          String       @id @default(uuid())
-  minQuantity Int          @map("min_quantity")
-  discount    Decimal      @map("discount") @db.Decimal(5, 2) @default(0.00)
-  productId   String       @map("product_id")
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  product     Product      @relation(fields: [productId], references: [id])
-  // bundleItems BundleItem[]
+  id          String   @id @default(uuid())
+  minQuantity Int      @map("min_quantity")
+  discount    Decimal  @default(0.00) @map("discount") @db.Decimal(5, 2)
+  productId   String   @map("product_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  product     Product  @relation(fields: [productId], references: [id])
 
   @@index([productId])
   @@map("bundle")
 }
 
-// model BundleItem {
-//   id                 String           @id @default(uuid())
-//   bundleId           String?          @map("bundle_id")
-//   productVariationId String           @map("product_variation_id")
-//   orderItemId        String           @map("order_item_id")
-//   quantity           Int              @default(1) @map("quantity")
-//   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-//   updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-//   bundle             Bundle?          @relation(fields: [bundleId], references: [id])
-//   orderItem          OrderItem        @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-//   productVariation   ProductVariation @relation(fields: [productVariationId], references: [id], onDelete: Cascade)
-
-//   @@index([bundleId])
-//   @@index([orderItemId])
-//   @@index([productVariationId])
-//   @@map("bundle_item")
-// }
-
 model Image {
   id        String   @id @default(uuid())
   productId String   @map("product_id")
   url       String   @map("url")
+  credit    String   @default("") @map("credit")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -200,7 +181,6 @@ model Order {
   isAbandoned     Boolean     @default(false) @map("is_abandoned")
   store           Store       @relation(fields: [storeId], references: [id])
   orderItems      OrderItem[]
-  shipping        Shipping?
 
   @@index([storeId])
   @@map("order")
@@ -216,7 +196,6 @@ model OrderItem {
   productVariationId String?           @map("product_variation_id")
   price              Decimal           @default(0.00) @map("price") @db.Decimal(10, 2)
   name               String            @default("") @map("name")
-  // bundleItems        BundleItem[]
   order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product            Product           @relation(fields: [productId], references: [id])
   productVariation   ProductVariation? @relation(fields: [productVariationId], references: [id])
@@ -225,20 +204,4 @@ model OrderItem {
   @@index([productId])
   @@index([productVariationId])
   @@map("order_item")
-}
-
-model Shipping {
-  id                String    @id
-  carrier           String    @map("carrier")
-  serviceLevel      String    @map("service_level")
-  rate              Decimal   @map("rate")
-  trackingNumber    String?   @map("tracking_number")
-  estimatedDelivery DateTime? @map("estimated_delivery") @db.Timestamptz(6)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  orderId           String    @unique @map("order_id")
-  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-  @@map("shipping")
 }

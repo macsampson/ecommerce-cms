@@ -1,37 +1,52 @@
-import prismadb from "@/lib/prismadb"
-import { ProductForm } from "./components/product-form"
+import prismadb from '@/lib/prismadb'
+import { ProductForm } from './components/product-form'
 
 const ProductPage = async ({
-  params,
+  params
 }: {
   params: { productId: string; storeId: string }
 }) => {
   const product = await prismadb.product.findUnique({
     where: {
-      id: params.productId,
+      id: params.productId
     },
     include: {
       images: true,
       variations: true,
-      bundles: true,
-    },
+      bundles: true
+    }
   })
 
   const categories = await prismadb.category.findMany({
     where: {
-      storeId: params.storeId,
-    },
+      storeId: params.storeId
+    }
   })
   const sizes = await prismadb.size.findMany({
     where: {
-      storeId: params.storeId,
-    },
+      storeId: params.storeId
+    }
   })
   const colors = await prismadb.color.findMany({
     where: {
-      storeId: params.storeId,
-    },
+      storeId: params.storeId
+    }
   })
+
+  const convertedProduct = product
+    ? {
+        ...product,
+        price: product.price.toNumber(), // Convert Decimal to number
+        variations: product.variations.map((variation) => ({
+          ...variation,
+          price: variation.price.toNumber() // Convert Decimal to number
+        })),
+        bundles: product.bundles.map((bundle) => ({
+          ...bundle,
+          discount: bundle.discount.toNumber() // Convert Decimal to number
+        }))
+      }
+    : null
 
   // console.log(product)
   return (
@@ -41,7 +56,7 @@ const ProductPage = async ({
           categories={categories}
           sizes={sizes}
           colors={colors}
-          initialData={product}
+          initialData={convertedProduct}
         />
       </div>
     </div>

@@ -15,6 +15,7 @@ export const formatPriceDisplay = (price: number) => {
   return `$${price.toFixed(2)}`
 }
 
-export const parsePriceInput = (input: string) => {
-  return parseFloat(input.replace(/[^0-9.-]+/g, ''))
+export const parsePriceInput = (value: string) => {
+  const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''))
+  return isNaN(parsed) ? 0 : parsed
 }

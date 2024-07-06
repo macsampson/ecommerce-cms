@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react'
 import axios from 'axios'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'react-hot-toast'
 import { Trash } from 'lucide-react'
@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
+import PriceInput from '@/components/ui/priceInput'
 import { Separator } from '@/components/ui/separator'
 import { Heading } from '@/components/ui/heading'
 import { AlertModal } from '@/components/modals/alert-modal'
@@ -51,14 +52,15 @@ import {
   Bundle
 } from '@prisma/client'
 
-import { formatPriceDisplay, parsePriceInput } from '@/lib/utils'
+import { formatter, formatPriceDisplay, parsePriceInput } from '@/lib/utils'
 
 interface ProductFormProps {
   initialData:
-    | (Product & {
+    | (Omit<Product, 'price'> & {
+        price: number
         images: Image[]
-        variations: ProductVariation[]
-        bundles: Bundle[]
+        variations: (Omit<ProductVariation, 'price'> & { price: number })[]
+        bundles: (Omit<Bundle, 'discount'> & { discount: number })[]
       })
     | null
   categories: Category[]
@@ -79,6 +81,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const [images, setImages] = useState<
+    { id?: string; url: string; credit: string }[]
+  >(
+    initialData?.images.map((img) => ({
+      id: img.id,
+      url: img.url,
+      credit: img.credit
+    })) || []
+  )
 
   const [variations, setVariations] = useState<VariationType[]>(
     initialData?.variations.map((v) => ({
@@ -124,7 +136,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           initialData?.bundles.map((bundle) => ({
             ...bundle,
             minQuantity: parseInt(String(bundle.minQuantity)),
-            discount: parseFloat(String(bundle.discount))
+            discount: parseInt(String(bundle.discount))
+          })) || [],
+        images:
+          initialData?.images.map((image) => ({
+            ...image,
+            id: image.id,
+            url: image.url,
+            credit: image.credit
           })) || []
       }
     : {
@@ -142,13 +161,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         isArchived: false
       }
 
+  // console.log('defaultValues', defaultValues)
+
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     form.setValue('quantity', totalVariationQuantity)
     form.setValue('variations', variations)
+    form.setValue('images', images)
     // console.log('variations', variations)
-  }, [variations])
+    // console.log('images', images)
+  }, [variations, images])
 
   useEffect(() => {
     form.setValue('bundles', bundles)
@@ -232,16 +255,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormLabel>Images</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={field.value.map((image) => image.url)}
+                    value={field.value}
                     disabled={loading}
-                    onChange={(url) =>
-                      field.onChange([...field.value, { url }])
-                    }
-                    onRemove={(url) =>
-                      field.onChange([
-                        ...field.value.filter((current) => current.url !== url)
-                      ])
-                    }
+                    onChange={(newImages) => {
+                      field.onChange(newImages)
+                      setImages(newImages)
+                    }}
+                    onRemove={(url) => {
+                      const updatedImages = field.value.filter(
+                        (img) => img.url !== url
+                      )
+                      field.onChange(updatedImages)
+                      setImages(updatedImages)
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -283,19 +309,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
+            <Controller
               name="price"
+              control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Price</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      disabled={loading}
-                      placeholder="9.99"
-                      value={field.value.toFixed(2)}
-                    />
+                    <PriceInput field={field} loading={false} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

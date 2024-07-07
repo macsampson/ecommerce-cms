@@ -39,7 +39,8 @@ import {
   formSchema,
   ProductFormValues,
   VariationType,
-  BundleType
+  BundleType,
+  ImageType
 } from './productFormSchema'
 
 import {
@@ -82,15 +83,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const [images, setImages] = useState<
-    { id?: string; url: string; credit: string }[]
-  >(
+  const [images, setImages] = useState<ImageType[]>(
     initialData?.images.map((img) => ({
       id: img.id,
       url: img.url,
-      credit: img.credit
+      credit: img.credit,
+      ordering: img.ordering
     })) || []
   )
+
+  console.log('images', images)
 
   const [variations, setVariations] = useState<VariationType[]>(
     initialData?.variations.map((v) => ({
@@ -147,7 +149,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             ...image,
             id: image.id,
             url: image.url,
-            credit: image.credit
+            credit: image.credit,
+            ordering: image.ordering
           })) || []
       }
     : {
@@ -181,7 +184,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       'quantity',
       totalVariationQuantity ? totalVariationQuantity : initialQuantity
     )
-    console.log('totalVariationQuantity', totalVariationQuantity)
+    // console.log('totalVariationQuantity', totalVariationQuantity)
   }, [variations])
 
   useEffect(() => {
@@ -195,7 +198,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   })
 
   const onSubmit = async (data: ProductFormValues) => {
-    // console.log('data', data)
+    console.log('data', data)
     try {
       setLoading(true)
       if (initialData) {
@@ -207,7 +210,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         await axios.post(`/api/${params.storeId}/products`, data)
       }
       router.refresh()
-      // router.push(`/${params.storeId}/products`)
+      router.push(`/${params.storeId}/products`)
       toast.success(toastMessage)
     } catch (error: any) {
       toast.error('Something went wrong.')

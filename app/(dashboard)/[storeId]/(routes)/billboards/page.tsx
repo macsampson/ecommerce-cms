@@ -1,16 +1,16 @@
-import prismadb from "@/lib/prismadb"
-import { BillboardClient } from "./components/client"
-import { BillboardColumn } from "./components/columns"
-import { format } from "date-fns"
+import prismadb from '@/lib/prismadb'
+import { BillboardClient } from './components/client'
+import { BillboardColumn } from './components/columns'
+import { format } from 'date-fns'
 
 const BillboardsPage = async ({ params }: { params: { storeId: string } }) => {
   const billboards = await prismadb.billboard.findMany({
     where: {
-      storeId: params.storeId,
+      storeId: params.storeId
     },
     orderBy: {
-      createdAt: "desc",
-    },
+      createdAt: 'desc'
+    }
   })
 
   const formattedBillboards: BillboardColumn[] = billboards.map(
@@ -18,15 +18,17 @@ const BillboardsPage = async ({ params }: { params: { storeId: string } }) => {
       id: billboard.id,
       label: billboard.label,
       landingPage: billboard.landingPage,
-      createdAt: format(billboard.createdAt, "MMMM do, yyyy"),
+      createdAt: format(billboard.createdAt, 'MMMM do, yyyy')
     })
   )
 
   const carouselImages = await prismadb.carouselImage.findMany({
     where: {
-      storeId: params.storeId,
-    },
+      storeId: params.storeId
+    }
   })
+
+  // console.log('carouselImages', carouselImages)
 
   // const formattedCarouselImages = carouselImages.map((image) => ({
   //   order: image.order,

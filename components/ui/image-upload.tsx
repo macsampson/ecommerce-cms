@@ -11,11 +11,14 @@ import { FormField } from './form'
 
 interface ImageUploadProps {
   disabled?: boolean
-  onChange: (value: { id?: string; url: string; credit: string }[]) => void
+  onChange: (
+    value: { id?: string; url: string; credit: string; ordering: number }[]
+  ) => void
   onRemove: (value: string) => void
   value: {
     url: string
     credit: string
+    ordering: number
   }[]
 }
 
@@ -32,7 +35,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   }, [])
 
   const onUpload = (result: any) => {
-    const newImage = { url: result.info.secure_url, credit: '' }
+    const newImage = { url: result.info.secure_url, credit: '', ordering: 0 }
     onChange([...value, newImage])
   }
 
@@ -44,17 +47,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     onChange(updatedValue)
   }
 
+  const handleOrderingChange = (url: string, ordering: number) => {
+    const updatedValue = value.map((item) =>
+      item.url === url ? { ...item, ordering } : item
+    )
+    // console.log('updatedValue', updatedValue)
+    onChange(updatedValue)
+  }
+
   if (!isMounted) {
     return null
   }
 
-  // console.log('value', value)
+  console.log('value', value)
 
   return (
     <div>
       <div className="mb-4 flex items-center gap-5">
         <div className="border-2 flex w-full flex-wrap gap-5 p-5 rounded-md">
-          {value.map(({ url, credit }) => (
+          {value.map(({ url, credit, ordering }) => (
             <div
               key={url}
               className="relative flex flex-col rounded-md overflow-hidden border p-2"
@@ -78,12 +89,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   src={url}
                 />
               </div>
-              <Input
-                className="mt-auto"
-                placeholder="credit?"
-                value={credit}
-                onChange={(e) => handleCreditChange(url, e.target.value)}
-              />
+              <div className="flex space-x-2">
+                <Input
+                  type="number"
+                  className="w-1/5"
+                  placeholder="order"
+                  value={ordering}
+                  onChange={(e) =>
+                    handleOrderingChange(url, Number(e.target.value))
+                  }
+                />
+                <Input
+                  className="w-1/2"
+                  placeholder="credit?"
+                  value={credit}
+                  onChange={(e) => handleCreditChange(url, e.target.value)}
+                />
+              </div>
             </div>
           ))}
         </div>

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/form'
 import ImageUpload from '@/components/ui/image-upload'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ImageType } from '../../../products/[productId]/components/productFormSchema'
 
 interface BillboardFormProps {
   initialData: Billboard | null
@@ -54,6 +55,8 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
       ? [{ url: initialData.imageUrl, credit: '' }]
       : [{ url: '', credit: '' }]
   )
+
+  // TODO: add a proper ordering for carousel images
 
   // console.log('images', images)
 
@@ -146,7 +149,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
                 <FormLabel>Background Image</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={[{ url: field.value, credit: '' }]}
+                    value={[{ url: field.value, credit: '', ordering: 0 }]}
                     disabled={loading}
                     onChange={(url) => field.onChange(url, '')}
                     onRemove={() => field.onChange('')}

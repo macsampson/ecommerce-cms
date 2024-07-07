@@ -137,13 +137,13 @@ export async function PATCH(
       (variation: { id: string }) => variation.id
     )
 
-    console.log('variationsToUpdate', variationsToUpdate)
+    // console.log('variationsToUpdate', variationsToUpdate)
 
     const variationsToCreate = variations.filter(
       (variation: { id: string }) => !variation.id
     )
 
-    console.log('variationsToCreate', variationsToCreate)
+    // console.log('variationsToCreate', variationsToCreate)
 
     await prismadb.product.update({
       where: {
@@ -204,7 +204,8 @@ export async function PATCH(
         await prismadb.image.update({
           where: { id: image.id },
           data: {
-            credit: image.credit
+            credit: image.credit,
+            ordering: image.ordering
           }
         })
       }

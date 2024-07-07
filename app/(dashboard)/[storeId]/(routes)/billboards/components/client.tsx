@@ -28,6 +28,9 @@ import { toast } from 'react-hot-toast'
 import * as z from 'zod'
 
 import { CarouselImage } from '@prisma/client'
+
+import { CarouselForm } from './carouselForm'
+
 import { Input } from '@/components/ui/input'
 
 interface BillboardClientProps {
@@ -36,8 +39,12 @@ interface BillboardClientProps {
 }
 
 const formSchema = z.object({
-  images: z.object({ imageUrl: z.string() }).array(),
-  imageCredits: z.string().optional()
+  images: z
+    .object({
+      imageUrl: z.string(),
+      imageCredit: z.string()
+    })
+    .array()
 })
 
 type CarouselValues = z.infer<typeof formSchema>
@@ -52,12 +59,15 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
   const initialData = carouselImages
     ? {
         images: carouselImages.map((image) => ({
-          imageUrl: image.imageUrl
+          imageUrl: image.imageUrl,
+          imageCredit: image.imageCredit
         }))
       }
     : {
         images: []
       }
+
+  // console.log('initialData', initialData)
   // console.log("initialData", initialData)
   const form = useForm<CarouselValues>({
     resolver: zodResolver(formSchema),
@@ -65,7 +75,7 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
   })
 
   const onSubmit = async (values: CarouselValues) => {
-    console.log('values: ', values)
+    // console.log('values: ', values)
 
     // const { images } = values
     // console.log("images", images)
@@ -103,44 +113,8 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
 
       <DataTable columns={columns} data={billboardData} searchKey="label" />
       <Separator />
-      <Heading title="Carousel" description="Carousel of billboards" />
-      <Separator />
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-          <FormField
-            control={form.control}
-            name="images"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Images</FormLabel>
-                <FormControl>
-                  <ImageUpload
-                    value={field.value.map((image) => image.imageUrl)}
-                    // disabled={loading}
-                    onChange={(url) =>
-                      field.onChange([...field.value, { imageUrl: url }])
-                    }
-                    onRemove={(url) =>
-                      field.onChange([
-                        ...field.value.filter(
-                          (current) => current.imageUrl !== url
-                        )
-                      ])
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" variant="default">
-            Save
-          </Button>
-        </form>
-      </Form>
+
+      <CarouselForm initialImages={carouselImages} />
 
       <Separator />
       <Heading title="API" description="API calls for billboards" />

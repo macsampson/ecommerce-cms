@@ -1,7 +1,8 @@
-import prismadb from "@/lib/prismadb"
-import { NextResponse } from "next/server"
+import prismadb from '@/lib/prismadb'
+import { NextResponse } from 'next/server'
 
-import { auth } from "@clerk/nextjs"
+import { auth } from '@clerk/nextjs'
+import { CarouselImage } from '@prisma/client'
 
 export async function GET(
   req: Request,
@@ -9,19 +10,19 @@ export async function GET(
 ) {
   try {
     if (!params.storeId) {
-      return new NextResponse("Store ID is required", { status: 400 })
+      return new NextResponse('Store ID is required', { status: 400 })
     }
 
     const carouselImages = await prismadb.carouselImage.findMany({
       where: {
-        storeId: params.storeId,
-      },
+        storeId: params.storeId
+      }
     })
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log("[CAROUSEL_IMAGES_GET]", error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.log('[CAROUSEL_IMAGES_GET]', error)
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
@@ -36,29 +37,30 @@ export async function POST(
     const { images } = body
     // console.log("image urls: ", images)
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!images)
-      return new NextResponse("Image URL is required", { status: 400 })
+      return new NextResponse('Image URL is required', { status: 400 })
 
     await prismadb.carouselImage.deleteMany({
       where: {
-        storeId: params.storeId,
-      },
+        storeId: params.storeId
+      }
     })
 
     // create many carousel images
     const carouselImages = await prismadb.carouselImage.createMany({
-      data: images.map((image: { imageUrl: string }) => ({
+      data: images.map((image: CarouselImage) => ({
         imageUrl: image.imageUrl,
         storeId: params.storeId,
-      })),
+        imageCredit: image.imageCredit
+      }))
     })
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log("[CAROUSEL_IMAGES_POST]", error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.log('[CAROUSEL_IMAGES_POST]', error)
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
@@ -73,37 +75,38 @@ export async function PATCH(
     const { images } = body
     // console.log("image urls: ", images)
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!images)
-      return new NextResponse("Image URL is required", { status: 400 })
+      return new NextResponse('Image URL is required', { status: 400 })
 
     // delete all carousel images
     await prismadb.carouselImage.deleteMany({
       where: {
-        storeId: params.storeId,
-      },
+        storeId: params.storeId
+      }
     })
 
     // create many carousel images with imageUrl and storeId
     const carouselImages = await prismadb.carouselImage.createMany({
-      data: images.map((image: { imageUrl: string }) => ({
+      data: images.map((image: CarouselImage) => ({
         imageUrl: image.imageUrl,
         storeId: params.storeId,
-      })),
+        imageCredit: image.imageCredit
+      }))
     })
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log("[CAROUSEL_IMAGES_PATCH]", error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.log('[CAROUSEL_IMAGES_PATCH]', error)
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 }
 
 export async function OPTIONS() {

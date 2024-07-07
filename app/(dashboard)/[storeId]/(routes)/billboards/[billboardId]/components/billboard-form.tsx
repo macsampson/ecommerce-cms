@@ -1,20 +1,20 @@
-"use client"
+'use client'
 
-import * as z from "zod"
-import { Billboard } from "@prisma/client"
-import { Trash } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "react-hot-toast"
-import axios from "axios"
-import { useParams, useRouter } from "next/navigation"
+import * as z from 'zod'
+import { Billboard } from '@prisma/client'
+import { Trash } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'react-hot-toast'
+import axios from 'axios'
+import { useParams, useRouter } from 'next/navigation'
 
-import { Input } from "@/components/ui/input"
-import { AlertModal } from "@/components/modals/alert-modal"
-import { Heading } from "@/components/ui/heading"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Input } from '@/components/ui/input'
+import { AlertModal } from '@/components/modals/alert-modal'
+import { Heading } from '@/components/ui/heading'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import {
   Form,
   FormControl,
@@ -22,10 +22,10 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import ImageUpload from "@/components/ui/image-upload"
-import { Checkbox } from "@/components/ui/checkbox"
+  FormMessage
+} from '@/components/ui/form'
+import ImageUpload from '@/components/ui/image-upload'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface BillboardFormProps {
   initialData: Billboard | null
@@ -35,33 +35,42 @@ const formSchema = z.object({
   label: z.string().optional(),
   imageUrl: z
     .string()
-    .min(1, "Billboard description must be at least 1 character long."),
-  landingPage: z.boolean().default(false),
+    .min(1, 'Billboard description must be at least 1 character long.'),
+  landingPage: z.boolean().default(false)
 })
 
 type BillboardFormValues = z.infer<typeof formSchema>
 
 export const BillboardForm: React.FC<BillboardFormProps> = ({
-  initialData,
+  initialData
 }) => {
   const params = useParams()
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [images, setImages] = useState<{ url: string; credit: string }[]>(
+    initialData
+      ? [{ url: initialData.imageUrl, credit: '' }]
+      : [{ url: '', credit: '' }]
+  )
 
-  const title = initialData ? "Edit billboard" : "Create billboard"
-  const description = initialData ? "Edit a billboard" : "Add a new billboard"
-  const toastMessage = initialData ? "Billboard updated." : "Billboard created."
-  const action = initialData ? "Save changes" : "Create"
+  // console.log('images', images)
+
+  const title = initialData ? 'Edit billboard' : 'Create billboard'
+  const description = initialData ? 'Edit a billboard' : 'Add a new billboard'
+  const toastMessage = initialData ? 'Billboard updated.' : 'Billboard created.'
+  const action = initialData ? 'Save changes' : 'Create'
+
+  // console.log('initialData', initialData)
 
   const form = useForm<BillboardFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-      label: "",
-      imageUrl: "",
-      landingPage: false,
-    },
+      label: '',
+      imageUrl: '',
+      landingPage: false
+    }
   })
 
   const onSubmit = async (data: BillboardFormValues) => {
@@ -79,7 +88,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
       toast.success(toastMessage)
       router.push(`/${params.storeId}/billboards`)
     } catch (error) {
-      toast.error("Something went wrong.")
+      toast.error('Something went wrong.')
     } finally {
       setLoading(false)
     }
@@ -93,9 +102,9 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
       )
       router.refresh()
       router.push(`/${params.storeId}/billboards`)
-      toast.success("Billboard deleted.")
+      toast.success('Billboard deleted.')
     } catch (error) {
-      toast.error("Make sure you removed all categories using this billboard.")
+      toast.error('Make sure you removed all categories using this billboard.')
     } finally {
       setLoading(false)
       setOpen(false)
@@ -111,10 +120,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
         loading={loading}
       />
       <div className="flex items-center justify-between">
-        <Heading
-          title={title}
-          description={description}
-        />
+        <Heading title={title} description={description} />
         {initialData && (
           <Button
             disabled={loading}
@@ -140,10 +146,10 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
                 <FormLabel>Background Image</FormLabel>
                 <FormControl>
                   <ImageUpload
-                    value={field.value ? [field.value] : []}
+                    value={[{ url: field.value, credit: '' }]}
                     disabled={loading}
-                    onChange={(url) => field.onChange(url)}
-                    onRemove={() => field.onChange("")}
+                    onChange={(url) => field.onChange(url, '')}
+                    onRemove={() => field.onChange('')}
                   />
                 </FormControl>
                 <FormMessage />
@@ -190,11 +196,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
               )}
             />
           </div>
-          <Button
-            disabled={loading}
-            className="ml-auto"
-            type="submit"
-          >
+          <Button disabled={loading} className="ml-auto" type="submit">
             {action}
           </Button>
         </form>

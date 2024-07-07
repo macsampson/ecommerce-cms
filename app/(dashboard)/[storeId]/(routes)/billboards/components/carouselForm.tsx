@@ -33,6 +33,8 @@ const formSchema = z.object({
     .array()
 })
 
+// TODO: add ordering for carousel images
+
 type CarouselValues = z.infer<typeof formSchema>
 
 interface CarouselFormProps {
@@ -114,7 +116,8 @@ export const CarouselForm: React.FC<CarouselFormProps> = ({
                   <ImageUpload
                     value={field.value.map((image) => ({
                       url: image.imageUrl,
-                      credit: image.imageCredit
+                      credit: image.imageCredit,
+                      ordering: 0
                     }))}
                     onChange={handleImageChange}
                     onRemove={handleImageRemove}

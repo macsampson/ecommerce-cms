@@ -13,7 +13,10 @@ interface ImageUploadProps {
   disabled?: boolean
   onChange: (value: { id?: string; url: string; credit: string }[]) => void
   onRemove: (value: string) => void
-  value: { url: string; credit: string }[]
+  value: {
+    url: string
+    credit: string
+  }[]
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -37,12 +40,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const updatedValue = value.map((item) =>
       item.url === url ? { ...item, credit } : item
     )
+    // console.log('updatedValue', updatedValue)
     onChange(updatedValue)
   }
 
   if (!isMounted) {
     return null
   }
+
+  // console.log('value', value)
 
   return (
     <div>

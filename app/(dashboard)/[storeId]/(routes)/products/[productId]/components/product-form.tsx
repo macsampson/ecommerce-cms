@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, use } from 'react'
 import axios from 'axios'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -109,21 +109,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     })) || []
   )
 
-  const totalVariationQuantity = variations.reduce(
-    (acc, variation) => acc + variation.quantity,
-    0
-  )
-
   const title = initialData ? 'Edit product' : 'Create product'
   const formDescription = initialData ? 'Edit a product.' : 'Add a new product'
   const toastMessage = initialData ? 'Product updated.' : 'Product created.'
   const action = initialData ? 'Save changes' : 'Create'
 
+  const totalVariationQuantity = variations.reduce(
+    (acc, variation) => acc + variation.quantity,
+    0
+  )
+
+  const initialQuantity = initialData?.quantity || 0
+
+  // console.log('initialQuantity', initialQuantity)
+
   const defaultValues = initialData
     ? {
         ...initialData,
         price: parseFloat(String(initialData?.price)),
-        quantity: totalVariationQuantity || initialData.quantity,
+        quantity: initialQuantity,
         colorId: initialData.colorId || undefined,
         sizeId: initialData.sizeId || undefined,
         variations:
@@ -166,12 +170,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    form.setValue('quantity', totalVariationQuantity)
-    form.setValue('variations', variations)
     form.setValue('images', images)
     // console.log('variations', variations)
     // console.log('images', images)
-  }, [variations, images])
+  }, [images])
+
+  useEffect(() => {
+    form.setValue('variations', variations)
+    form.setValue(
+      'quantity',
+      totalVariationQuantity ? totalVariationQuantity : initialQuantity
+    )
+    console.log('totalVariationQuantity', totalVariationQuantity)
+  }, [variations])
 
   useEffect(() => {
     form.setValue('bundles', bundles)
@@ -347,19 +358,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               control={form.control}
               name="variations"
               render={({ field }) => {
-                const addVariationHandler = (variation: VariationType) => {
-                  const newVariations = [...field.value, variation]
-                  field.onChange(newVariations)
-                  setVariations(newVariations)
-                }
-
                 return (
                   <FormItem>
                     <FormLabel>Variations</FormLabel>
                     <FormControl>
                       <>
                         <VariationInput
-                          onAdd={addVariationHandler}
+                          onAdd={(variation: VariationType) => {
+                            const newVariations = [...field.value, variation]
+                            field.onChange(newVariations)
+                            setVariations(newVariations)
+                          }}
                           variations={variations}
                           setVariations={setVariations}
                         />

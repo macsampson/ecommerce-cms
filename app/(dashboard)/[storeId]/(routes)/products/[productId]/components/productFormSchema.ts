@@ -6,7 +6,8 @@ export const formSchema = z.object({
     .object({
       id: z.string().optional(),
       url: z.string(),
-      credit: z.string()
+      credit: z.string(),
+      ordering: z.coerce.number().min(0)
     })
     .array(),
   price: z.coerce.number().min(1),
@@ -48,4 +49,11 @@ export type BundleType = {
   id?: string
   minQuantity: number
   discount: number
+}
+
+export type ImageType = {
+  id?: string
+  url: string
+  credit: string
+  ordering: number
 }

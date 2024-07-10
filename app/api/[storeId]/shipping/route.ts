@@ -46,6 +46,7 @@ type AddressType = {
 }
 
 type CartItemType = {
+  productId: string
   name: string
   price: number
   cartQuantity: number
@@ -78,34 +79,27 @@ export async function POST(req: Request) {
   const totalWeight = totalQuantity * 0.01
 
   // create line items for shippo from cart items
-  //   const lineItems = cartItems.map((cartItem) => {
-  //     const { item, totalQuantity, variations, bundlePrice } = cartItem
-  //     const { price } = item
-  //     const name = item.name
-  //     const productId = item.id
+  const lineItems = cartItems.map((cartItem) => {
+    const { productId, name, price, cartQuantity, variations } = cartItem
 
-  //     const lineItem = {
-  //       currency: "USD",
-  //       manufacture_country: "CA",
-  //       // date 2 weeks from now that item needs to be delivered by
-  //       max_delivery_time: new Date(Date.now() + 12096e5).toISOString(),
-  //       // date 1 week from now that item needs to be shipped by
-  //       max_ship_time: new Date(Date.now() + 6048e5).toISOString(),
-  //       quantity: totalQuantity,
-  //       sku: productId,
-  //       title: name,
-  //       total_price: (bundlePrice
-  //         ? bundlePrice / totalQuantity
-  //         : price
-  //       ).toString(),
-  //       variant_title: variations?.map((variation) => variation.name).join(", "),
-  //       weight: "10",
-  //       weight_unit: "g",
-  //       object_id: productId,
-  //     }
+    const lineItem = {
+      currency: 'USD',
+      manufacture_country: 'CA',
+      // date 2 weeks from now that item needs to be delivered by
+      max_delivery_time: new Date(Date.now() + 12096e5).toISOString(),
+      // date 1 week from now that item needs to be shipped by
+      max_ship_time: new Date(Date.now() + 6048e5).toISOString(),
+      quantity: totalQuantity,
+      sku: productId,
+      title: name,
+      total_price: price,
+      weight: '10',
+      weight_unit: 'g',
+      object_id: productId
+    }
 
-  //     return lineItem
-  //   })
+    return lineItem
+  })
 
   //   console.log(lineItems)
   // Construct the address object for Shippo
@@ -113,14 +107,18 @@ export async function POST(req: Request) {
   // const carrierAccounts = await shippoClient.carrieraccount.list()
   // console.log(carrierAccounts)
 
-  const parcel = {
-    length: '18',
-    width: '12',
-    height: '5',
-    distance_unit: 'cm',
-    weight: '10',
-    mass_unit: 'g'
-  } as CreateParcelRequest
+  const parcels = await fetch(
+    'https://api.goshippo.com/live-rates/settings/parcel-template',
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  ).then((res) => res.json())
+
+  const parcel = parcels.result
 
   const customsDeclaration = {
     certify: true,
@@ -156,8 +154,8 @@ export async function POST(req: Request) {
       phone: '+17788289009',
       email: 'pocketcaps@gmail.com',
       is_residential: true
-    },
-    test: true
+    }
+    // test: true
   } as CreateCustomsDeclarationRequest
 
   const shipmentObject = {
@@ -173,49 +171,49 @@ export async function POST(req: Request) {
       email: address.email,
       phone: address.phone
     },
-    parcels: [parcel],
-    async: false,
+    parcel: parcel.object_id,
+    async: true,
     // carrier_accounts: ["dca6c762810f40658ae52cf86b455efd"],
-    customs_declaration: customsDeclaration
+    customs_declaration: customsDeclaration,
     // parcels: ["dca6c762810f40658ae52cf86b455efd"],
-    // line_items: lineItems,
+    line_items: lineItems
   }
+
+  // console.log('shipment ', shipmentObject)
 
   // console.log("shipping ", shipmentObject)
 
-  try {
-    const shipment = await shippoClient.shipment.create(shipmentObject)
-    // console.log(shipment)
-    return NextResponse.json(shipment, { status: 200 })
-  } catch (error) {
-    console.log(error)
-    return new NextResponse('Error fetching shipping rates', {
-      status: 500
-    })
-  }
+  // try {
+  //   const shipment = await shippoClient.shipment.create(shipmentObject)
+  //   // console.log(shipment)
+  //   return NextResponse.json(shipment, { status: 200 })
+  // } catch (error) {
+  //   console.log(error)
+  //   return new NextResponse('Error fetching shipping rates', {
+  //     status: 500
+  //   })
+  // }
 
   // LIVE RATES ENDPOINT
 
-  //   try {
-  //
-  //     // create axios post request to shippo to get live rates
-  //     const { data } = await axios.post(
-  //       SHIPPO_LIVE_RATES_ENDPOINT,
-  //       shipmentObject,
-  //       {
-  //         headers: {
-  //           Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     )
+  try {
+    // create axios post request to shippo to get live rates
+    const data = await fetch('https://api.goshippo.com/live-rates', {
+      method: 'POST',
+      headers: {
+        Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(shipmentObject)
+    }).then((res) => res.json())
 
-  //     return NextResponse.json(data, { status: 200, headers: corsHeaders })
-  //   } catch (error) {
-  //     console.log(error)
-  //     return new NextResponse("Internal Server Error", {
-  //       status: 500,
-  //       headers: corsHeaders,
-  //     })
-  //   }
+    // console.log('response', data)
+
+    return NextResponse.json(data, { status: 200 })
+  } catch (error) {
+    console.log(error)
+    return new NextResponse('Internal Server Error', {
+      status: 500
+    })
+  }
 }

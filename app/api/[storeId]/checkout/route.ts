@@ -26,7 +26,7 @@ type ItemType = {
   variations: Record<string, ProductVariationType>
   name: string
   category: string
-  weight: number
+  // weight: number
 }
 
 // Example of the cartItems object that you will receive from the frontend
@@ -52,7 +52,7 @@ type orderItemType = {
   productVariationId: string | null
   price: Decimal
   name: string
-  weight: number
+  // weight: number
 }
 
 type cartItemsObjectType = {
@@ -302,11 +302,11 @@ export async function POST(
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
             orderId: order.id,
-            shippingAddress: JSON.stringify(shippingAddress),
-            totalWeight: Object.values(cartItems).reduce(
-              (acc, item) => acc + item.weight,
-              0
-            )
+            shippingAddress: JSON.stringify(shippingAddress)
+            // totalWeight: Object.values(cartItems).reduce(
+            //   (acc, item) => acc + item.weight,
+            //   0
+            // )
           },
           payment_intent_data: {
             metadata: {

@@ -2,57 +2,16 @@ import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
 
 import { stripe } from '@/lib/stripe'
-import { Rate as ShippoRate } from 'shippo'
+// import { Rate as ShippoRate } from 'shippo'
 import prismadb from '@/lib/prismadb'
 import { Decimal } from '@prisma/client/runtime/library'
-
-// const addressFromCanada = {
-//   name: "Pocket Caps",
-//   company: "PocketCaps",
-//   street1: "4730 Lougheed Hwy",
-//   city: "Burnaby",
-//   state: "BC",
-//   zip: "v6e 0m9",
-//   country: "CA", // iso2 country code
-//   phone: "",
-//   email: "pocketcaps@gmail.com",
-// }
-
-// const addressFromUSTesting = {
-//   name: "Pocket Caps",
-//   company: "PocketCaps",
-//   street1: "102 Los Altos Ave",
-//   city: "Los Altos",
-//   state: "CA",
-//   zip: "94022",
-//   country: "US", // iso2 country code
-//   phone: "",
-//   email: "pocketcaps@gmail.com",
-// }
-
-// const allowedOrigins = process.env.ALLOWED_ORIGINS
-//   ? process.env.ALLOWED_ORIGINS.split(',')
-//   : ([] as string[])
-
-// // console.log('allowedOrigins: ', allowedOrigins)
-
-// const corsHeaders = (origin: string) => ({
-//   'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : '',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-//   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-// })
-// const allowedCountries: string[] = ["US", "CA"]
 
 export async function OPTIONS(req: Request) {
   const origin = req.headers.get('Origin') || ''
 
-  // if (allowedOrigins.includes(origin)) {
-  //   // console.log('origin: ', origin)
-  //   console.log(corsHeaders(origin))
-  // }
-
   return new NextResponse()
 }
+
 // These are the types for the request body that you will receive from the frontend
 
 type ProductVariationType = {
@@ -62,10 +21,12 @@ type ProductVariationType = {
 }
 
 type ItemType = {
-  cartQuantity: number // required if variations is empty
-  price: number // required if variations is empty
+  cartQuantity: number
+  price: number
   variations: Record<string, ProductVariationType>
   name: string
+  category: string
+  weight: number
 }
 
 // Example of the cartItems object that you will receive from the frontend
@@ -91,22 +52,12 @@ type orderItemType = {
   productVariationId: string | null
   price: Decimal
   name: string
-  // bundleItems: any[]
+  weight: number
 }
 
 type cartItemsObjectType = {
   [key: string]: ItemType
 }
-
-// type ShippingRateType = {
-//   id: string
-//   amount: string
-//   amount_local: string
-//   currency: string
-//   currency_local: string
-//   estimated_days: number
-//   title: string
-// }
 
 type AddressType = {
   firstName: string
@@ -118,6 +69,16 @@ type AddressType = {
   zip: string
   country: string
   email: string
+}
+
+type ShippoRate = {
+  id: string
+  amount: string
+  amount_local: string
+  currency: string
+  currency_local: string
+  estimated_days: number
+  title: string
 }
 
 export async function POST(
@@ -142,33 +103,6 @@ export async function POST(
   if (!cartItems) {
     return new NextResponse('Product IDs are required', { status: 400 })
   }
-
-  // console.log('cartItems: ', cartItems)
-  // create stripe shipping options from shippo selected rate
-
-  // let shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = []
-
-  // shippingOptions = [
-  //   {
-  //     shipping_rate_data: {
-  //       type: "fixed_amount",
-  //       fixed_amount: {
-  //         amount: Math.round(parseFloat(selectedRate.amount_local) * 100),
-  //         currency: selectedRate.currency_local,
-  //       },
-
-  //       display_name:
-  //         selectedRate.provider + " " + selectedRate.servicelevel.name,
-
-  //       metadata: {
-  //         id: selectedRate.object_id,
-  //         provider: selectedRate.provider,
-  //         servicelevel: selectedRate.servicelevel.name,
-  //         estimated_days: selectedRate.estimated_days,
-  //       },
-  //     },
-  //   },
-  // ]
 
   // Create a single string from the shipping address object
   const shippingAddressObject = [
@@ -265,7 +199,7 @@ export async function POST(
       return prisma.order.create({
         data: {
           storeId: params.storeId,
-          isPaid: false, // set true as per your payment logic
+          isPaid: false, // set to false until payment is successful (webhook)
           totalPrice: totalPrice,
           shippingAddress: shippingAddressComponents,
           orderItems: {
@@ -331,7 +265,7 @@ export async function POST(
           price_data: {
             currency: currency,
             product_data: {
-              name: cartItems[id].name,
+              name: cartItems[id].name + ' ' + cartItems[id].category,
               // Format the list of variations for purchase in the description as a single string, separated by semicolons for readability
               description: Object.keys(cartItems[id].variations).length
                 ? Object.entries(cartItems[id].variations)
@@ -368,12 +302,16 @@ export async function POST(
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
             orderId: order.id,
-            shippingAddress: JSON.stringify(shippingAddress)
+            shippingAddress: JSON.stringify(shippingAddress),
+            totalWeight: Object.values(cartItems).reduce(
+              (acc, item) => acc + item.weight,
+              0
+            )
           },
           payment_intent_data: {
             metadata: {
-              orderId: order.id,
-              shippingRateId: selectedRate.object_id
+              orderId: order.id
+              // shippingRateId: selectedRate.id
             }
           },
           shipping_options: [
@@ -387,14 +325,13 @@ export async function POST(
                   currency: selectedRate.currency_local
                 },
 
-                display_name:
-                  selectedRate.provider + ' ' + selectedRate.servicelevel.name,
+                display_name: selectedRate.title,
 
                 metadata: {
-                  id: selectedRate.object_id,
-                  provider: selectedRate.provider,
-                  servicelevel: selectedRate.servicelevel.name,
-                  estimated_days: selectedRate.estimated_days
+                  // id: selectedRate.id
+                  // provider: selectedRate.provider,
+                  // servicelevel: selectedRate.title,
+                  // estimated_days: selectedRate.estimated_days
                 }
               }
             }

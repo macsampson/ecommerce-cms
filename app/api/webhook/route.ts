@@ -144,14 +144,99 @@ export async function POST(req: Request) {
     // console.log(paymentIntent)
     const orderId = paymentIntent.metadata.orderId
 
-    await prismadb.order.update({
-      where: {
-        id: orderId
-      },
-      data: {
-        isPaid: true
+    try {
+      // get line items from stripe session
+      const checkoutSessions = await stripe.checkout.sessions.list({
+        payment_intent: paymentIntent.id
+      })
+      // console.log('Checkout sessions:', checkoutSessions)
+
+      if (checkoutSessions.data.length === 0) {
+        return new NextResponse('No checkout sessions found', { status: 404 })
       }
-    })
+
+      const checkoutSession = checkoutSessions.data[0]
+
+      await prismadb.order.update({
+        where: {
+          id: orderId
+        },
+        data: {
+          isPaid: true
+        }
+      })
+
+      // get line items from stripe session
+      const lineItemsObject = await stripe.checkout.sessions.listLineItems(
+        checkoutSession.id,
+        {
+          limit: 100
+        }
+      )
+
+      const lineItems = lineItemsObject.data.map((item) => {
+        return {
+          title: item.description,
+          quantity: item.quantity,
+          total_price: item.amount_total / 100
+        }
+      })
+
+      const shippingAddress = {
+        name: checkoutSession.customer_details?.name,
+        street1: checkoutSession.customer_details?.address?.line1,
+        city: checkoutSession.customer_details?.address?.city,
+        state: checkoutSession.customer_details?.address?.state,
+        zip: checkoutSession.customer_details?.address?.postal_code,
+        country: checkoutSession.customer_details?.address?.country
+      }
+
+      // Create an order in shippo
+      const order = {
+        to_address: shippingAddress,
+        line_items: lineItems,
+        // get date from unix timestamp
+        placed_at: new Date(checkoutSession.created * 1000).toISOString(),
+        order_number: checkoutSession?.metadata?.orderId,
+        order_status: 'PAID',
+        shipping_cost: Number(checkoutSession?.shipping_cost?.amount_total)
+          ? Number(checkoutSession?.shipping_cost?.amount_total) / 100
+          : 0,
+        shipping_cost_currency: checkoutSession.currency?.toUpperCase(),
+        // shipping_method: checkoutSession?.shipping_options, //todo
+        subtotal_price: checkoutSession.amount_subtotal
+          ? checkoutSession.amount_subtotal / 100
+          : 0,
+        total_price: checkoutSession.amount_total
+          ? checkoutSession.amount_total / 100
+          : 0,
+        total_tax: checkoutSession.total_details?.amount_tax
+          ? checkoutSession.total_details.amount_tax / 100
+          : 0,
+        currency: checkoutSession.currency?.toUpperCase(),
+        weight: checkoutSession?.metadata?.totalWeight,
+        weight_unit: 'g'
+      }
+
+      // console.log('Order:', order)
+
+      // call shippo API to create order
+      try {
+        const res = await fetch('https://api.goshippo.com/orders/', {
+          method: 'POST',
+          headers: {
+            Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(order)
+        })
+        // console.log('Shippo order created:', res)
+      } catch (error) {
+        console.log('Error creating order in Shippo:', error)
+      }
+    } catch (error) {
+      console.log('Error updating order:', error)
+    }
 
     // let shippingRate: Stripe.ShippingRate | undefined
     // try {
@@ -165,21 +250,21 @@ export async function POST(req: Request) {
     //   )
     // }
 
-    const shippingRateId = paymentIntent.metadata.shippingRateId
+    // const shippingRateId = paymentIntent.metadata.shippingRateId
 
-    if (shippingRateId) {
-      try {
-        shippoClient.transaction.create({
-          rate: shippingRateId,
-          label_file_type: 'PDF',
-          async: false
-        })
-        // console.log(transaction)
-      } catch (error) {
-        // TODO: create webhook to alert admin of failed shipping label creation
-        console.log('Error creating shipping label:', error)
-      }
-    }
+    // if (shippingRateId) {
+    //   try {
+    //     shippoClient.transaction.create({
+    //       rate: shippingRateId,
+    //       label_file_type: 'PDF',
+    //       async: false
+    //     })
+    //     // console.log(transaction)
+    //   } catch (error) {
+    //     // TODO: create webhook to alert admin of failed shipping label creation
+    //     console.log('Error creating shipping label:', error)
+    //   }
+    // }
 
     // revalidate product data
     await axios.post(

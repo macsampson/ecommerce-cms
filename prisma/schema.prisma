@@ -111,6 +111,7 @@ model Product {
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   description String             @map("description")
+  weight      Decimal            @default(0.00) @map("weight") @db.Decimal(10, 2)
   bundles     Bundle[]
   images      Image[]
   orderItems  OrderItem[]
@@ -200,6 +201,7 @@ model OrderItem {
   order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product            Product           @relation(fields: [productId], references: [id])
   productVariation   ProductVariation? @relation(fields: [productVariationId], references: [id])
+  weight             Decimal           @default(0.00) @map("weight") @db.Decimal(10, 2)
 
   @@index([orderId])
   @@index([productId])

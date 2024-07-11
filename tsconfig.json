@@ -29,5 +29,10 @@
     ".next/types/**/*.ts",
     "cron.js"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
 }

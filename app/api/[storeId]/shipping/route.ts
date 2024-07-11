@@ -6,7 +6,9 @@ import shippo, {
 } from 'shippo' // Shippo client initialization
 
 import shippoClient from '@/lib/shippo'
+import { ca } from 'date-fns/locale'
 
+// todo: get address from db
 const addressFromCanada = {
   name: 'Pocket Caps',
   company: 'PocketCaps',
@@ -18,20 +20,6 @@ const addressFromCanada = {
   phone: '+17788289009',
   email: 'pocketcaps@gmail.com'
 }
-
-const addressFromUS = {
-  name: 'Pocket Caps',
-  company: 'PocketCaps',
-  street1: '532 19th Ave',
-  city: 'Seattle',
-  state: 'WA',
-  zip: '98122',
-  country: 'US', // iso2 country code
-  phone: '',
-  email: 'pocketcaps@gmail.com'
-}
-
-// const SHIPPO_LIVE_RATES_ENDPOINT = "https://api.goshippo.com/live-rates"
 
 type AddressType = {
   firstName: string
@@ -50,6 +38,7 @@ type CartItemType = {
   name: string
   price: number
   cartQuantity: number
+  weight: number
   variations?: ProductVariation[]
   bundles?: { minQuantity: number; discount: number }[]
 }
@@ -64,23 +53,46 @@ export async function POST(req: Request) {
     cartItems
   }: { address: AddressType; cartItems: CartItemType[] } = await req.json()
 
-  const totalQuantity = cartItems.reduce((acc, cartItem) => {
-    const { cartQuantity } = cartItem
-    return acc + cartQuantity
-  }, 0)
-
-  const totalValue = cartItems.reduce((acc, cartItem) => {
-    const { price, cartQuantity, bundles } = cartItem
-
-    return acc + price * totalQuantity
-  }, 0)
-
-  // keycap weight is 10g
-  const totalWeight = totalQuantity * 0.01
+  // console.log('Cart Items:', cartItems)
 
   // create line items for shippo from cart items
   const lineItems = cartItems.map((cartItem) => {
-    const { productId, name, price, cartQuantity, variations } = cartItem
+    const {
+      productId,
+      name,
+      price,
+      cartQuantity,
+      variations,
+      weight,
+      bundles
+    } = cartItem
+
+    // calculate the price of the item based on the quantity and any bundles that apply
+    let itemsPrice = 0
+    if (bundles && cartQuantity > 1) {
+      let bundle = null
+      // sort bundles by key and find the largest minQuantity that is less than or equal to the cartQuantity
+      const sortedBundles = Object.entries(bundles).sort(
+        ([a], [b]) => Number(a) - Number(b)
+      )
+
+      for (const [minQuantity, discount] of sortedBundles) {
+        if (cartQuantity >= Number(minQuantity)) {
+          bundle = {
+            minQuantity: Number(minQuantity),
+            discount: Number(discount)
+          }
+        }
+      }
+
+      if (bundle) {
+        itemsPrice = price * cartQuantity * (1 - bundle.discount / 100)
+      }
+    } else {
+      itemsPrice = price * cartQuantity
+    }
+
+    const itemsWeight = weight * cartQuantity
 
     const lineItem = {
       currency: 'USD',
@@ -89,11 +101,11 @@ export async function POST(req: Request) {
       max_delivery_time: new Date(Date.now() + 12096e5).toISOString(),
       // date 1 week from now that item needs to be shipped by
       max_ship_time: new Date(Date.now() + 6048e5).toISOString(),
-      quantity: totalQuantity,
+      quantity: cartQuantity,
       sku: productId,
       title: name,
-      total_price: price,
-      weight: '10',
+      total_price: itemsPrice.toString(),
+      weight: itemsWeight.toString(),
       weight_unit: 'g',
       object_id: productId
     }
@@ -101,12 +113,47 @@ export async function POST(req: Request) {
     return lineItem
   })
 
-  //   console.log(lineItems)
-  // Construct the address object for Shippo
+  // console.log('Line Items:', lineItems)
 
-  // const carrierAccounts = await shippoClient.carrieraccount.list()
-  // console.log(carrierAccounts)
+  // Calculate the total quantity, price, and weight of the cart
 
+  const totalQuantity = cartItems.reduce((acc, cartItem) => {
+    const { cartQuantity } = cartItem
+    return acc + cartQuantity
+  }, 0)
+
+  const totalPrice = cartItems.reduce((acc, cartItem) => {
+    const { price, cartQuantity, bundles } = cartItem
+
+    if (bundles && cartQuantity >= 1) {
+      // find the bundle that applies to the current cart item
+      // console.log('Bundles:', Object.entries(bundles))
+
+      let bundle = null
+      for (const [minQuantity, discount] of Object.entries(bundles)) {
+        if (cartQuantity >= Number(minQuantity)) {
+          bundle = {
+            minQuantity: Number(minQuantity),
+            discount: Number(discount)
+          }
+        }
+      }
+
+      if (bundle) {
+        return acc + price * totalQuantity * (1 - bundle.discount / 100)
+      }
+    }
+
+    return acc + price * totalQuantity
+  }, 0)
+
+  const totalWeight = cartItems.reduce((acc, cartItem) => {
+    const { weight, cartQuantity } = cartItem
+
+    return acc + weight * cartQuantity
+  }, 0)
+
+  // Get the parcel template from shippo
   const parcels = await fetch(
     'https://api.goshippo.com/live-rates/settings/parcel-template',
     {
@@ -120,29 +167,31 @@ export async function POST(req: Request) {
 
   const parcel = parcels.result
 
+  // Create the customs declaration object
   const customsDeclaration = {
     certify: true,
     certify_signer: 'PocketCaps',
-    contents_explanation: 'Keyboard Keycap',
+    contents_explanation: 'Keyboard Keycaps',
     contents_type: 'MERCHANDISE',
     eel_pfc: 'NOEEI_30_36',
     incoterm: 'DDP',
     is_vat_collected: null,
     items: [
       {
-        description: 'Keyboard Keycap',
+        description: 'Keyboard Keycaps',
         mass_unit: 'g',
         // "metadata": "Order ID \"123454\"",
         net_weight: totalWeight.toString(),
         origin_country: 'CA',
         quantity: totalQuantity,
         tarrif_number: '3926.90',
-        value_amount: totalValue.toString(),
+        value_amount: totalPrice.toString(),
         value_currency: 'USD'
       }
     ],
     non_delivery_option: 'RETURN',
     address_importer: {
+      // todo: get address from db
       name: 'Mackenzie Sampson',
       company: 'PocketCaps',
       street1: '4730 Lougheed Hwy',
@@ -173,26 +222,9 @@ export async function POST(req: Request) {
     },
     parcel: parcel.object_id,
     async: true,
-    // carrier_accounts: ["dca6c762810f40658ae52cf86b455efd"],
     customs_declaration: customsDeclaration,
-    // parcels: ["dca6c762810f40658ae52cf86b455efd"],
     line_items: lineItems
   }
-
-  // console.log('shipment ', shipmentObject)
-
-  // console.log("shipping ", shipmentObject)
-
-  // try {
-  //   const shipment = await shippoClient.shipment.create(shipmentObject)
-  //   // console.log(shipment)
-  //   return NextResponse.json(shipment, { status: 200 })
-  // } catch (error) {
-  //   console.log(error)
-  //   return new NextResponse('Error fetching shipping rates', {
-  //     status: 500
-  //   })
-  // }
 
   // LIVE RATES ENDPOINT
 

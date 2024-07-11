@@ -195,7 +195,7 @@ export async function POST(
         })
       }
 
-      console.log('Cart Items: ', cartItems)
+      // console.log('Cart Items: ', cartItems)
       // Create the order in the database
       return prisma.order.create({
         data: {
@@ -248,9 +248,7 @@ export async function POST(
       )
     }
 
-    //  Create line cartItems for the checkout session
-    // const line_cartItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
-    // group order items by product id
+    //  Create lineitems for the checkout session. group order items by product id, so variants will be one item
     const groupedOrderItems = order.orderItems.reduce((acc, orderItem) => {
       if (acc[orderItem.productId]) {
         acc[orderItem.productId].push(orderItem)
@@ -295,7 +293,12 @@ export async function POST(
       console.log('Error creating line items: ', error)
     }
 
-    console.log('orderItems: ', order.orderItems)
+    // console.log(
+    //   'stripe line_items: ',
+    //   line_items.map((item) => item.price_data?.product_data)
+    // )
+
+    // console.log('orderItems: ', order.orderItems)
 
     // Create the checkout session
     if (line_items.length > 0) {
@@ -327,9 +330,11 @@ export async function POST(
                 type: 'fixed_amount',
                 fixed_amount: {
                   amount: Math.round(
-                    parseFloat(selectedRate.amount_local) * 100
+                    parseFloat(
+                      selectedRate.amount_local || selectedRate.amount
+                    ) * 100
                   ),
-                  currency: selectedRate.currency_local
+                  currency: selectedRate.currency_local || selectedRate.currency
                 },
 
                 display_name: selectedRate.title,

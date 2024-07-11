@@ -1,1 +1,0 @@
-ALTER TABLE image ADD COLUMN ordering integer NOT NULL DEFAULT 0;

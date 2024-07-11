@@ -226,6 +226,8 @@ export async function POST(req: Request) {
     line_items: lineItems
   }
 
+  console.log('Shipment Object:', JSON.stringify(shipmentObject))
+
   // LIVE RATES ENDPOINT
 
   try {

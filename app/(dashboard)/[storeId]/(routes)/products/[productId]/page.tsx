@@ -36,6 +36,7 @@ const ProductPage = async ({
   const convertedProduct = product
     ? {
         ...product,
+        weight: product.weight.toNumber(), // Convert Decimal to number
         price: product.price.toNumber(), // Convert Decimal to number
         variations: product.variations.map((variation) => ({
           ...variation,

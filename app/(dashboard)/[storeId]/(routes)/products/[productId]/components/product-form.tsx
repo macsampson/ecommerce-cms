@@ -62,6 +62,7 @@ interface ProductFormProps {
         images: Image[]
         variations: (Omit<ProductVariation, 'price'> & { price: number })[]
         bundles: (Omit<Bundle, 'discount'> & { discount: number })[]
+        weight: number
       })
     | null
   categories: Category[]
@@ -130,6 +131,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         ...initialData,
         price: parseFloat(String(initialData?.price)),
         quantity: initialQuantity,
+        weight: parseFloat(String(initialData.weight)),
         colorId: initialData.colorId || undefined,
         sizeId: initialData.sizeId || undefined,
         variations:
@@ -161,6 +163,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         description: '',
         variations: [],
         bundles: [],
+        weight: 0,
         categoryId: '',
         colorId: undefined,
         sizeId: undefined,
@@ -357,6 +360,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="variations"
@@ -382,6 +386,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 )
               }}
             />
+
             <FormField
               control={form.control}
               name="bundles"
@@ -408,6 +413,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </FormItem>
                 )
               }}
+            />
+            <FormField
+              control={form.control}
+              name="weight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Weight (grams)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      // disabled={loading || variations.length > 0}
+                      placeholder="1.00"
+                      value={field.value}
+                      onChange={(e) => {
+                        field.onChange(parseFloat(e.target.value))
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <FormField
               control={form.control}

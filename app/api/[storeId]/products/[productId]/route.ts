@@ -62,6 +62,7 @@ export async function PATCH(
       images,
       quantity,
       description,
+      weight,
       categoryId,
       colorId,
       sizeId,
@@ -81,6 +82,8 @@ export async function PATCH(
     if (!images || !images.length) {
       return new NextResponse('At least one image is required', { status: 400 })
     }
+
+    if (!weight) return new NextResponse('Weight is required', { status: 400 })
 
     if (!price) return new NextResponse('Price ID is required', { status: 400 })
 
@@ -154,6 +157,7 @@ export async function PATCH(
         price,
         quantity,
         description,
+        weight,
         categoryId,
         colorId,
         sizeId,

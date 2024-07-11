@@ -12,6 +12,7 @@ export const formSchema = z.object({
     .array(),
   price: z.coerce.number().min(1),
   quantity: z.coerce.number().min(0),
+  weight: z.coerce.number().min(0),
   description: z.string().min(1),
   variations: z
     .object({

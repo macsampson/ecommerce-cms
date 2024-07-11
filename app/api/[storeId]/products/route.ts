@@ -114,7 +114,7 @@ export async function GET(
     const amountToFetch = searchParams.get('amountToFetch') || undefined
     const excludeProductId = searchParams.get('excludeProductId') || undefined
 
-    console.log('searchParams: ', searchParams)
+    // console.log('searchParams: ', searchParams)
 
     if (!params.storeId) {
       return new NextResponse('Store ID is required', { status: 400 })

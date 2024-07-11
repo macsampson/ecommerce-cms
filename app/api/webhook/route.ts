@@ -6,12 +6,6 @@ import axios from 'axios'
 import { stripe } from '@/lib/stripe'
 import prismadb from '@/lib/prismadb'
 
-import shippoClient from '@/lib/shippo'
-
-// type ItemsObject = {
-//   [productId: string]: number | { [variationId: string]: number }
-// }
-
 const DISCORD_ORDER_WEBHOOK_URL = process.env.DISCORD_ORDER_WEBHOOK_URL!
 
 const REVALIDATE_URL = process.env.FRONTEND_STORE_URL + '/api/revalidate'
@@ -54,8 +48,10 @@ export async function POST(req: Request) {
 
   const session = event.data.object as Stripe.Checkout.Session
   // console.log('Session:', session)
+
   // TODO: implement currency conversion
   // const currency = session?.currency
+
   const billingAddress = session?.customer_details?.address
 
   const billingAddressComponents = [
@@ -191,6 +187,8 @@ export async function POST(req: Request) {
         country: checkoutSession.customer_details?.address?.country
       }
 
+      console.log('Total Weight: ', checkoutSession.metadata?.totalWeight)
+
       // Create an order in shippo
       const order = {
         to_address: shippingAddress,
@@ -214,11 +212,11 @@ export async function POST(req: Request) {
           ? checkoutSession.total_details.amount_tax / 100
           : 0,
         currency: checkoutSession.currency?.toUpperCase(),
-        weight: checkoutSession?.metadata?.totalWeight,
+        weight: checkoutSession.metadata?.totalWeight,
         weight_unit: 'g'
       }
 
-      // console.log('Order:', order)
+      console.log('Order:', order)
 
       // call shippo API to create order
       try {
@@ -237,34 +235,6 @@ export async function POST(req: Request) {
     } catch (error) {
       console.log('Error updating order:', error)
     }
-
-    // let shippingRate: Stripe.ShippingRate | undefined
-    // try {
-    //   const shippingID = session.shipping_cost?.shipping_rate
-
-    //   shippingRate = await stripe.shippingRates.retrieve(shippingID as string)
-    // } catch (error) {
-    //   console.log(
-    //     'Error retrieving shipping rate, so cannot create shipping label:',
-    //     error
-    //   )
-    // }
-
-    // const shippingRateId = paymentIntent.metadata.shippingRateId
-
-    // if (shippingRateId) {
-    //   try {
-    //     shippoClient.transaction.create({
-    //       rate: shippingRateId,
-    //       label_file_type: 'PDF',
-    //       async: false
-    //     })
-    //     // console.log(transaction)
-    //   } catch (error) {
-    //     // TODO: create webhook to alert admin of failed shipping label creation
-    //     console.log('Error creating shipping label:', error)
-    //   }
-    // }
 
     // revalidate product data
     await axios.post(

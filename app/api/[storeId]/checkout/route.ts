@@ -26,7 +26,7 @@ type ItemType = {
   variations: Record<string, ProductVariationType>
   name: string
   category: string
-  // weight: number
+  weight: number
 }
 
 // Example of the cartItems object that you will receive from the frontend
@@ -52,7 +52,7 @@ type orderItemType = {
   productVariationId: string | null
   price: Decimal
   name: string
-  // weight: number
+  weight: Decimal
 }
 
 type cartItemsObjectType = {
@@ -195,6 +195,7 @@ export async function POST(
         })
       }
 
+      console.log('Cart Items: ', cartItems)
       // Create the order in the database
       return prisma.order.create({
         data: {
@@ -211,7 +212,9 @@ export async function POST(
                     product: { connect: { id: productId } },
                     price: variation.price,
                     quantity: variation.cartQuantity, // Quantity per variation
-                    productVariation: { connect: { id: variationId } }
+                    productVariation: { connect: { id: variationId } },
+                    weight: item.weight,
+                    name: variation.name + ' - ' + item.name
                   })
                 )
               } else {
@@ -221,7 +224,9 @@ export async function POST(
                   {
                     product: { connect: { id: productId } },
                     price: item.price,
-                    quantity: item.cartQuantity
+                    quantity: item.cartQuantity,
+                    weight: item.weight,
+                    name: item.name
                   }
                 ]
               }
@@ -290,6 +295,8 @@ export async function POST(
       console.log('Error creating line items: ', error)
     }
 
+    console.log('orderItems: ', order.orderItems)
+
     // Create the checkout session
     if (line_items.length > 0) {
       try {
@@ -302,11 +309,11 @@ export async function POST(
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
             orderId: order.id,
-            shippingAddress: JSON.stringify(shippingAddress)
-            // totalWeight: Object.values(cartItems).reduce(
-            //   (acc, item) => acc + item.weight,
-            //   0
-            // )
+            shippingAddress: JSON.stringify(shippingAddress),
+            totalWeight: order.orderItems.reduce(
+              (acc, item) => acc + parseFloat(item.weight.toString()),
+              0
+            )
           },
           payment_intent_data: {
             metadata: {

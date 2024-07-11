@@ -52,19 +52,22 @@ import {
   Size,
   Bundle
 } from '@prisma/client'
-
-import { formatter, formatPriceDisplay, parsePriceInput } from '@/lib/utils'
+import { Decimal } from '@prisma/client/runtime/library'
 
 interface ProductFormProps {
-  initialData:
-    | (Omit<Product, 'price'> & {
-        price: number
-        images: Image[]
-        variations: (Omit<ProductVariation, 'price'> & { price: number })[]
-        bundles: (Omit<Bundle, 'discount'> & { discount: number })[]
-        weight: number
-      })
-    | null
+  initialData: {
+    price: number
+    quantity: number
+    images: Image[]
+    variations: (Omit<ProductVariation, 'price'> & { price: number })[]
+    bundles: (Omit<Bundle, 'discount'> & { discount: number })[]
+    weight: number
+    categoryId: string
+    colorId: string | null
+    sizeId: string | null
+    isFeatured: boolean
+    isArchived: boolean
+  } | null
   categories: Category[]
   colors: Color[]
   sizes: Size[]

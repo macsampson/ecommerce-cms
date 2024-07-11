@@ -16,6 +16,7 @@ export async function POST(
       price,
       quantity,
       description,
+      weight,
       variations,
       categoryId,
       colorId,
@@ -38,6 +39,8 @@ export async function POST(
 
     if (!categoryId)
       return new NextResponse('Category ID  is required', { status: 400 })
+
+    if (!weight) return new NextResponse('Weight is required', { status: 400 })
 
     // if (!colorId)
     //   return new NextResponse("Color ID is required", { status: 400 })
@@ -65,6 +68,7 @@ export async function POST(
         price,
         quantity,
         description,
+        weight,
         variations: {
           createMany: {
             data: [

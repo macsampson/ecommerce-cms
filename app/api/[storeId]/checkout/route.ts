@@ -89,16 +89,21 @@ export async function POST(
   const {
     cartItems,
     totalPrice,
-    selectedRate,
+    shippingType,
     shippingAddress,
     currency
   }: {
     cartItems: cartItemsObjectType
     totalPrice: number
-    selectedRate: ShippoRate
+    shippingType: { rate: number; title: string }
     shippingAddress: AddressType
     currency: string
   } = await req.json()
+
+  console.log('totalPrice: ', totalPrice)
+  console.log('shippingType: ', shippingType)
+  console.log('shippingAddress: ', shippingAddress)
+  console.log('currency: ', currency)
 
   if (!cartItems) {
     return new NextResponse('Product IDs are required', { status: 400 })
@@ -308,6 +313,7 @@ export async function POST(
           mode: 'payment',
           billing_address_collection: 'required',
           currency,
+          customer_email: shippingAddress.email,
           success_url: `${process.env.FRONTEND_STORE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${process.env.FRONTEND_STORE_URL}/shipping/`,
           metadata: {
@@ -321,7 +327,7 @@ export async function POST(
           payment_intent_data: {
             metadata: {
               orderId: order.id
-              // shippingRateId: selectedRate.id
+              // shippingRateId: shippingType.id
             }
           },
           shipping_options: [
@@ -329,21 +335,17 @@ export async function POST(
               shipping_rate_data: {
                 type: 'fixed_amount',
                 fixed_amount: {
-                  amount: Math.round(
-                    parseFloat(
-                      selectedRate.amount_local || selectedRate.amount
-                    ) * 100
-                  ),
-                  currency: selectedRate.currency_local || selectedRate.currency
+                  amount: Math.round(shippingType.rate * 100),
+                  currency: currency
                 },
 
-                display_name: selectedRate.title,
+                display_name: shippingType.title,
 
                 metadata: {
-                  // id: selectedRate.id
-                  // provider: selectedRate.provider,
-                  // servicelevel: selectedRate.title,
-                  // estimated_days: selectedRate.estimated_days
+                  // id: shippingType.id
+                  // provider: shippingType.provider,
+                  // servicelevel: shippingType.title,
+                  // estimated_days: shippingType.estimated_days
                 }
               }
             }

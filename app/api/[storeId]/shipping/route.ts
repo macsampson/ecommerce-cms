@@ -1,3 +1,4 @@
+// Import necessary dependencies and types
 import { Product, ProductVariation } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import shippo, {
@@ -5,10 +6,7 @@ import shippo, {
   CreateCustomsDeclarationRequest
 } from 'shippo' // Shippo client initialization
 
-import shippoClient from '@/lib/shippo'
-import { ca } from 'date-fns/locale'
-
-// todo: get address from db
+// Define the sender's address (TODO: Fetch this from the database in the future)
 const addressFromCanada = {
   name: 'Pocket Caps',
   company: 'PocketCaps',
@@ -21,6 +19,7 @@ const addressFromCanada = {
   email: 'pocketcaps@gmail.com'
 }
 
+// Define types for address and cart items
 type AddressType = {
   firstName: string
   lastName: string
@@ -43,19 +42,23 @@ type CartItemType = {
   bundles?: { minQuantity: number; discount: number }[]
 }
 
+// Handle OPTIONS request
 export async function OPTIONS() {
   return NextResponse.json({})
 }
 
+// Handle POST request for shipping rate calculation
 export async function POST(req: Request) {
+  // Extract address, cart items, and currency from the request body
   const {
     address,
-    cartItems
-  }: { address: AddressType; cartItems: CartItemType[] } = await req.json()
+    cartItems,
+    currency
+  }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
+    await req.json()
 
-  // console.log('Cart Items:', cartItems)
-
-  // create line items for shippo from cart items
+  console.log('currency: ', currency)
+  // Create line items for Shippo from cart items
   const lineItems = cartItems.map((cartItem) => {
     const {
       productId,
@@ -67,11 +70,11 @@ export async function POST(req: Request) {
       bundles
     } = cartItem
 
-    // calculate the price of the item based on the quantity and any bundles that apply
+    // Calculate the price of the item based on quantity and any applicable bundles
     let itemsPrice = 0
     if (bundles && cartQuantity > 1) {
       let bundle = null
-      // sort bundles by key and find the largest minQuantity that is less than or equal to the cartQuantity
+      // Sort bundles by key and find the largest minQuantity that is less than or equal to the cartQuantity
       const sortedBundles = Object.entries(bundles).sort(
         ([a], [b]) => Number(a) - Number(b)
       )
@@ -94,13 +97,12 @@ export async function POST(req: Request) {
 
     const itemsWeight = weight * cartQuantity
 
+    // Create a line item object for Shippo
     const lineItem = {
-      currency: 'USD',
+      currency: currency,
       manufacture_country: 'CA',
-      // date 2 weeks from now that item needs to be delivered by
-      max_delivery_time: new Date(Date.now() + 12096e5).toISOString(),
-      // date 1 week from now that item needs to be shipped by
-      max_ship_time: new Date(Date.now() + 6048e5).toISOString(),
+      max_delivery_time: new Date(Date.now() + 12096e5).toISOString(), // 2 weeks from now
+      max_ship_time: new Date(Date.now() + 6048e5).toISOString(), // 1 week from now
       quantity: cartQuantity,
       sku: productId,
       title: name,
@@ -113,10 +115,7 @@ export async function POST(req: Request) {
     return lineItem
   })
 
-  // console.log('Line Items:', lineItems)
-
   // Calculate the total quantity, price, and weight of the cart
-
   const totalQuantity = cartItems.reduce((acc, cartItem) => {
     const { cartQuantity } = cartItem
     return acc + cartQuantity
@@ -126,9 +125,7 @@ export async function POST(req: Request) {
     const { price, cartQuantity, bundles } = cartItem
 
     if (bundles && cartQuantity >= 1) {
-      // find the bundle that applies to the current cart item
-      // console.log('Bundles:', Object.entries(bundles))
-
+      // Find the bundle that applies to the current cart item
       let bundle = null
       for (const [minQuantity, discount] of Object.entries(bundles)) {
         if (cartQuantity >= Number(minQuantity)) {
@@ -149,11 +146,10 @@ export async function POST(req: Request) {
 
   const totalWeight = cartItems.reduce((acc, cartItem) => {
     const { weight, cartQuantity } = cartItem
-
     return acc + weight * cartQuantity
   }, 0)
 
-  // Get the parcel template from shippo
+  // Fetch the parcel template from Shippo
   const parcels = await fetch(
     'https://api.goshippo.com/live-rates/settings/parcel-template',
     {
@@ -167,7 +163,7 @@ export async function POST(req: Request) {
 
   const parcel = parcels.result
 
-  // Create the customs declaration object
+  // Create the customs declaration object for international shipping
   const customsDeclaration = {
     certify: true,
     certify_signer: 'PocketCaps',
@@ -180,7 +176,6 @@ export async function POST(req: Request) {
       {
         description: 'Keyboard Keycaps',
         mass_unit: 'g',
-        // "metadata": "Order ID \"123454\"",
         net_weight: totalWeight.toString(),
         origin_country: 'CA',
         quantity: totalQuantity,
@@ -191,26 +186,25 @@ export async function POST(req: Request) {
     ],
     non_delivery_option: 'RETURN',
     address_importer: {
-      // todo: get address from db
+      // TODO: Fetch this address from the database
       name: 'Mackenzie Sampson',
       company: 'PocketCaps',
-      street1: '4730 Lougheed Hwy',
-      street2: 'Unit 302',
-      city: 'Burnaby',
+      street1: '6381 Weir Rd',
+      street2: '',
+      city: 'Kamloops',
       state: 'BC',
-      zip: 'v5c0m9',
+      zip: 'V0E2A0',
       country: 'CA',
       phone: '+17788289009',
       email: 'pocketcaps@gmail.com',
       is_residential: true
     }
-    // test: true
   } as CreateCustomsDeclarationRequest
 
+  // Create the shipment object for Shippo API request
   const shipmentObject = {
     address_from: addressFromCanada,
     address_to: {
-      // Only state and zip might be sufficient for an estimate
       name: address.firstName + ' ' + address.lastName,
       street1: address.street,
       city: address.city,
@@ -226,12 +220,8 @@ export async function POST(req: Request) {
     line_items: lineItems
   }
 
-  console.log('Shipment Object:', JSON.stringify(shipmentObject))
-
-  // LIVE RATES ENDPOINT
-
+  // Send request to Shippo API to get live rates
   try {
-    // create axios post request to shippo to get live rates
     const data = await fetch('https://api.goshippo.com/live-rates', {
       method: 'POST',
       headers: {
@@ -241,8 +231,7 @@ export async function POST(req: Request) {
       body: JSON.stringify(shipmentObject)
     }).then((res) => res.json())
 
-    // console.log('response', data)
-
+    // Return the shipping rates to the client
     return NextResponse.json(data, { status: 200 })
   } catch (error) {
     console.log(error)

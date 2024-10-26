@@ -188,7 +188,7 @@ export async function POST(req: Request) {
       }
 
       console.log('Total Weight: ', checkoutSession.metadata?.totalWeight)
-
+      console.log('Currency: ', checkoutSession.currency)
       // Create an order in shippo
       const order = {
         to_address: shippingAddress,

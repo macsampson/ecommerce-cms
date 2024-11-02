@@ -118,7 +118,8 @@ export async function POST(req: Request) {
             \n**Shipping Address:**
             ${shippingAddress}
             \n**Email:**
-            ${session?.customer_details?.email}`,
+            ${session?.customer_details?.email}
+            \n@everyone`,
             color: 65280, // Color code in decimal (equivalent to #00ff00)
             timestamp: new Date().toISOString(),
             image: {

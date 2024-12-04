@@ -172,6 +172,7 @@ export async function POST(req: Request) {
       )
 
       const lineItems = lineItemsObject.data.map((item) => {
+        // console.log('Item:', item)
         return {
           title: item.description,
           quantity: item.quantity,
@@ -179,60 +180,142 @@ export async function POST(req: Request) {
         }
       })
 
-      const shippingAddress = {
-        name: checkoutSession.customer_details?.name,
-        street1: checkoutSession.customer_details?.address?.line1,
-        city: checkoutSession.customer_details?.address?.city,
-        state: checkoutSession.customer_details?.address?.state,
-        zip: checkoutSession.customer_details?.address?.postal_code,
-        country: checkoutSession.customer_details?.address?.country
-      }
+      const chitChatLineItems = lineItems.map((item) => {
+        // console.log('Chit chat item:', item)
 
-      console.log('Total Weight: ', checkoutSession.metadata?.totalWeight)
-      console.log('Currency: ', checkoutSession.currency)
-      // Create an order in shippo
-      const order = {
-        to_address: shippingAddress,
-        line_items: lineItems,
-        // get date from unix timestamp
-        placed_at: new Date(checkoutSession.created * 1000).toISOString(),
-        order_number: checkoutSession?.metadata?.orderId,
-        order_status: 'PAID',
-        shipping_cost: Number(checkoutSession?.shipping_cost?.amount_total)
-          ? Number(checkoutSession?.shipping_cost?.amount_total) / 100
-          : 0,
-        shipping_cost_currency: checkoutSession.currency?.toUpperCase(),
-        // shipping_method: checkoutSession?.shipping_options, //todo
-        subtotal_price: checkoutSession.amount_subtotal
-          ? checkoutSession.amount_subtotal / 100
-          : 0,
-        total_price: checkoutSession.amount_total
+        return {
+          quantity: item.quantity,
+          description: item.title,
+          value_amount: item.total_price / (item.quantity || 1),
+          currency_code: 'usd'
+        }
+      })
+
+      const checkoutSessionAddress = checkoutSession.customer_details?.address
+
+      // Create Chit Chats shipment object
+      const chitChatsShipment = {
+        name: `${checkoutSession.customer_details?.name}`,
+        address_1: checkoutSession.customer_details?.address?.line1,
+        address_2: checkoutSession.customer_details?.address?.line2,
+        city: checkoutSession.customer_details?.address?.city,
+        province_code: checkoutSession.customer_details?.address?.state,
+        postal_code: checkoutSession.customer_details?.address?.postal_code,
+        country_code: checkoutSession.customer_details?.address?.country,
+        phone: checkoutSession.customer_details?.phone?.replace(/\D/g, ''), // Remove non-numeric characters
+        email: checkoutSession.customer_details?.email,
+        package_contents: 'merchandise',
+        description: 'Keyboard Keycaps',
+        value: checkoutSession.amount_total
           ? checkoutSession.amount_total / 100
           : 0,
-        total_tax: checkoutSession.total_details?.amount_tax
-          ? checkoutSession.total_details.amount_tax / 100
-          : 0,
-        currency: checkoutSession.currency?.toUpperCase(),
+        value_currency: 'usd',
+        order_id: '', // TODO: Add order ID
+        // order_store: 'other',
+        package_type: 'thick_envelope',
+        weight_unit: 'g',
         weight: checkoutSession.metadata?.totalWeight,
-        weight_unit: 'g'
+        size_unit: 'cm',
+        size_x: 23,
+        size_y: 16,
+        size_z: 5,
+        insurance_requested: true,
+        signature_requested: false,
+        vat_reference: '',
+        // duties_paid_requested: false,
+        // postage_type:
+        //   checkoutSessionAddress?.country === 'US'
+        //     ? 'chit_chats_us_edge'
+        //     : 'chit_chats_select',
+        // cheapest_postage_type_requested: 'yes',
+        // tracking_number: '',
+        // ship_date: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000)
+        //   .toISOString()
+        //   .split('T')[0],
+        line_items: chitChatLineItems
       }
 
-      console.log('Order:', order)
+      console.log('Chit Chats shipment:', chitChatsShipment)
 
-      // call shippo API to create order
+      // Send request to Chit Chats API
       try {
-        const res = await fetch('https://api.goshippo.com/orders/', {
-          method: 'POST',
-          headers: {
-            Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(order)
-        })
-        // console.log('Shippo order created:', res)
+        const response = await fetch(
+          `${process.env.CHIT_CHATS_API_URL}/${process.env.CHIT_CHATS_CLIENT_ID}/shipments`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `${process.env.CHIT_CHATS_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(chitChatsShipment)
+          }
+        )
+
+        const data = await response.json()
+        console.log('Chit Chats shipment created:', data)
+        // return NextResponse.json(data, { status: 200 })
       } catch (error) {
-        console.log('Error creating order in Shippo:', error)
+        console.error('Chit Chats API Error:', error)
+        // return new NextResponse('Internal Server Error', { status: 500 })
       }
+
+      //   const shippingAddress = {
+      //     name: checkoutSession.customer_details?.name,
+      //     street1: checkoutSession.customer_details?.address?.line1,
+      //     city: checkoutSession.customer_details?.address?.city,
+      //     state: checkoutSession.customer_details?.address?.state,
+      //     zip: checkoutSession.customer_details?.address?.postal_code,
+      //     country: checkoutSession.customer_details?.address?.country
+      //   }
+
+      //   console.log('Total Weight: ', checkoutSession.metadata?.totalWeight)
+      //   console.log('Currency: ', checkoutSession.currency)
+      //   // Create an order in shippo
+      //   const order = {
+      //     to_address: shippingAddress,
+      //     line_items: lineItems,
+      //     // get date from unix timestamp
+      //     placed_at: new Date(checkoutSession.created * 1000).toISOString(),
+      //     order_number: checkoutSession?.metadata?.orderId,
+      //     order_status: 'PAID',
+      //     shipping_cost: Number(checkoutSession?.shipping_cost?.amount_total)
+      //       ? Number(checkoutSession?.shipping_cost?.amount_total) / 100
+      //       : 0,
+      //     shipping_cost_currency: checkoutSession.currency?.toUpperCase(),
+      //     // shipping_method: checkoutSession?.shipping_options, //todo
+      //     subtotal_price: checkoutSession.amount_subtotal
+      //       ? checkoutSession.amount_subtotal / 100
+      //       : 0,
+      //     total_price: checkoutSession.amount_total
+      //       ? checkoutSession.amount_total / 100
+      //       : 0,
+      //     total_tax: checkoutSession.total_details?.amount_tax
+      //       ? checkoutSession.total_details.amount_tax / 100
+      //       : 0,
+      //     currency: checkoutSession.currency?.toUpperCase(),
+      //     weight: checkoutSession.metadata?.totalWeight,
+      //     weight_unit: 'g'
+      //   }
+
+      //   console.log('Order:', order)
+
+      //   // call shippo API to create order
+      //   try {
+      //     const res = await fetch('https://api.goshippo.com/orders/', {
+      //       method: 'POST',
+      //       headers: {
+      //         Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+      //         'Content-Type': 'application/json'
+      //       },
+      //       body: JSON.stringify(order)
+      //     })
+      //     // console.log('Shippo order created:', res)
+      //   } catch (error) {
+      //     console.log('Error creating order in Shippo:', error)
+      //   }
+      // } catch (error) {
+      //   console.log('Error updating order:', error)
+      // }
     } catch (error) {
       console.log('Error updating order:', error)
     }

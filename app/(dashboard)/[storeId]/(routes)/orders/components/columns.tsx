@@ -58,7 +58,7 @@ export const columns: ColumnDef<OrderColumn>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-x-2">
-          {row.original.isAbandoned ? '🅰️' : '🛒'}
+          {row.original.isAbandoned ? '🗑️' : '🛒'}
         </div>
       )
     }

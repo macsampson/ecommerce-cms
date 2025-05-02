@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       zip: address.zip,
       country: address.country,
       email: address.email,
-      phone: address.phone || '',
+      phone: address.phone,
       is_residential: true
     },
     parcels: [parcelData],
@@ -192,6 +192,8 @@ export async function POST(req: Request) {
 
     const shipmentData = await shipmentResponse.json()
 
+    // console.log('shipmentData: ', shipmentData)
+
     if (!shipmentData.rates) {
       throw new Error('No rates returned from Shippo')
     }
@@ -203,7 +205,10 @@ export async function POST(req: Request) {
       .filter((rate: ShippoRate) => {
         // For US addresses, only show 'Tracked Packet - USA'
         if (address.country === 'US') {
-          return rate.servicelevel.name === 'Tracked Packet - USA'
+          return (
+            rate.servicelevel.name === 'Tracked Packet - USA' ||
+            rate.servicelevel.name === 'Expedited Parcel USA'
+          )
         }
 
         // For Canadian addresses, show all available rates with valid estimated days

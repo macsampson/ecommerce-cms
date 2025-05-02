@@ -42,6 +42,28 @@ type CartItemType = {
   bundles?: { minQuantity: number; discount: number }[]
 }
 
+type ShippoRate = {
+  object_id: string
+  provider: string
+  servicelevel: {
+    name: string
+    token: string
+    display_name: string
+  }
+  amount: string
+  currency: string
+  amount_local: string
+  currency_local: string
+  estimated_days: number
+  duration_terms: string
+  attributes: string[]
+}
+
+type ShippoRatesResponse = {
+  rates: ShippoRate[]
+  messages: any[]
+}
+
 // Handle OPTIONS request
 export async function OPTIONS() {
   return NextResponse.json({})
@@ -49,7 +71,6 @@ export async function OPTIONS() {
 
 // Handle POST request for shipping rate calculation
 export async function POST(req: Request) {
-  // Extract address, cart items, and currency from the request body
   const {
     address,
     cartItems,
@@ -57,186 +78,246 @@ export async function POST(req: Request) {
   }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
     await req.json()
 
-  console.log('currency: ', currency)
-  // Create line items for Shippo from cart items
-  const lineItems = cartItems.map((cartItem) => {
-    const {
-      productId,
-      name,
-      price,
-      cartQuantity,
-      variations,
-      weight,
-      bundles
-    } = cartItem
+  // Calculate total weight and price
+  const totalWeight = cartItems.reduce(
+    (acc, item) => acc + item.weight * item.cartQuantity,
+    0
+  )
 
-    // Calculate the price of the item based on quantity and any applicable bundles
-    let itemsPrice = 0
+  const totalPrice = cartItems.reduce((acc, item) => {
+    const { price, cartQuantity, bundles } = item
+    let itemPrice = price * cartQuantity
+
     if (bundles && cartQuantity > 1) {
-      let bundle = null
-      // Sort bundles by key and find the largest minQuantity that is less than or equal to the cartQuantity
       const sortedBundles = Object.entries(bundles).sort(
         ([a], [b]) => Number(a) - Number(b)
       )
-
       for (const [minQuantity, discount] of sortedBundles) {
         if (cartQuantity >= Number(minQuantity)) {
-          bundle = {
-            minQuantity: Number(minQuantity),
-            discount: Number(discount)
-          }
+          itemPrice = price * cartQuantity * (1 - Number(discount) / 100)
+          break
         }
       }
-
-      if (bundle) {
-        itemsPrice = price * cartQuantity * (1 - bundle.discount / 100)
-      }
-    } else {
-      itemsPrice = price * cartQuantity
     }
-
-    const itemsWeight = weight * cartQuantity
-
-    // Create a line item object for Shippo
-    const lineItem = {
-      currency: currency,
-      manufacture_country: 'CA',
-      max_delivery_time: new Date(Date.now() + 12096e5).toISOString(), // 2 weeks from now
-      max_ship_time: new Date(Date.now() + 6048e5).toISOString(), // 1 week from now
-      quantity: cartQuantity,
-      sku: productId,
-      title: name,
-      total_price: itemsPrice.toString(),
-      weight: itemsWeight.toString(),
-      weight_unit: 'g',
-      object_id: productId
-    }
-
-    return lineItem
-  })
-
-  // Calculate the total quantity, price, and weight of the cart
-  const totalQuantity = cartItems.reduce((acc, cartItem) => {
-    const { cartQuantity } = cartItem
-    return acc + cartQuantity
+    return acc + itemPrice
   }, 0)
 
-  const totalPrice = cartItems.reduce((acc, cartItem) => {
-    const { price, cartQuantity, bundles } = cartItem
+  // Create line items for Shippo
+  const lineItems = cartItems.map((item) => ({
+    title: item.name,
+    sku: item.productId,
+    quantity: item.cartQuantity,
+    total_price: (item.price * item.cartQuantity).toString(),
+    currency: currency,
+    weight: (item.weight * item.cartQuantity).toString(),
+    weight_unit: 'g',
+    mass_unit: 'g',
+    manufacture_country: 'CA'
+  }))
 
-    if (bundles && cartQuantity >= 1) {
-      // Find the bundle that applies to the current cart item
-      let bundle = null
-      for (const [minQuantity, discount] of Object.entries(bundles)) {
-        if (cartQuantity >= Number(minQuantity)) {
-          bundle = {
-            minQuantity: Number(minQuantity),
-            discount: Number(discount)
-          }
+  // Create parcel data
+  const parcelData = {
+    length: '20',
+    width: '15',
+    height: '10',
+    distance_unit: 'cm',
+    weight: totalWeight.toString(),
+    weight_unit: 'g',
+    mass_unit: 'g'
+  }
+
+  // Create customs declaration for international shipping
+  const customsDeclaration =
+    address.country !== 'CA'
+      ? {
+          certify: true,
+          certify_signer: 'PocketCaps',
+          contents_explanation: 'Keyboard Keycaps',
+          contents_type: 'MERCHANDISE',
+          eel_pfc: 'NOEEI_30_36',
+          incoterm: 'DDP',
+          items: [
+            {
+              description: 'Keyboard Keycaps',
+              mass_unit: 'g',
+              net_weight: totalWeight.toString(),
+              origin_country: 'CA',
+              quantity: cartItems.reduce(
+                (acc, item) => acc + item.cartQuantity,
+                0
+              ),
+              tarrif_number: '3926.90',
+              value_amount: totalPrice.toString(),
+              value_currency: currency
+            }
+          ],
+          non_delivery_option: 'RETURN'
         }
-      }
+      : undefined
 
-      if (bundle) {
-        return acc + price * totalQuantity * (1 - bundle.discount / 100)
-      }
-    }
-
-    return acc + price * totalQuantity
-  }, 0)
-
-  const totalWeight = cartItems.reduce((acc, cartItem) => {
-    const { weight, cartQuantity } = cartItem
-    return acc + weight * cartQuantity
-  }, 0)
-
-  // Fetch the parcel template from Shippo
-  const parcels = await fetch(
-    'https://api.goshippo.com/live-rates/settings/parcel-template',
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  ).then((res) => res.json())
-
-  const parcel = parcels.result
-
-  // Create the customs declaration object for international shipping
-  const customsDeclaration = {
-    certify: true,
-    certify_signer: 'PocketCaps',
-    contents_explanation: 'Keyboard Keycaps',
-    contents_type: 'MERCHANDISE',
-    eel_pfc: 'NOEEI_30_36',
-    incoterm: 'DDP',
-    is_vat_collected: null,
-    items: [
-      {
-        description: 'Keyboard Keycaps',
-        mass_unit: 'g',
-        net_weight: totalWeight.toString(),
-        origin_country: 'CA',
-        quantity: totalQuantity,
-        tarrif_number: '3926.90',
-        value_amount: totalPrice.toString(),
-        value_currency: 'USD'
-      }
-    ],
-    non_delivery_option: 'RETURN',
-    address_importer: {
-      // TODO: Fetch this address from the database
-      name: 'Mackenzie Sampson',
-      company: 'PocketCaps',
-      street1: '6381 Weir Rd',
-      street2: '',
-      city: 'Kamloops',
-      state: 'BC',
-      zip: 'V0E2A0',
-      country: 'CA',
-      phone: '+17788289009',
-      email: 'pocketcaps@gmail.com',
-      is_residential: true
-    }
-  } as CreateCustomsDeclarationRequest
-
-  // Create the shipment object for Shippo API request
+  // Create shipment object
   const shipmentObject = {
     address_from: addressFromCanada,
     address_to: {
-      name: address.firstName + ' ' + address.lastName,
+      name: `${address.firstName} ${address.lastName}`,
       street1: address.street,
       city: address.city,
       state: address.state,
       zip: address.zip,
       country: address.country,
       email: address.email,
-      phone: address.phone
+      phone: address.phone,
+      is_residential: true
     },
-    parcel: parcel.object_id,
-    async: true,
+    parcels: [parcelData],
+    async: false,
     customs_declaration: customsDeclaration,
     line_items: lineItems
   }
 
-  // Send request to Shippo API to get live rates
   try {
-    const data = await fetch('https://api.goshippo.com/live-rates', {
-      method: 'POST',
-      headers: {
-        Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(shipmentObject)
-    }).then((res) => res.json())
+    // Create shipment and get rates
+    const shipmentResponse = await fetch(
+      'https://api.goshippo.com/shipments/',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(shipmentObject)
+      }
+    )
 
-    // Return the shipping rates to the client
-    return NextResponse.json(data, { status: 200 })
-  } catch (error) {
-    console.log(error)
-    return new NextResponse('Internal Server Error', {
-      status: 500
+    const shipmentData = await shipmentResponse.json()
+
+    if (!shipmentData.rates) {
+      throw new Error('No rates returned from Shippo')
+    }
+
+    // Format rates for frontend display
+    const formattedRates = shipmentData.rates
+      .filter((rate: ShippoRate) => rate.servicelevel?.name)
+      .map((rate: ShippoRate) => ({
+        id: rate.object_id,
+        title:
+          rate.servicelevel.display_name ||
+          `${rate.provider} ${rate.servicelevel.name}`,
+        description:
+          rate.duration_terms ||
+          `${rate.estimated_days} day${
+            rate.estimated_days !== 1 ? 's' : ''
+          } delivery`,
+        amount: rate.amount,
+        currency: rate.currency,
+        amount_local: rate.amount_local,
+        currency_local: rate.currency_local,
+        estimated_days: rate.estimated_days,
+        attributes: rate.attributes
+      }))
+      .sort(
+        (a: ShippoRate, b: ShippoRate) =>
+          parseFloat(a.amount) - parseFloat(b.amount)
+      )
+
+    return NextResponse.json({
+      success: true,
+      rates: formattedRates
     })
+  } catch (error) {
+    console.error('Shipping rate error:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch shipping rates'
+      },
+      { status: 500 }
+    )
   }
 }
+
+//   // Send request to Shippo API to get live rates
+//   try {
+//     const response = await fetch('https://api.goshippo.com/live-rates', {
+//       method: 'POST',
+//       headers: {
+//         Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify(shipmentObject)
+//     })
+
+//     const data: ShippoRatesResponse = await response.json()
+//     console.log('data: ', data)
+
+//     // Format the rates for frontend display
+//     if (data.results && data.results.length > 0) {
+//       let rates = data.results
+
+//       // If shipping to Canada but no domestic rates returned, add fallback options
+//       if (
+//         address.country === 'CA' &&
+//         (!rates.length || rates[0].title.includes('USA'))
+//       ) {
+//         rates = [
+//           {
+//             title: 'Canada Post Regular Parcel',
+//             description: 'Domestic shipping within Canada',
+//             amount: '2.00',
+//             currency: 'CAD',
+//             amount_local: '2.00',
+//             currency_local: 'CAD',
+//             estimated_days: 5
+//           },
+//           {
+//             title: 'Canada Post Expedited Parcel',
+//             description: 'Faster domestic shipping within Canada',
+//             amount: '13.00',
+//             currency: 'CAD',
+//             amount_local: '13.00',
+//             currency_local: 'CAD',
+//             estimated_days: 3
+//           }
+//         ]
+//       }
+
+//       const formattedRates = rates.map((rate) => ({
+//         id: `${rate.title}-${rate.amount}`.toLowerCase().replace(/\s+/g, '-'), // Create a unique ID
+//         title: rate.title,
+//         amount: rate.amount,
+//         currency: rate.currency,
+//         amount_local: rate.amount_local,
+//         currency_local: rate.currency_local,
+//         estimated_days: rate.estimated_days,
+//         description: rate.description
+//       }))
+
+//       // Sort rates by price
+//       formattedRates.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount))
+
+//       // console.log('formattedRates: ', formattedRates)
+
+//       return NextResponse.json({
+//         success: true,
+//         rates: formattedRates
+//       })
+//     } else {
+//       return NextResponse.json(
+//         {
+//           success: false,
+//           error: 'No shipping rates available'
+//         },
+//         { status: 400 }
+//       )
+//     }
+//   } catch (error) {
+//     console.error('Shipping rate error:', error)
+//     return NextResponse.json(
+//       {
+//         success: false,
+//         error: 'Failed to fetch shipping rates'
+//       },
+//       { status: 500 }
+//     )
+//   }
+// }

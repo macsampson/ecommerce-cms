@@ -2,7 +2,6 @@ import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
 
 import { stripe } from '@/lib/stripe'
-// import { Rate as ShippoRate } from 'shippo'
 import prismadb from '@/lib/prismadb'
 import { Decimal } from '@prisma/client/runtime/library'
 
@@ -71,15 +70,15 @@ type AddressType = {
   email: string
 }
 
-type ShippoRate = {
-  id: string
-  amount: string
-  amount_local: string
-  currency: string
-  currency_local: string
-  estimated_days: number
-  title: string
-}
+// type ShippoRate = {
+//   id: string
+//   amount: string
+//   amount_local: string
+//   currency: string
+//   currency_local: string
+//   estimated_days: number
+//   title: string
+// }
 
 export async function POST(
   req: Request,
@@ -320,7 +319,8 @@ export async function POST(
             orderId: order.id,
             shippingAddress: JSON.stringify(shippingAddress),
             totalWeight: order.orderItems.reduce(
-              (acc, item) => acc + parseFloat(item.weight.toString()),
+              (acc, item) =>
+                acc + parseFloat(item.weight.toString()) * item.quantity,
               0
             )
           },

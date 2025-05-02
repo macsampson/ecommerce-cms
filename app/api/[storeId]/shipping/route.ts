@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     length: '23',
     width: '16',
     height: '5',
-    distance_unit: 'in',
+    distance_unit: 'cm',
     weight: totalWeight.toString(),
     weight_unit: 'g',
     mass_unit: 'g'

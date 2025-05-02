@@ -29,7 +29,7 @@ type AddressType = {
   zip: string
   country: string
   email: string
-  phone: string
+  phone?: string
 }
 
 type CartItemType = {
@@ -118,10 +118,10 @@ export async function POST(req: Request) {
 
   // Create parcel data
   const parcelData = {
-    length: '20',
-    width: '15',
-    height: '10',
-    distance_unit: 'cm',
+    length: '23',
+    width: '16',
+    height: '5',
+    distance_unit: 'in',
     weight: totalWeight.toString(),
     weight_unit: 'g',
     mass_unit: 'g'
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
       zip: address.zip,
       country: address.country,
       email: address.email,
-      phone: address.phone,
+      phone: address.phone || '',
       is_residential: true
     },
     parcels: [parcelData],

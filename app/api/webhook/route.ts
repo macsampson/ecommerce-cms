@@ -194,7 +194,7 @@ export async function POST(req: Request) {
         state: checkoutSession.customer_details?.address?.state,
         zip: checkoutSession.customer_details?.address?.postal_code,
         country: checkoutSession.customer_details?.address?.country,
-        phone: checkoutSession.customer_details?.phone,
+        phone: checkoutSession.customer_details?.phone || '',
         email: checkoutSession.customer_details?.email
       }
 

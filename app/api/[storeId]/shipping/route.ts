@@ -195,17 +195,34 @@ export async function POST(req: Request) {
       throw new Error('No rates returned from Shippo')
     }
 
-    console.log('shipmentData: ', shipmentData.rates)
+    // console.log('shipmentData: ', shipmentData.rates)
 
     // Format rates for frontend display
     const formattedRates = shipmentData.rates
-      .filter(
-        (rate: ShippoRate) =>
+      .filter((rate: ShippoRate) => {
+        // For US addresses, only show 'Tracked Packet - USA'
+        if (address.country === 'US') {
+          return rate.servicelevel.name === 'Tracked Packet - USA'
+        }
+
+        // For Canadian addresses, show all available rates with valid estimated days
+        if (address.country === 'CA') {
+          return (
+            rate.servicelevel?.name &&
+            rate.estimated_days !== null &&
+            rate.estimated_days !== undefined &&
+            rate.servicelevel.name !== 'Xpresspost' &&
+            rate.servicelevel.name !== 'Regular Parcel'
+          )
+        }
+
+        // For other countries, show all available rates with valid estimated days
+        return (
           rate.servicelevel?.name &&
           rate.estimated_days !== null &&
-          rate.estimated_days !== undefined &&
-          rate.servicelevel.name == 'Tracked Packet - USA'
-      )
+          rate.estimated_days !== undefined
+        )
+      })
       .map((rate: ShippoRate) => ({
         id: rate.object_id,
         title:

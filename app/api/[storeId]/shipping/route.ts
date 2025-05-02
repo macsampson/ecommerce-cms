@@ -57,6 +57,7 @@ type ShippoRate = {
   estimated_days: number
   duration_terms: string
   attributes: string[]
+  provider_image_200: string
 }
 
 type ShippoRatesResponse = {
@@ -238,7 +239,8 @@ export async function POST(req: Request) {
         amount_local: rate.amount_local,
         currency_local: rate.currency_local,
         estimated_days: rate.estimated_days,
-        attributes: rate.attributes
+        attributes: rate.attributes,
+        provider_image: rate.provider_image_200
       }))
       .sort(
         (a: ShippoRate, b: ShippoRate) =>

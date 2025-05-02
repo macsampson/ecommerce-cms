@@ -195,9 +195,17 @@ export async function POST(req: Request) {
       throw new Error('No rates returned from Shippo')
     }
 
+    console.log('shipmentData: ', shipmentData.rates)
+
     // Format rates for frontend display
     const formattedRates = shipmentData.rates
-      .filter((rate: ShippoRate) => rate.servicelevel?.name)
+      .filter(
+        (rate: ShippoRate) =>
+          rate.servicelevel?.name &&
+          rate.estimated_days !== null &&
+          rate.estimated_days !== undefined &&
+          rate.servicelevel.name == 'Tracked Packet - USA'
+      )
       .map((rate: ShippoRate) => ({
         id: rate.object_id,
         title:

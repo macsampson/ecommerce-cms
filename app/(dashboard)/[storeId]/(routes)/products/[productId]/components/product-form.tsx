@@ -96,7 +96,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     })) || []
   )
 
-  console.log('images', images)
+  // console.log('images', images)
 
   const [variations, setVariations] = useState<VariationType[]>(
     initialData?.variations.map((v) => ({
@@ -204,7 +204,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   })
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log('data', data)
+    // console.log('data', data)
     try {
       setLoading(true)
       if (initialData) {

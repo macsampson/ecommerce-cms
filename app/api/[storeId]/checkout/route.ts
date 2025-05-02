@@ -99,10 +99,10 @@ export async function POST(
     currency: string
   } = await req.json()
 
-  console.log('totalPrice: ', totalPrice)
-  console.log('shippingType: ', shippingType)
-  console.log('shippingAddress: ', shippingAddress)
-  console.log('currency: ', currency)
+  // console.log('totalPrice: ', totalPrice)
+  // console.log('shippingType: ', shippingType)
+  // console.log('shippingAddress: ', shippingAddress)
+  // console.log('currency: ', currency)
 
   if (!cartItems) {
     return new NextResponse('Product IDs are required', { status: 400 })

@@ -208,3 +208,15 @@ model OrderItem {
   @@index([productVariationId])
   @@map("order_item")
 }
+
+model ExchangeRate {
+  id          String   @id @default(uuid())
+  baseCurrency String   @map("base_currency")
+  rates       Json     @map("rates") // Store exchange rates as JSON
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([baseCurrency])
+  @@index([baseCurrency])
+  @@map("exchange_rate")
+}

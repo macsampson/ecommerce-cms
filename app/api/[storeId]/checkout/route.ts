@@ -94,7 +94,12 @@ export async function POST(
   }: {
     cartItems: cartItemsObjectType
     totalPrice: number
-    shippingType: { rate: number; title: string }
+    shippingType: {
+      id: string
+      rate: number
+      title: string
+      originalCurrency: string
+    }
     shippingAddress: AddressType
     currency: string
   } = await req.json()
@@ -297,12 +302,31 @@ export async function POST(
       console.log('Error creating line items: ', error)
     }
 
-    // console.log(
-    //   'stripe line_items: ',
-    //   line_items.map((item) => item.price_data?.product_data)
-    // )
-
     // console.log('orderItems: ', order.orderItems)
+
+    // Check if email is provided
+    if (!shippingAddress.email) {
+      console.log('Missing email in shipping address:', shippingAddress)
+      return new NextResponse('Valid email address is required', {
+        status: 400
+      })
+    }
+
+    // Add email validation (basic check)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(shippingAddress.email)) {
+      console.log('Invalid email format:', shippingAddress.email)
+      return new NextResponse('Invalid email address format', { status: 400 })
+    }
+
+    const shippingRate = await stripe.shippingRates.create({
+      display_name: shippingType.title,
+      type: 'fixed_amount',
+      fixed_amount: {
+        amount: Math.round(shippingType.rate * 100),
+        currency: currency
+      }
+    })
 
     // Create the checkout session
     if (line_items.length > 0) {
@@ -318,6 +342,9 @@ export async function POST(
           metadata: {
             orderId: order.id,
             shippingAddress: JSON.stringify(shippingAddress),
+            shippingRateId: shippingType.id,
+            shippingRateAmount: shippingType.rate,
+            shippingRateTitle: shippingType.title,
             totalWeight: order.orderItems.reduce(
               (acc, item) =>
                 acc + parseFloat(item.weight.toString()) * item.quantity,
@@ -329,28 +356,32 @@ export async function POST(
               orderId: order.id
               // shippingRateId: shippingType.id
             }
-          },
-          shipping_options: [
-            {
-              shipping_rate_data: {
-                type: 'fixed_amount',
-                fixed_amount: {
-                  amount: Math.round(shippingType.rate * 100),
-                  currency: currency
-                },
-
-                display_name: shippingType.title,
-
-                metadata: {
-                  // id: shippingType.id
-                  // provider: shippingType.provider,
-                  // servicelevel: shippingType.title,
-                  // estimated_days: shippingType.estimated_days
-                }
-              }
-            }
-          ]
+          }
+          // shipping_options: [
+          //   {
+          //     shipping_rate: shippingRate.id
+          //   }
+          // ]
         })
+
+        // Example of a shipping rate object
+        //                 {
+        //   "id": "shr_1MrRx2LkdIwHu7ixikgEA6Wd",
+        //   "object": "shipping_rate",
+        //   "active": true,
+        //   "created": 1680207604,
+        //   "delivery_estimate": null,
+        //   "display_name": "Ground shipping",
+        //   "fixed_amount": {
+        //     "amount": 500,
+        //     "currency": "usd"
+        //   },
+        //   "livemode": false,
+        //   "metadata": {},
+        //   "tax_behavior": "unspecified",
+        //   "tax_code": null,
+        //   "type": "fixed_amount"
+        // }
 
         // Return the session URL to the frontend
         return NextResponse.json({

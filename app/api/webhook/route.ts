@@ -10,6 +10,11 @@ const DISCORD_ORDER_WEBHOOK_URL = process.env.DISCORD_ORDER_WEBHOOK_URL!
 
 const REVALIDATE_URL = process.env.FRONTEND_STORE_URL + '/api/revalidate'
 
+// Helper function to format prices to 2 decimal places
+const formatPrice = (price: number): string => {
+  return price.toFixed(2)
+}
+
 type AddressType = {
   firstName: string
   lastName: string
@@ -112,7 +117,9 @@ export async function POST(req: Request) {
             \n**Products:**
             ${parsedProductDetails}
             \n**Total:** 
-            $${session.amount_total ? session.amount_total / 100 : 0}
+            $${formatPrice(
+              session.amount_total ? session.amount_total / 100 : 0
+            )}
             \n**Buyer's Name:**
             ${session?.customer_details?.name}
             \n**Shipping Address:**
@@ -137,6 +144,7 @@ export async function POST(req: Request) {
 
   // Listen for the payment_intent.succeeded event
   if (event.type === 'payment_intent.succeeded') {
+    // console.log('Payment intent succeeded event received')
     const paymentIntent = event.data.object as Stripe.PaymentIntent
     // console.log(paymentIntent)
     const orderId = paymentIntent.metadata.orderId
@@ -176,7 +184,7 @@ export async function POST(req: Request) {
         return {
           title: item.description,
           quantity: item.quantity,
-          total_price: item.amount_total / 100,
+          total_price: formatPrice(item.amount_total / 100),
           sku: item.price?.product as string,
           weight: checkoutSession.metadata?.totalWeight
             ? Number(checkoutSession.metadata.totalWeight) /
@@ -198,6 +206,35 @@ export async function POST(req: Request) {
         email: checkoutSession.customer_details?.email
       }
 
+      // Inside payment_intent.succeeded event handler
+      const shippingMethod = checkoutSession.metadata?.shippingRateTitle
+      const isInternational = shippingAddress.country !== 'CA'
+
+      // Create customs declaration for international shipping
+      const customsDeclaration = isInternational
+        ? {
+            certify: true,
+            certify_signer: 'PocketCaps',
+            contents_explanation: 'Keyboard Keycaps',
+            contents_type: 'MERCHANDISE',
+            eel_pfc: 'NOEEI_30_36',
+            incoterm: 'DDU',
+            items: lineItems.map((item) => ({
+              description: item.title,
+              mass_unit: 'g',
+              net_weight: item.weight,
+              origin_country: 'CA',
+              quantity: item.quantity,
+              tarrif_number: '3926.90',
+              value_amount: checkoutSession.amount_total
+                ? checkoutSession.amount_total / 100
+                : 0,
+              value_currency: checkoutSession.currency?.toUpperCase()
+            })),
+            non_delivery_option: 'RETURN'
+          }
+        : undefined
+
       // Create Shippo order
       const shippoOrder = {
         to_address: shippingAddress,
@@ -205,25 +242,34 @@ export async function POST(req: Request) {
         placed_at: new Date(checkoutSession.created * 1000).toISOString(),
         order_number: checkoutSession?.metadata?.orderId,
         order_status: 'PAID',
-        shipping_cost: Number(checkoutSession?.shipping_cost?.amount_total)
-          ? Number(checkoutSession?.shipping_cost?.amount_total) / 100
-          : 0,
+        shipping_cost: formatPrice(
+          Number(checkoutSession.metadata?.shippingRateAmount) || 0
+        ),
         shipping_cost_currency: checkoutSession.currency?.toUpperCase(),
-        subtotal_price: checkoutSession.amount_subtotal
-          ? checkoutSession.amount_subtotal / 100
-          : 0,
-        total_price: checkoutSession.amount_total
-          ? checkoutSession.amount_total / 100
-          : 0,
-        total_tax: checkoutSession.total_details?.amount_tax
-          ? checkoutSession.total_details.amount_tax / 100
-          : 0,
+        shipping_method: shippingMethod,
+        subtotal_price: formatPrice(
+          checkoutSession.amount_subtotal
+            ? checkoutSession.amount_subtotal / 100
+            : 0
+        ),
+        total_price: formatPrice(
+          checkoutSession.amount_total
+            ? checkoutSession.amount_total / 100 +
+                Number(checkoutSession.metadata?.shippingRateAmount)
+            : 0
+        ),
+        total_tax: formatPrice(
+          checkoutSession.total_details?.amount_tax
+            ? checkoutSession.total_details.amount_tax / 100
+            : 0
+        ),
         currency: checkoutSession.currency?.toUpperCase(),
         weight: checkoutSession.metadata?.totalWeight,
-        weight_unit: 'g'
+        weight_unit: 'g',
+        customs_declaration: customsDeclaration
       }
 
-      console.log('Shippo order:', shippoOrder)
+      // console.log('Shippo order:', shippoOrder)
 
       // Create order in Shippo
       try {
@@ -234,8 +280,8 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            ...shippoOrder,
-            test: true // Enable test mode
+            ...shippoOrder
+            // test: true // Enable test mode
           })
         })
 

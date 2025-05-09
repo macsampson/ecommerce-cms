@@ -25,6 +25,18 @@ type AddressType = {
   country: string
 }
 
+const fromAddress = {
+  name: 'Pocket Caps',
+  company: 'PocketCaps',
+  street1: '3307 24 St NW',
+  city: 'Calgary',
+  state: 'AB',
+  zip: 'T2M 3Z8',
+  country: 'CA',
+  phone: '+17788289009',
+  email: 'pocketcaps@gmail.com'
+}
+
 function parseShippingAddress(shippingAddressJson: string): string {
   const shippingAddress: AddressType = JSON.parse(shippingAddressJson)
   const shippingAddressObject = `${shippingAddress.firstName} ${shippingAddress.lastName}
@@ -190,7 +202,12 @@ export async function POST(req: Request) {
             ? Number(checkoutSession.metadata.totalWeight) /
               (item.quantity || 1)
             : 0,
-          weight_unit: 'g'
+          weight_unit: 'g',
+          currency: checkoutSession.currency?.toUpperCase(),
+          manufacture_country: 'CA',
+          max_ship_time: new Date(
+            new Date().setDate(new Date().getDate() + 7)
+          ).toISOString()
         }
       })
 
@@ -238,6 +255,7 @@ export async function POST(req: Request) {
       // Create Shippo order
       const shippoOrder = {
         to_address: shippingAddress,
+        from_address: fromAddress,
         line_items: lineItems,
         placed_at: new Date(checkoutSession.created * 1000).toISOString(),
         order_number: checkoutSession?.metadata?.orderId,
@@ -264,7 +282,9 @@ export async function POST(req: Request) {
             : 0
         ),
         currency: checkoutSession.currency?.toUpperCase(),
-        weight: checkoutSession.metadata?.totalWeight,
+        weight: parseFloat(
+          checkoutSession.metadata?.totalWeight || '0'
+        ).toFixed(2),
         weight_unit: 'g',
         customs_declaration: customsDeclaration
       }

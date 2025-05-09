@@ -6,14 +6,19 @@ import shippo, {
   CreateCustomsDeclarationRequest
 } from 'shippo' // Shippo client initialization
 
+// Helper function to format prices to 2 decimal places
+const formatPrice = (price: number): string => {
+  return price.toFixed(2)
+}
+
 // Define the sender's address (TODO: Fetch this from the database in the future)
 const addressFromCanada = {
   name: 'Pocket Caps',
   company: 'PocketCaps',
-  street1: '4730 Lougheed Hwy',
-  city: 'Burnaby',
-  state: 'BC',
-  zip: 'v6e 0m9',
+  street1: '3307 24 St NW',
+  city: 'Calgary',
+  state: 'AB',
+  zip: 'T2M 3Z8',
   country: 'CA', // iso2 country code
   phone: '+17788289009',
   email: 'pocketcaps@gmail.com'
@@ -108,7 +113,7 @@ export async function POST(req: Request) {
     title: item.name,
     sku: item.productId,
     quantity: item.cartQuantity,
-    total_price: (item.price * item.cartQuantity).toString(),
+    total_price: formatPrice(item.price * item.cartQuantity),
     currency: currency,
     weight: (item.weight * item.cartQuantity).toString(),
     weight_unit: 'g',
@@ -148,7 +153,7 @@ export async function POST(req: Request) {
                 0
               ),
               tarrif_number: '3926.90',
-              value_amount: totalPrice.toString(),
+              value_amount: formatPrice(totalPrice),
               value_currency: currency
             }
           ],
@@ -176,6 +181,8 @@ export async function POST(req: Request) {
     line_items: lineItems
   }
 
+  // console.log('shipmentObject: ', shipmentObject)
+
   try {
     // Create shipment and get rates
     const shipmentResponse = await fetch(
@@ -192,7 +199,7 @@ export async function POST(req: Request) {
 
     const shipmentData = await shipmentResponse.json()
 
-    // console.log('shipmentData: ', shipmentData)
+    // console.log('Full shipment data: ', shipmentData)
 
     if (!shipmentData.rates) {
       throw new Error('No rates returned from Shippo')

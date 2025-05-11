@@ -356,12 +356,12 @@ export async function POST(
               orderId: order.id
               // shippingRateId: shippingType.id
             }
-          }
-          // shipping_options: [
-          //   {
-          //     shipping_rate: shippingRate.id
-          //   }
-          // ]
+          },
+          shipping_options: [
+            {
+              shipping_rate: shippingRate.id
+            }
+          ]
         })
 
         // Example of a shipping rate object

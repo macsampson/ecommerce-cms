@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
+import { ExchangeRate } from '@prisma/client'
 
 interface ExchangeRateResponse {
   result: string
@@ -15,6 +16,7 @@ interface ExchangeRateResponse {
 
 const EXCHANGE_RATE_API_KEY = process.env.EXCHANGE_RATE_API_KEY
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 const defaultExchangeRates: Record<string, number> = {
   USD: 1,
@@ -25,9 +27,10 @@ const defaultExchangeRates: Record<string, number> = {
 const fetchExchangeRates = async (
   baseCurrency: string = 'USD'
 ): Promise<Record<string, number>> => {
+  let existingRate: ExchangeRate | null = null
   try {
     // Check if we have a recent entry in the database (less than 24 hours old)
-    const existingRate = await prismadb.exchangeRate.findUnique({
+    existingRate = await prismadb.exchangeRate.findUnique({
       where: {
         baseCurrency
       }
@@ -39,7 +42,7 @@ const fetchExchangeRates = async (
     if (existingRate) {
       const rateAge = currentTime.getTime() - existingRate.updatedAt.getTime()
 
-      if (rateAge < CACHE_DURATION_MS) {
+      if (!IS_PRODUCTION || rateAge < CACHE_DURATION_MS) {
         console.log(
           'Using cached exchange rates from database for:',
           baseCurrency
@@ -53,14 +56,14 @@ const fetchExchangeRates = async (
     const response = await fetch(
       `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${baseCurrency}`
     )
-    console.log('Exchange API Response status:', response.status)
+    // console.log('Exchange API Response status:', response.status)
 
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`)
     }
 
     const data: ExchangeRateResponse = await response.json()
-    console.log('Exchange rates:', data.conversion_rates)
+    // console.log('Exchange rates:', data.conversion_rates)
 
     // Store in database (upsert to create or update)
     await prismadb.exchangeRate.upsert({

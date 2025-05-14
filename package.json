@@ -3,16 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && cd /mnt/o/stripe_1.18.0_windows_x86_64 && ./stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../pocketcaps && bun run dev\"",
+    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../pocketcaps && bun run dev\"",
     "cron": "node cron.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate && prisma migrate deploy",
-    "deploy": "prisma migrate deploy"
+    "postbuild": "bun run seed-prod",
+    "deploy": "prisma migrate deploy",
+    "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
+    "seed-prod": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-prod.ts"
   },
   "prisma": {
-    "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed-dev.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.25.4",

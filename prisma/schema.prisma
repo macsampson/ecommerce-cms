@@ -111,7 +111,7 @@ model Product {
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   description String             @map("description")
-  weight      Decimal            @default(0.00) @map("weight") @db.Decimal(10, 2)
+  weight      Decimal            @default(1.00) @map("weight") @db.Decimal(10, 2)
   bundles     Bundle[]
   images      Image[]
   orderItems  OrderItem[]
@@ -219,4 +219,24 @@ model ExchangeRate {
   @@unique([baseCurrency])
   @@index([baseCurrency])
   @@map("exchange_rate")
+}
+
+model State {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  countryId   BigInt    @map("country_id")
+  countryCode String    @map("country_code") @db.Char(2)
+  fipsCode    String?   @map("fips_code") @db.VarChar(255)
+  iso2        String?   @map("iso2") @db.VarChar(255)
+  type        String?   @map("type") @db.VarChar(191)
+  level       Int?
+  parentId    Int?      @map("parent_id")
+  latitude    Decimal?  @db.Decimal(10, 8)
+  longitude   Decimal?  @db.Decimal(11, 8)
+  createdAt   DateTime? @map("created_at")
+  updatedAt   DateTime  @default(now()) @map("updated_at")
+  flag        Int       @default(1)
+  wikiDataId  String?   @map("wikiDataId") @db.VarChar(255)
+
+  @@map("states")
 }

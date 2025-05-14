@@ -19,39 +19,43 @@ async function main() {
     const sqlContent = readFileSync(sqlPath, 'utf-8')
 
     // Extract only valid INSERT statements with a regex approach
-    // Modified to exclude commented-out INSERT statements (lines that start with --)
     const insertRegex =
       /^(?!--).*INSERT\s+INTO\s+public\.states\s+VALUES\s+\([^;]+\)/gim
     const matches = sqlContent.match(insertRegex) || []
 
     console.log(`Found ${matches.length} state records to import`)
 
-    // Start a transaction to ensure all or nothing gets imported
-    await prisma.$transaction(async (tx) => {
-      // Execute each statement
-      let successCount = 0
-      for (const insertStatement of matches) {
-        try {
-          // Make the statement idempotent
-          const idempotentStatement = `${insertStatement} ON CONFLICT (id) DO NOTHING`
+    // Process in smaller batches to avoid transaction timeouts
+    const BATCH_SIZE = 100
+    let successCount = 0
 
-          // Use $executeRawUnsafe for raw SQL execution
-          await tx.$executeRawUnsafe(idempotentStatement)
-          successCount++
+    for (let i = 0; i < matches.length; i += BATCH_SIZE) {
+      const batch = matches.slice(i, i + BATCH_SIZE)
 
-          // Log progress for large imports
-          if (successCount % 500 === 0) {
-            console.log(`Imported ${successCount} states so far...`)
+      // Use a new transaction for each batch
+      await prisma.$transaction(async (tx) => {
+        for (const insertStatement of batch) {
+          try {
+            // Make the statement idempotent
+            const idempotentStatement = `${insertStatement} ON CONFLICT (id) DO NOTHING`
+            await tx.$executeRawUnsafe(idempotentStatement)
+            successCount++
+          } catch (error) {
+            console.error('Error seeding state:', error)
+            console.error('Failed statement:', insertStatement)
+            // Don't throw here to allow other statements in batch to continue
           }
-        } catch (error) {
-          console.error('Error seeding state:', error)
-          console.error('Failed statement:', insertStatement)
-          throw error // Stop the process if any insert fails
         }
-      }
+      })
 
-      console.log(`Successfully imported ${successCount} states`)
-    })
+      console.log(
+        `Imported ${successCount} states so far (batch ${
+          i / BATCH_SIZE + 1
+        }/${Math.ceil(matches.length / BATCH_SIZE)})`
+      )
+    }
+
+    console.log(`Successfully imported ${successCount} states`)
   } catch (error) {
     console.error('Error seeding states:', error)
     process.exit(1)

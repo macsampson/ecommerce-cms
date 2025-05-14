@@ -181,7 +181,7 @@ export async function POST(req: Request) {
     line_items: lineItems
   }
 
-  // console.log('shipmentObject: ', shipmentObject)
+  console.log('shipmentObject: ', shipmentObject)
 
   try {
     // Create shipment and get rates
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
 
     const shipmentData = await shipmentResponse.json()
 
-    // console.log('Full shipment data: ', shipmentData)
+    console.log('Full shipment data: ', shipmentData)
 
     if (!shipmentData.rates) {
       throw new Error('No rates returned from Shippo')

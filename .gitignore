@@ -12,6 +12,9 @@ node_modules
 /.next/
 /out/
 
+# seed for dev
+prisma/seed-dev.ts
+prisma/seed/dev/
 # production
 /build
 
@@ -40,4 +43,6 @@ next-env.d.ts
 
 original_refs_backup.txt
 recommit.sh.save
+
+
 

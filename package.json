@@ -9,10 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate && prisma migrate deploy",
-    "vercel-build": "next build && bun run seed-prod",
     "deploy": "prisma migrate deploy",
-    "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
-    "seed-prod": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-prod.ts"
+    "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts"
   },
   "prisma": {
     "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed-dev.ts"

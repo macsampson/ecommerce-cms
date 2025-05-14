@@ -294,7 +294,11 @@ export async function POST(
                     .slice(0, -2) // Remove the last semicolon and space for cleanliness
                 : 'Standard'
             },
-            unit_amount: Math.round(cartItems[id].price * 100)
+            unit_amount:
+              // If the currency is JPY, don't multiply by 100
+              currency.toUpperCase() === 'JPY'
+                ? Math.round(cartItems[id].price)
+                : Math.round(cartItems[id].price * 100)
           }
         })
       )
@@ -323,7 +327,10 @@ export async function POST(
       display_name: shippingType.title,
       type: 'fixed_amount',
       fixed_amount: {
-        amount: Math.round(shippingType.rate * 100),
+        amount:
+          currency.toUpperCase() === 'JPY'
+            ? Math.round(shippingType.rate)
+            : Math.round(shippingType.rate * 100),
         currency: currency
       }
     })

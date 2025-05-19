@@ -59,7 +59,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     return null
   }
 
-  console.log('value', value)
+  // console.log('value', value)
 
   return (
     <div>

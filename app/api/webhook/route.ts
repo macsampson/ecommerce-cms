@@ -318,11 +318,11 @@ export async function POST(req: Request) {
           )
         }
 
-        console.log('Shippo order created successfully:', {
-          orderId: data.object_id,
-          orderNumber: data.order_number,
-          status: data.order_status
-        })
+        // console.log('Shippo order created successfully:', {
+        //   orderId: data.object_id,
+        //   orderNumber: data.order_number,
+        //   status: data.order_status
+        // })
       } catch (error) {
         console.error('Error creating order in Shippo:', error)
         // Log the full error details for debugging

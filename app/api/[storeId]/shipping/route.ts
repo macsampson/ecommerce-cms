@@ -184,85 +184,219 @@ export async function POST(req: Request) {
   // console.log('shipmentObject: ', shipmentObject)
 
   try {
-    // Create shipment and get rates
-    const shipmentResponse = await fetch(
-      'https://api.goshippo.com/shipments/',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(shipmentObject)
+    // Create separate functions for each shipping provider
+    const getShippoRates = async () => {
+      try {
+        const shippoResponse = await fetch(
+          'https://api.goshippo.com/shipments/',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(shipmentObject)
+          }
+        )
+        const shippoData = await shippoResponse.json()
+
+        return shippoData.rates.map((rate: ShippoRate) => ({
+          id: rate.object_id,
+          provider: 'Shippo',
+          title:
+            rate.servicelevel.display_name ||
+            `${rate.provider} ${rate.servicelevel.name}`,
+          description:
+            rate.duration_terms ||
+            (rate.estimated_days &&
+              `${rate.estimated_days} day${
+                rate.estimated_days !== 1 ? 's' : ''
+              } delivery`) ||
+            'Exact delivery estimate not available',
+          amount: rate.amount,
+          currency: rate.currency,
+          amount_local: rate.amount_local,
+          currency_local: rate.currency_local,
+          estimated_days: rate.estimated_days,
+          attributes: rate.attributes,
+          provider_image: rate.provider_image_200
+        }))
+      } catch (error) {
+        console.error('Shippo rate error:', error)
+        return []
       }
+    }
+
+    const getChitChatsRates = async () => {
+      try {
+        const chitchatsResponse = await fetch(
+          `${process.env.CHITCHATS_API_URL}/api/v1/clients/${process.env.CHITCHATS_CLIENT_ID}/shipments`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: process.env.CHITCHATS_API_KEY!,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: `${address.firstName} ${address.lastName}`,
+              address_1: address.street,
+              city: address.city,
+              province_code: address.state,
+              postal_code: address.zip,
+              country_code: address.country,
+              phone: address.phone,
+              email: address.email,
+              description: cartItems
+                .map((item) => `${item.cartQuantity}x Keycaps`)
+                .join(', '),
+              value: totalPrice.toString(),
+              value_currency: currency,
+              package_type: 'thick_envelope',
+              postage_type: 'unknown',
+              size_unit: 'cm',
+              size_x: 23,
+              size_y: 16,
+              size_z: 5,
+              weight_unit: 'g',
+              weight: totalWeight,
+              is_insured: true,
+              is_insurance_requested: true,
+              ship_date: 'today',
+              line_items: cartItems.map((item) => ({
+                quantity: item.cartQuantity,
+                description: item.name,
+                currency_code: currency,
+                value_amount: item.price.toString(),
+                weight: item.weight.toString(),
+                weight_unit: 'g',
+                origin_country: 'CA',
+                hs_tariff_code: '3926.90'
+              }))
+            })
+          }
+        )
+        const chitchatsData = await chitchatsResponse.json()
+
+        // Delete shipment until customer makes purchase
+        if (chitchatsData.shipment && chitchatsData.shipment.id) {
+          try {
+            await fetch(
+              `${process.env.CHITCHATS_API_URL}/api/v1/clients/${process.env.CHITCHATS_CLIENT_ID}/shipments/${chitchatsData.shipment.id}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  Authorization: process.env.CHITCHATS_API_KEY!
+                }
+              }
+            )
+          } catch (deleteError) {
+            console.error('Failed to delete temporary shipment:', deleteError)
+            // Non-critical error, continue with returning rates
+          }
+        }
+
+        const rates = chitchatsData.shipment.rates.map((rate: any) => ({
+          id: `${rate.postage_type}`,
+          provider: 'Chit Chats',
+          title: rate.postage_description,
+          description: rate.delivery_time_description,
+          amount: rate.payment_amount,
+          currency: currency,
+          amount_local: rate.payment_amount,
+          currency_local: currency,
+          estimated_days: parseInt(
+            rate.delivery_time_description.match(/\d+/)?.[0] || '0'
+          ),
+          attributes: [
+            rate.tracking_type_description,
+            rate.is_insured ? 'Insured' : null,
+            rate.signature_confirmation_description,
+            rate.delivery_duties_paid_description
+          ].filter(Boolean),
+          provider_image:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTwF9SOKaw4zLDp3zdkLiezZRMqaHARJooA-g&s'
+        }))
+
+        // Filter out Canada Post rates
+        return rates.filter((rate: any) => !rate.title.includes('Canada Post'))
+      } catch (error) {
+        console.error('Chit Chats rate error:', error)
+        return []
+      }
+    }
+
+    // Get rates from both providers in parallel
+    const [shippoRates, chitchatsRates] = await Promise.all([
+      getShippoRates(),
+      getChitChatsRates()
+    ])
+
+    // Combine and sort all rates by price
+    const allRates = [...shippoRates, ...chitchatsRates].sort(
+      (a, b) => parseFloat(a.amount) - parseFloat(b.amount)
     )
 
-    const shipmentData = await shipmentResponse.json()
-
-    // console.log('Full shipment data: ', shipmentData)
-
-    if (!shipmentData.rates) {
-      throw new Error('No rates returned from Shippo')
-    }
+    return NextResponse.json({
+      success: true,
+      rates: allRates
+    })
 
     // console.log('shipmentData: ', shipmentData.rates)
 
     // Format rates for frontend display
-    const formattedRates = shipmentData.rates
-      .filter((rate: ShippoRate) => {
-        // For US addresses, only show 'Tracked Packet - USA'
-        if (address.country === 'US') {
-          return (
-            rate.servicelevel.name === 'Tracked Packet - USA' ||
-            rate.servicelevel.name === 'Expedited Parcel USA'
-          )
-        }
+    // const formattedRates = shipmentData.rates
+    // .filter((rate: ShippoRate) => {
+    // For US addresses, only show 'Tracked Packet - USA'
+    // if (address.country === 'US') {
+    //   return (
+    //     rate.servicelevel.name === 'Tracked Packet - USA' ||
+    //     rate.servicelevel.name === 'Expedited Parcel USA'
+    //   )
+    // }
+    // // For Canadian addresses, show all available rates with valid estimated days
+    // if (address.country === 'CA') {
+    //   return (
+    //     rate.servicelevel?.name &&
+    //     rate.estimated_days !== null &&
+    //     rate.estimated_days !== undefined &&
+    //     rate.servicelevel.name !== 'Xpresspost' &&
+    //     rate.servicelevel.name !== 'Regular Parcel'
+    //   )
+    // }
+    // // For other countries, show all available rates with valid estimated days
+    // return (
+    //   rate.servicelevel?.name &&
+    //   rate.estimated_days !== null &&
+    //   rate.estimated_days !== undefined
+    // )
+    // })
+    //   .map((rate: ShippoRate) => ({
+    //     id: rate.object_id,
+    //     title:
+    //       rate.servicelevel.display_name ||
+    //       `${rate.provider} ${rate.servicelevel.name}`,
+    //     description:
+    //       rate.duration_terms ||
+    //       `${rate.estimated_days} day${
+    //         rate.estimated_days !== 1 ? 's' : ''
+    //       } delivery`,
+    //     amount: rate.amount,
+    //     currency: rate.currency,
+    //     amount_local: rate.amount_local,
+    //     currency_local: rate.currency_local,
+    //     estimated_days: rate.estimated_days,
+    //     attributes: rate.attributes,
+    //     provider_image: rate.provider_image_200
+    //   }))
+    //   .sort(
+    //     (a: ShippoRate, b: ShippoRate) =>
+    //       parseFloat(a.amount) - parseFloat(b.amount)
+    //   )
 
-        // For Canadian addresses, show all available rates with valid estimated days
-        if (address.country === 'CA') {
-          return (
-            rate.servicelevel?.name &&
-            rate.estimated_days !== null &&
-            rate.estimated_days !== undefined &&
-            rate.servicelevel.name !== 'Xpresspost' &&
-            rate.servicelevel.name !== 'Regular Parcel'
-          )
-        }
-
-        // For other countries, show all available rates with valid estimated days
-        return (
-          rate.servicelevel?.name &&
-          rate.estimated_days !== null &&
-          rate.estimated_days !== undefined
-        )
-      })
-      .map((rate: ShippoRate) => ({
-        id: rate.object_id,
-        title:
-          rate.servicelevel.display_name ||
-          `${rate.provider} ${rate.servicelevel.name}`,
-        description:
-          rate.duration_terms ||
-          `${rate.estimated_days} day${
-            rate.estimated_days !== 1 ? 's' : ''
-          } delivery`,
-        amount: rate.amount,
-        currency: rate.currency,
-        amount_local: rate.amount_local,
-        currency_local: rate.currency_local,
-        estimated_days: rate.estimated_days,
-        attributes: rate.attributes,
-        provider_image: rate.provider_image_200
-      }))
-      .sort(
-        (a: ShippoRate, b: ShippoRate) =>
-          parseFloat(a.amount) - parseFloat(b.amount)
-      )
-
-    return NextResponse.json({
-      success: true,
-      rates: formattedRates
-    })
+    // return NextResponse.json({
+    //   success: true,
+    //   rates: formattedRates
+    // })
   } catch (error) {
     console.error('Shipping rate error:', error)
     return NextResponse.json(

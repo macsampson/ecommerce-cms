@@ -394,7 +394,7 @@ export async function POST(req: Request) {
           state: checkoutSession.customer_details?.address?.state,
           zip: checkoutSession.customer_details?.address?.postal_code,
           country: checkoutSession.customer_details?.address?.country,
-          phone: checkoutSession.customer_details?.phone || '',
+          phone: checkoutSession.customer_details?.phone || '7788289009',
           email: checkoutSession.customer_details?.email
         }
 
@@ -420,7 +420,7 @@ export async function POST(req: Request) {
                 quantity: item.quantity,
                 hs_code: '3926.90.99',
                 tarrif_number: '3926.90.99',
-                value_amount: Number(item.total_price) * (item.quantity || 1),
+                value_amount: item.total_price,
                 value_currency: checkoutSession.currency?.toUpperCase()
               })),
               non_delivery_option: 'RETURN'

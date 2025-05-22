@@ -36,7 +36,7 @@ const fromAddress = {
   state: 'AB',
   zip: 'T2M 3Z8',
   country: 'CA',
-  phone: '+17788289009',
+  phone: '17788289009',
   email: 'pocketcaps@gmail.com'
 }
 
@@ -411,16 +411,16 @@ export async function POST(req: Request) {
               contents_type: 'MERCHANDISE',
               eel_pfc: 'NOEEI_30_36',
               incoterm: 'DDU',
+              address_importer: fromAddress,
               items: lineItems.map((item) => ({
                 description: item.title,
                 mass_unit: 'g',
                 net_weight: item.weight,
                 origin_country: 'CA',
                 quantity: item.quantity,
-                tarrif_number: '3926.90',
-                value_amount: checkoutSession.amount_total
-                  ? checkoutSession.amount_total / 100
-                  : 0,
+                hs_code: '3926.90.99',
+                tarrif_number: '3926.90.99',
+                value_amount: Number(item.total_price) * (item.quantity || 1),
                 value_currency: checkoutSession.currency?.toUpperCase()
               })),
               non_delivery_option: 'RETURN'

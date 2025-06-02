@@ -3,6 +3,8 @@ import prismadb from '@/lib/prismadb'
 import { auth } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
 
+import Sidebar from '@/components/sidebar' // Import the Sidebar component
+
 export default async function DashboardLayout({
   children,
   params,
@@ -30,7 +32,12 @@ export default async function DashboardLayout({
   return (
     <>
       <Navbar />
-      {children}
+      <div className="flex h-screen pt-16"> {/* pt-16 for navbar height */}
+        <Sidebar storeId={params.storeId} />
+        <main className="flex-1 overflow-y-auto p-4 pl-[272px]"> {/* pl for sidebar width + padding */}
+          {children}
+        </main>
+      </div>
     </>
   )
 }

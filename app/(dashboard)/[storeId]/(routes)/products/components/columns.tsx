@@ -17,17 +17,20 @@ export type ProductColumn = {
   updatedAt: string
 }
 
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react" // Import ArrowUp and ArrowDown
-import { Button } from "@/components/ui/button"
-import { Column } from "@tanstack/react-table" // Import Column type
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react' // Import ArrowUp and ArrowDown
+import { Button } from '@/components/ui/button'
+import { Column } from '@tanstack/react-table' // Import Column type
 
 // Helper function to render sortable header
-const renderSortableHeader = <TData, TValue>(column: Column<TData, TValue>, title: string) => {
-  const sorted = column.getIsSorted();
+const renderSortableHeader = <TData, TValue>(
+  column: Column<TData, TValue>,
+  title: string
+) => {
+  const sorted = column.getIsSorted()
   return (
     <Button
       variant="ghost"
-      onClick={() => column.toggleSorting(sorted === "asc")}
+      onClick={() => column.toggleSorting(sorted === 'asc')}
     >
       {title}
       {sorted === 'desc' ? (
@@ -38,53 +41,76 @@ const renderSortableHeader = <TData, TValue>(column: Column<TData, TValue>, titl
         <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
-  );
-};
+  )
+}
 
 export const columns: ColumnDef<ProductColumn>[] = [
   {
     accessorKey: 'name',
-    header: ({ column }) => renderSortableHeader(column, "Name"),
+    header: ({ column }) => renderSortableHeader(column, 'Name'),
     enableSorting: true,
+    cell: ({ row }) => {
+      const router = require('next/navigation').useRouter()
+      const params = require('next/navigation').useParams()
+      return (
+        <button
+          className="text-primary underline hover:text-primary/80 text-left w-full"
+          onClick={() =>
+            router.push(`/${params.storeId}/products/${row.original.id}`)
+          }
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer'
+          }}
+        >
+          {row.original.name}
+        </button>
+      )
+    }
   },
   {
     accessorKey: 'price',
-    header: ({ column }) => renderSortableHeader(column, "Price"),
-    enableSorting: true,
+    header: ({ column }) => renderSortableHeader(column, 'Price'),
+    enableSorting: true
   },
   {
     accessorKey: 'quantity',
-    header: ({ column }) => renderSortableHeader(column, "Quantity"),
-    enableSorting: true,
+    header: ({ column }) => renderSortableHeader(column, 'Quantity'),
+    enableSorting: true
   },
   {
     accessorKey: 'category',
-    header: ({ column }) => renderSortableHeader(column, "Category"),
-    enableSorting: true,
+    header: ({ column }) => renderSortableHeader(column, 'Category'),
+    enableSorting: true
   },
   {
     accessorKey: 'isFeatured',
-    header: ({ column }) => renderSortableHeader(column, "Featured"),
+    header: ({ column }) => renderSortableHeader(column, 'Featured'),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center"> {/* Centered content */}
+      <div className="flex items-center justify-center">
+        {' '}
+        {/* Centered content */}
         {row.original.isFeatured ? '🟢' : '🔴'}
       </div>
     ),
-    enableSorting: true,
+    enableSorting: true
   },
   {
-    accessorKey: "size",
-    header: "Size",
+    accessorKey: 'size',
+    header: 'Size',
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.size || "N/A"} {/* Provide fallback for undefined/empty size */}
+        {row.original.size || 'N/A'}{' '}
+        {/* Provide fallback for undefined/empty size */}
       </div>
     ),
-    enableSorting: false, // Size might not be ideal for sorting unless it's standardized
+    enableSorting: false // Size might not be ideal for sorting unless it's standardized
   },
   {
-    accessorKey: "color",
-    header: "Color",
+    accessorKey: 'color',
+    header: 'Color',
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
         {row.original.color ? (
@@ -97,31 +123,33 @@ export const columns: ColumnDef<ProductColumn>[] = [
             {/* <span>{row.original.color}</span> */}
           </div>
         ) : (
-          "N/A" // Provide fallback for undefined/empty color
+          'N/A' // Provide fallback for undefined/empty color
         )}
       </div>
     ),
-    enableSorting: false, // Color value might not be ideal for sorting
+    enableSorting: false // Color value might not be ideal for sorting
   },
   {
     accessorKey: 'isArchived',
-    header: ({ column }) => renderSortableHeader(column, "Live"),
+    header: ({ column }) => renderSortableHeader(column, 'Live'),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center"> {/* Centered content */}
+      <div className="flex items-center justify-center">
+        {' '}
+        {/* Centered content */}
         {row.original.isArchived ? '🔴' : '🟢'}
       </div>
     ),
-    enableSorting: true,
+    enableSorting: true
   },
   {
     accessorKey: 'createdAt',
-    header: ({ column }) => renderSortableHeader(column, "Date Created"),
-    enableSorting: true,
+    header: ({ column }) => renderSortableHeader(column, 'Date Created'),
+    enableSorting: true
   },
   {
     accessorKey: 'updatedAt',
-    header: ({ column }) => renderSortableHeader(column, "Last Updated"),
-    enableSorting: true,
+    header: ({ column }) => renderSortableHeader(column, 'Last Updated'),
+    enableSorting: true
   },
   {
     id: 'actions',

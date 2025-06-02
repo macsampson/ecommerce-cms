@@ -22,7 +22,7 @@ export const OrderClient: React.FC<OrderClientProps> = ({ data }) => {
       <DataTable
         columns={columns}
         data={data}
-        searchKey="products"
+        searchKey="emailAddress" // Changed from "products" to "emailAddress"
       />
     </>
   )

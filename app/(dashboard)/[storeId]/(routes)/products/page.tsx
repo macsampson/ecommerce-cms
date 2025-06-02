@@ -1,45 +1,83 @@
-import prismadb from '@/lib/prismadb'
-import { ProductClient } from './components/client'
-import { ProductColumn } from './components/columns'
-import { format } from 'date-fns'
-import { formatter } from '@/lib/utils'
+"use client"; // Changed to client component
 
-const ProductsPage = async ({ params }: { params: { storeId: string } }) => {
-  const products = await prismadb.product.findMany({
-    where: {
-      storeId: params.storeId
-    },
-    include: {
-      category: true,
-      size: true,
-      color: true
-    },
-    orderBy: {
-      quantity: 'desc'
-    }
-  })
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams } from "next/navigation"; // To get storeId
 
-  const formattedProducts: ProductColumn[] = products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    quantity: product.quantity,
-    isFeatured: product.isFeatured,
-    isArchived: product.isArchived,
-    price: formatter.format(product.price.toNumber()),
-    category: product.category.name,
-    size: product.size?.name,
-    color: product.color?.value,
-    createdAt: format(product.createdAt, 'MMMM do, yyyy'),
-    updatedAt: format(product.updatedAt, 'MMMM do, yyyy')
-  }))
+import { ProductClient } from './components/client';
+import { ProductColumn } from './components/columns'; // Still needed by ProductClient
+
+// This type should match the structure returned by your API endpoint
+// and be compatible with ProductColumn.
+// Based on the API created: app/api/[storeId]/products-summary/route.ts
+type ApiProductData = {
+  id: string;
+  name: string;
+  price: string; 
+  quantity: number;
+  category: string;
+  size?: string; 
+  color?: string; 
+  isFeatured: boolean;
+  isArchived: boolean;
+  createdAt: string; 
+  updatedAt: string;
+};
+
+const ProductsPage = () => {
+  const params = useParams(); // For getting storeId
+  const [products, setProducts] = useState<ProductColumn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const storeId = params.storeId;
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!storeId) {
+        setLoading(false);
+        setError("Store ID not found.");
+        return;
+      }
+      try {
+        setLoading(true);
+        setError(null);
+        // Construct API URL (consistent with overview page refactor)
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const apiUrl = `${baseUrl}/api/${storeId}/products-summary`;
+        
+        const response = await axios.get<ApiProductData[]>(apiUrl);
+        
+        // The API already returns data in a format compatible with ProductColumn
+        // as per the ApiProductSummary type defined in the API route.
+        setProducts(response.data);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+        setError("Failed to load products. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [storeId]);
+
+  if (loading) {
+    // TODO: Replace with a proper loading spinner/skeleton component
+    return <div className="flex-1 space-y-4 p-8 pt-6">Loading products...</div>;
+  }
+
+  if (error) {
+    return <div className="flex-1 space-y-4 p-8 pt-6 text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <ProductClient data={formattedProducts} />
+        <ProductClient data={products} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductsPage
+export default ProductsPage;

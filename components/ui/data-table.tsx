@@ -87,11 +87,7 @@ export function DataTable<TData, TValue>({
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                          {header.column.getIsSorted() === 'asc'
-                            ? ' 🔺'
-                            : header.column.getIsSorted() === 'desc'
-                            ? ' 🔻'
-                            : ' ➖'}
+                          {/* Text-based sort indicators removed, custom headers will handle icons */}
                         </div>
                       )}
                     </TableHead>

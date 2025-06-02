@@ -1,77 +1,80 @@
-import prismadb from '@/lib/prismadb'
-import { OrderClient } from './components/client'
-import { OrderColumn } from './components/columns'
-import { format } from 'date-fns'
-import { formatter } from '@/lib/utils'
-// import { revalidatePath } from 'next/cache'
+"use client"; // Changed to client component
 
-const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
-  const orders = await prismadb.order.findMany({
-    where: {
-      storeId: params.storeId
-      // isPaid: true,
-    },
-    include: {
-      orderItems: {
-        include: {
-          product: true,
-          productVariation: true
-        }
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams } from "next/navigation";
+
+import { OrderClient } from './components/client';
+import { OrderColumn } from './components/columns'; // Still needed by OrderClient
+
+// This type should match the structure returned by your API endpoint (ApiOrderSummary)
+// and be compatible with OrderColumn.
+type ApiOrderData = {
+  id: string;
+  emailAddress: string;
+  address: string; 
+  shippingAddress: string;
+  products: string; 
+  variations: string;
+  totalPrice: string; 
+  isPaid: boolean;
+  isAbandoned: boolean;
+  createdAt: string; 
+};
+
+const OrdersPage = () => {
+  const params = useParams();
+  const [orders, setOrders] = useState<OrderColumn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const storeId = params.storeId;
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!storeId) {
+        setLoading(false);
+        setError("Store ID not found.");
+        return;
       }
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
-
-  const formattedOrders: OrderColumn[] = orders.map((order) => {
-    const productGroups: { [key: string]: string[] } = {}
-    order.orderItems.forEach((item) => {
-      const productName = item.product.name
-      if (!productGroups[productName]) {
-        productGroups[productName] = []
+      try {
+        setLoading(true);
+        setError(null);
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const apiUrl = `${baseUrl}/api/${storeId}/orders-summary`;
+        
+        const response = await axios.get<ApiOrderData[]>(apiUrl);
+        // The API returns data in a format compatible with OrderColumn
+        setOrders(response.data);
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+        setError("Failed to load orders. Please try again later.");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const variationName = item.productVariation
-        ? item.productVariation.name
-        : 'Standard'
-      productGroups[productName].push(`- ${variationName} x${item.quantity}`)
-    })
+    fetchOrders();
+  }, [storeId]);
 
-    const productString = Object.entries(productGroups)
-      .map(([productName, variations]) => {
-        return `${productName}\n ${variations.join('\n ')}`
-      })
-      .join('\n\n')
+  if (loading) {
+    // TODO: Replace with a proper loading spinner/skeleton component
+    return <div className="flex-1 space-y-4 p-8 pt-6">Loading orders...</div>;
+  }
 
-    return {
-      id: order.id,
-      emailAddress: order.emailAddress,
-      address: order.billingAddress,
-      shippingAddress: order.shippingAddress,
-      // for each product, if it has bundle items, then show the product name and the bundle items
-      // otherwise, show the product name and the product variation name
-      // join all of these with a comma
-      products: productString,
-      variations: order.orderItems
-        .map((item) => {
-          return item.productVariation ? item.productVariation.name : 'Standard'
-        })
-        .join(', '),
-      totalPrice: formatter.format(order.totalPrice.toNumber()),
-      isPaid: order.isPaid,
-      isAbandoned: order.isAbandoned,
-      createdAt: format(order.createdAt, 'yyyy-MM-dd hh:mm a')
-    }
-  })
+  if (error) {
+    return <div className="flex-1 space-y-4 p-8 pt-6 text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6 whitespace-pre-wrap">
-        <OrderClient data={formattedOrders} />
+      {/* whitespace-pre-wrap was here for the productString, 
+          OrderClient or DataTable columns should handle this if still needed */}
+      <div className="flex-1 space-y-4 p-8 pt-6"> 
+        <OrderClient data={orders} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OrdersPage
+export default OrdersPage;

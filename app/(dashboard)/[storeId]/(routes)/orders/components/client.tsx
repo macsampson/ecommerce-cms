@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter } from 'next/navigation'
 
-import { Heading } from "@/components/ui/heading"
-import { Separator } from "@/components/ui/separator"
-import { OrderColumn, columns } from "./columns"
-import { DataTable } from "@/components/ui/data-table"
+import { Heading } from '@/components/ui/heading'
+import { Separator } from '@/components/ui/separator'
+import { OrderColumn, columns } from './columns'
+import { DataTable } from '@/components/ui/data-table'
 
 interface OrderClientProps {
   data: OrderColumn[]
@@ -19,11 +19,9 @@ export const OrderClient: React.FC<OrderClientProps> = ({ data }) => {
         description="Manage your orders"
       />
       <Separator />
-      <DataTable
-        columns={columns}
-        data={data}
-        searchKey="emailAddress" // Changed from "products" to "emailAddress"
-      />
+      <div className="w-full">
+        <DataTable columns={columns} data={data} searchKey="emailAddress" />
+      </div>
     </>
   )
 }

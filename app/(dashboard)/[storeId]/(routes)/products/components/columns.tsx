@@ -108,8 +108,6 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: ({ column }) => renderSortableHeader(column, 'Featured'),
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        {' '}
-        {/* Centered content */}
         {row.original.isFeatured ? '🟢' : '🔴'}
       </div>
     ),
@@ -120,11 +118,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: 'Size',
     cell: ({ row }) => (
       <div className="flex items-center gap-x-2">
-        {row.original.size || 'N/A'}{' '}
-        {/* Provide fallback for undefined/empty size */}
+        {row.original.size || 'N/A'}
       </div>
     ),
-    enableSorting: false // Size might not be ideal for sorting unless it's standardized
+    enableSorting: false
   },
   {
     accessorKey: 'color',
@@ -137,23 +134,19 @@ export const columns: ColumnDef<ProductColumn>[] = [
               className="w-6 h-6 rounded-full border"
               style={{ backgroundColor: row.original.color }}
             />
-            {/* Optional: Display hex code or color name if available and distinct from the visual color */}
-            {/* <span>{row.original.color}</span> */}
           </div>
         ) : (
-          'N/A' // Provide fallback for undefined/empty color
+          'N/A'
         )}
       </div>
     ),
-    enableSorting: false // Color value might not be ideal for sorting
+    enableSorting: false
   },
   {
     accessorKey: 'isArchived',
     header: ({ column }) => renderSortableHeader(column, 'Live'),
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        {' '}
-        {/* Centered content */}
         {row.original.isArchived ? '🔴' : '🟢'}
       </div>
     ),

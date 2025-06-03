@@ -1,22 +1,22 @@
-"use client"
+'use client'
 
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { useStoreModal } from "@/hooks/use-store-modal"
-import { Store } from "@prisma/client"
-import { useParams, useRouter } from "next/navigation"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+  PopoverTrigger
+} from '@/components/ui/popover'
+import { useStoreModal } from '@/hooks/use-store-modal'
+import { Store } from '@prisma/client'
+import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Check,
   ChevronsUpDown,
   PlusCircle,
-  Store as StoreIcon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+  Store as StoreIcon
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   Command,
   CommandEmpty,
@@ -24,8 +24,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
-} from "@/components/ui/command"
+  CommandSeparator
+} from '@/components/ui/command'
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<typeof PopoverTrigger>
 
@@ -35,7 +35,7 @@ interface StoreSwitcherProps extends PopoverTriggerProps {
 
 export default function StoreSwitcher({
   className,
-  items = [],
+  items = []
 }: StoreSwitcherProps) {
   const storeModal = useStoreModal()
   const params = useParams()
@@ -43,7 +43,7 @@ export default function StoreSwitcher({
 
   const formattedItems = items.map((item) => ({
     label: item.name,
-    value: item.id,
+    value: item.id
   }))
 
   const currentStore = formattedItems.find(
@@ -66,14 +66,16 @@ export default function StoreSwitcher({
           role="combobox"
           aria-expanded={open}
           aria-label="Select a store"
-          className={cn("w-[200px] justify-between", className)}
+          className={cn('w-[140px] sm:w-[200px] justify-between', className)}
         >
           <StoreIcon className="mr-2 h-4 w-4" />
-          {currentStore?.label || "Select a store"}
+          <span className="truncate">
+            {currentStore?.label || 'Select a store'}
+          </span>
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[140px] sm:w-[200px] p-0">
         <Command>
           <CommandList>
             <CommandInput placeholder="Search store..." />
@@ -89,10 +91,10 @@ export default function StoreSwitcher({
                   {store.label}
                   <Check
                     className={cn(
-                      "ml-auto h-4 w-4",
+                      'ml-auto h-4 w-4',
                       store.value === currentStore?.value
-                        ? "opacity-100"
-                        : "opacity-0"
+                        ? 'opacity-100'
+                        : 'opacity-0'
                     )}
                   />
                 </CommandItem>

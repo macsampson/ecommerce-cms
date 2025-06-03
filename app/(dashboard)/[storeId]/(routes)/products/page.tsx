@@ -22,6 +22,7 @@ type ApiProductData = {
   isArchived: boolean
   createdAt: string
   updatedAt: string
+  imageUrl?: string | null
 }
 
 const ProductsPage = () => {

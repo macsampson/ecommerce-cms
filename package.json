@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../pocketcaps && bun run dev\"",
+    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../frontend && bun run dev\"",
     "cron": "node cron.js",
     "build": "next build",
     "start": "next start",

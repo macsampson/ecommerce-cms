@@ -7,7 +7,7 @@ import Sidebar from '@/components/sidebar' // Import the Sidebar component
 
 export default async function DashboardLayout({
   children,
-  params,
+  params
 }: {
   children: React.ReactNode
   params: { storeId: string }
@@ -21,8 +21,8 @@ export default async function DashboardLayout({
   const store = await prismadb.store.findFirst({
     where: {
       id: params.storeId,
-      userId,
-    },
+      userId
+    }
   })
 
   if (!store) {
@@ -32,9 +32,9 @@ export default async function DashboardLayout({
   return (
     <>
       <Navbar />
-      <div className="flex h-screen pt-16"> {/* pt-16 for navbar height */}
+      <div className="flex pt-16 min-h-screen">
         <Sidebar storeId={params.storeId} />
-        <main className="flex-1 overflow-y-auto p-4 pl-[272px]"> {/* pl for sidebar width + padding */}
+        <main className="flex-1 p-2 sm:p-4 md:pl-[272px] md:pr-4">
           {children}
         </main>
       </div>

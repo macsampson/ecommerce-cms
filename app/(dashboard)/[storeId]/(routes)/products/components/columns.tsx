@@ -15,6 +15,7 @@ export type ProductColumn = {
   isArchived: boolean
   createdAt: string
   updatedAt: string
+  imageUrl?: string | null
 }
 
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react' // Import ArrowUp and ArrowDown
@@ -45,6 +46,23 @@ const renderSortableHeader = <TData, TValue>(
 }
 
 export const columns: ColumnDef<ProductColumn>[] = [
+  {
+    id: 'image',
+    header: 'Image',
+    cell: ({ row }) =>
+      row.original.imageUrl ? (
+        <img
+          src={row.original.imageUrl}
+          alt={row.original.name}
+          className="w-12 h-12 object-cover rounded-md border"
+        />
+      ) : (
+        <div className="w-12 h-12 flex items-center justify-center bg-muted text-muted-foreground rounded-md border">
+          N/A
+        </div>
+      ),
+    enableSorting: false
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => renderSortableHeader(column, 'Name'),

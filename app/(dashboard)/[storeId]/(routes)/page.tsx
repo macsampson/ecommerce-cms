@@ -1,11 +1,11 @@
-import Overview from "@/components/overview"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heading } from "@/components/ui/heading"
-import { Separator } from "@/components/ui/separator"
-import { formatter } from "@/lib/utils"
-import { CreditCard, DollarSign, Package, Users } from "lucide-react"
-import React from "react"
-import axios from "axios" // Import axios
+import Overview from '@/components/overview'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Heading } from '@/components/ui/heading'
+import { Separator } from '@/components/ui/separator'
+import { formatter } from '@/lib/utils'
+import { CreditCard, DollarSign, Package, Users } from 'lucide-react'
+import React from 'react'
+import axios from 'axios' // Import axios
 
 interface DashboardPageProps {
   params: { storeId: string }
@@ -17,58 +17,63 @@ const getApiUrl = (storeId: string, path: string) => {
   // For server components, relative URLs like `/api/...` might not work directly with axios
   // without a full base URL. Let's construct a full URL.
   // This might need adjustment based on actual deployment environment.
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${baseUrl}/api/${storeId}/overview/${path}`;
-};
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  return `${baseUrl}/api/${storeId}/overview/${path}`
+}
 
 const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
   // Fetch data using Axios
   // Since this is a server component, these requests happen server-side.
   // Error handling should be added for production (e.g., try/catch per request or a wrapper)
-  
-  let totalRevenue = 0;
-  let salesCount = 0;
-  let stockCount = 0;
-  let graphRevenue: any[] = []; // Default to empty array for chart
+
+  let totalRevenue = 0
+  let salesCount = 0
+  let stockCount = 0
+  let graphRevenue: any[] = [] // Default to empty array for chart
 
   try {
-    const totalRevenueRes = await axios.get(getApiUrl(params.storeId, 'total-revenue'));
-    totalRevenue = totalRevenueRes.data.totalRevenue;
+    const totalRevenueRes = await axios.get(
+      getApiUrl(params.storeId, 'total-revenue')
+    )
+    totalRevenue = totalRevenueRes.data.totalRevenue
   } catch (error) {
-    console.error("Failed to fetch total revenue:", error);
+    console.error('Failed to fetch total revenue:', error)
   }
 
   try {
-    const salesCountRes = await axios.get(getApiUrl(params.storeId, 'sales-count'));
-    salesCount = salesCountRes.data.salesCount;
+    const salesCountRes = await axios.get(
+      getApiUrl(params.storeId, 'sales-count')
+    )
+    salesCount = salesCountRes.data.salesCount
   } catch (error) {
-    console.error("Failed to fetch sales count:", error);
+    console.error('Failed to fetch sales count:', error)
   }
 
   try {
-    const stockCountRes = await axios.get(getApiUrl(params.storeId, 'stock-count'));
-    stockCount = stockCountRes.data.stockCount;
+    const stockCountRes = await axios.get(
+      getApiUrl(params.storeId, 'stock-count')
+    )
+    stockCount = stockCountRes.data.stockCount
   } catch (error) {
-    console.error("Failed to fetch stock count:", error);
+    console.error('Failed to fetch stock count:', error)
   }
-  
+
   try {
-    const graphRevenueRes = await axios.get(getApiUrl(params.storeId, 'graph-revenue'));
-    graphRevenue = graphRevenueRes.data;
+    const graphRevenueRes = await axios.get(
+      getApiUrl(params.storeId, 'graph-revenue')
+    )
+    graphRevenue = graphRevenueRes.data
   } catch (error) {
-    console.error("Failed to fetch graph revenue:", error);
+    console.error('Failed to fetch graph revenue:', error)
     // graphRevenue will remain empty array, chart will show no data or handle it gracefully
   }
 
   return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <Heading
-          title="Dashboard"
-          description="Overview for your store"
-        />
+    <div className="flex flex-col w-full min-h-screen">
+      <div className="flex-1 w-full max-w-full px-2 py-4 sm:px-4 md:px-8 md:py-6 mx-auto space-y-4">
+        <Heading title="Dashboard" description="Overview for your store" />
         <Separator />
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -77,7 +82,7 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
               <DollarSign className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {formatter.format(totalRevenue)}
               </div>
             </CardContent>
@@ -88,16 +93,18 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
               <CreditCard className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{salesCount}</div>
+              <div className="text-xl sm:text-2xl font-bold">+{salesCount}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                New Customers
+              </CardTitle>
               <Users className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">N/A</div> {/* Placeholder value */}
+              <div className="text-xl sm:text-2xl font-bold">N/A</div>
             </CardContent>
           </Card>
           <Card>
@@ -108,15 +115,15 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
               <Package className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stockCount}</div>
+              <div className="text-xl sm:text-2xl font-bold">{stockCount}</div>
             </CardContent>
           </Card>
         </div>
-        <Card className="md:col-span-4 sm:col-span-2 col-span-1"> {/* Ensure chart spans full width */}
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Overview</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent className="p-2 sm:p-6">
             <Overview data={graphRevenue} />
           </CardContent>
         </Card>

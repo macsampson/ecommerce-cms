@@ -78,8 +78,8 @@ const ProductsPage = () => {
   }
 
   return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex flex-col w-full min-h-screen">
+      <div className="flex-1 w-full max-w-full px-2 py-4 sm:px-4 md:px-8 md:py-6 mx-auto">
         <ProductClient data={products} />
       </div>
     </div>

@@ -1,17 +1,20 @@
 'use client'
 
 import { ColumnDef, Column } from '@tanstack/react-table' // Import Column
-import { CellAction } from "./cell-action" // Import CellAction
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { CellAction } from './cell-action' // Import CellAction
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 // Definition for renderSortableHeader (copied from products)
-const renderSortableHeader = <TData, TValue>(column: Column<TData, TValue>, title: string) => {
-  const sorted = column.getIsSorted();
+const renderSortableHeader = <TData, TValue>(
+  column: Column<TData, TValue>,
+  title: string
+) => {
+  const sorted = column.getIsSorted()
   return (
     <Button
       variant="ghost"
-      onClick={() => column.toggleSorting(sorted === "asc")}
+      onClick={() => column.toggleSorting(sorted === 'asc')}
     >
       {title}
       {sorted === 'desc' ? (
@@ -22,8 +25,8 @@ const renderSortableHeader = <TData, TValue>(column: Column<TData, TValue>, titl
         <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
-  );
-};
+  )
+}
 
 export type OrderColumn = {
   id: string
@@ -40,35 +43,35 @@ export type OrderColumn = {
 export const columns: ColumnDef<OrderColumn>[] = [
   {
     accessorKey: 'id',
-    header: ({ column }) => renderSortableHeader(column, "Order ID"),
-  },
-  {
-    accessorKey: 'products',
-    header: 'Products', // Not making this sortable due to its complex string nature
-    // cell: ({ row }) => <div className="whitespace-pre-wrap">{row.original.products}</div> // Already handled by parent div
-  },
-  {
-    accessorKey: 'shippingAddress',
-    header: 'Shipping Address', // Not making this sortable
-  },
-  {
-    accessorKey: 'address',
-    header: 'Billing Address', // Not making this sortable
+    header: ({ column }) => renderSortableHeader(column, 'Order ID')
   },
   {
     accessorKey: 'emailAddress',
-    header: ({ column }) => renderSortableHeader(column, "Email"),
+    header: ({ column }) => renderSortableHeader(column, 'Email')
   },
   {
     accessorKey: 'totalPrice',
-    header: ({ column }) => renderSortableHeader(column, "Total Price"),
+    header: ({ column }) => renderSortableHeader(column, 'Total Price')
+  },
+  // All other columns hidden on mobile
+  {
+    accessorKey: 'products',
+    header: 'Products'
+  },
+  {
+    accessorKey: 'shippingAddress',
+    header: 'Shipping Address'
+  },
+  {
+    accessorKey: 'address',
+    header: 'Billing Address'
   },
   {
     accessorKey: 'isPaid',
-    header: ({ column }) => renderSortableHeader(column, "Paid"),
+    header: ({ column }) => renderSortableHeader(column, 'Paid'),
     cell: ({ row }) => {
       return (
-        <div className="flex items-center justify-center gap-x-2"> {/* Centered */}
+        <div className="flex items-center justify-center gap-x-2">
           {row.original.isPaid ? '💵' : '❌'}
         </div>
       )
@@ -76,10 +79,10 @@ export const columns: ColumnDef<OrderColumn>[] = [
   },
   {
     accessorKey: 'isAbandoned',
-    header: ({ column }) => renderSortableHeader(column, "Abandoned"),
+    header: ({ column }) => renderSortableHeader(column, 'Abandoned'),
     cell: ({ row }) => {
       return (
-        <div className="flex items-center justify-center gap-x-2"> {/* Centered */}
+        <div className="flex items-center justify-center gap-x-2">
           {row.original.isAbandoned ? '🗑️' : '🛒'}
         </div>
       )
@@ -87,7 +90,7 @@ export const columns: ColumnDef<OrderColumn>[] = [
   },
   {
     accessorKey: 'createdAt',
-    header: ({ column }) => renderSortableHeader(column, "Date Created"),
+    header: ({ column }) => renderSortableHeader(column, 'Date Created')
   },
   {
     id: 'actions',

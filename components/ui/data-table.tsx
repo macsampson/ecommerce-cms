@@ -25,6 +25,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { useState } from 'react'
+import { Modal } from '@/components/ui/modal'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -39,6 +40,8 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [sorting, setSorting] = useState<SortingState>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalData, setModalData] = useState<TData | null>(null)
 
   const router = useRouter()
   const params = useParams()
@@ -67,7 +70,7 @@ export function DataTable<TData, TValue>({
           onChange={(event) =>
             table.getColumn(searchKey)?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="w-full max-w-xs sm:max-w-sm"
         />
       </div>
       <div className="rounded-md border">
@@ -75,9 +78,12 @@ export function DataTable<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map((header, i) => {
+                  const headerClass =
+                    (header.column.columnDef as any).headerClassName ||
+                    (i > 1 ? 'hidden md:table-cell' : '')
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className={headerClass}>
                       {header.isPlaceholder ? null : (
                         <div
                           {...{
@@ -91,12 +97,12 @@ export function DataTable<TData, TValue>({
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                          {/* Text-based sort indicators removed, custom headers will handle icons */}
                         </div>
                       )}
                     </TableHead>
                   )
                 })}
+                <TableHead className="md:hidden">Details</TableHead>
               </TableRow>
             ))}
           </TableHeader>
@@ -119,22 +125,40 @@ export function DataTable<TData, TValue>({
                         : undefined
                     }
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        <div
-                          onClick={(e) => {
-                            if ((e.target as HTMLElement).closest('button')) {
-                              e.stopPropagation()
-                            }
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </div>
-                      </TableCell>
-                    ))}
+                    {row.getVisibleCells().map((cell, i) => {
+                      const cellClass =
+                        (cell.column.columnDef as any).cellClassName ||
+                        (i > 1 ? 'hidden md:table-cell' : '')
+                      return (
+                        <TableCell key={cell.id} className={cellClass}>
+                          <div
+                            onClick={(e) => {
+                              if ((e.target as HTMLElement).closest('button')) {
+                                e.stopPropagation()
+                              }
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </div>
+                        </TableCell>
+                      )
+                    })}
+                    <TableCell className="md:hidden">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setModalData(row.original)
+                          setModalOpen(true)
+                        }}
+                      >
+                        Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 )
               })
@@ -169,6 +193,22 @@ export function DataTable<TData, TValue>({
           Next
         </Button>
       </div>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Details"
+        description="Full row details"
+      >
+        <div className="space-y-2">
+          {modalData &&
+            Object.entries(modalData).map(([key, value]) => (
+              <div key={key} className="flex justify-between">
+                <span className="font-semibold">{key}</span>
+                <span className="break-all text-right">{String(value)}</span>
+              </div>
+            ))}
+        </div>
+      </Modal>
     </div>
   )
 }

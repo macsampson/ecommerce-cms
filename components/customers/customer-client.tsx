@@ -7,14 +7,6 @@ import { DataTable } from '../ui/data-table'
 // Dummy data for demonstration
 const data = [
   {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '123-456-7890',
-    totalOrders: 5,
-    totalSpent: 200
-  },
-  {
     id: '2',
     name: 'Jane Smith',
     email: 'jane@example.com',

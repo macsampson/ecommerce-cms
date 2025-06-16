@@ -326,13 +326,13 @@ export async function POST(req: Request) {
     }
 
     // Get rates from both providers in parallel
-    const [chitchatsRates] = await Promise.all([
-      // getShippoRates(),
-      getChitChatsRates()
+    const [shippoRates] = await Promise.all([
+      getShippoRates()
+      // getChitChatsRates()
     ])
 
     // Combine and sort all rates by price
-    const allRates = [...chitchatsRates].sort(
+    const allRates = [...shippoRates].sort(
       (a, b) => parseFloat(a.amount) - parseFloat(b.amount)
     )
 

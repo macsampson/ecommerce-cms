@@ -23,6 +23,5 @@ export async function PUT(
     update: data,
     create: { storeId, ...data }
   })
-  console.log('settings: ', settings)
   return NextResponse.json(settings)
 }

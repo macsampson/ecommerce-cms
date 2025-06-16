@@ -2,7 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation' // For active link highlighting
-import { Shield, ShoppingCart, Box, Users, Menu, X } from 'lucide-react'
+import {
+  Shield,
+  ShoppingCart,
+  Box,
+  Users,
+  Menu,
+  X,
+  Edit,
+  Truck
+} from 'lucide-react'
 import { cn } from '@/lib/utils' // For conditional classes
 import { useState } from 'react'
 
@@ -38,6 +47,12 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId }) => {
       label: 'Customers',
       icon: <Users className="h-5 w-5 mr-3" />,
       active: pathname === `/${storeId}/customers`
+    },
+    {
+      href: `/${storeId}/shipping`,
+      label: 'Shipping',
+      icon: <Truck className="h-5 w-5 mr-3" />,
+      active: pathname === `/${storeId}/shipping`
     }
     // Add other routes here if they exist, e.g., Settings, Billboards etc.
     // Example for settings:

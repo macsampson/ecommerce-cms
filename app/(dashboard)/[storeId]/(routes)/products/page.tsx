@@ -44,9 +44,8 @@ const ProductsPage = () => {
         setLoading(true)
         setError(null)
         // Construct API URL (consistent with overview page refactor)
-        const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        const apiUrl = `${baseUrl}/api/${storeId}/products-summary`
+
+        const apiUrl = `/api/${storeId}/products-summary`
 
         const response = await axios.get<ApiProductData[]>(apiUrl)
 

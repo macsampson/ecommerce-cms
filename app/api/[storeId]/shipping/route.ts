@@ -5,23 +5,11 @@ import shippo, {
   CreateParcelRequest,
   CreateCustomsDeclarationRequest
 } from 'shippo' // Shippo client initialization
+import prismadb from '@/lib/prismadb'
 
 // Helper function to format prices to 2 decimal places
 const formatPrice = (price: number): string => {
   return price.toFixed(2)
-}
-
-// Define the sender's address (TODO: Fetch this from the database in the future)
-const addressFromCanada = {
-  name: 'Pocket Caps',
-  company: 'PocketCaps',
-  street1: '3307 24 St NW',
-  city: 'Calgary',
-  state: 'AB',
-  zip: 'T2M 3Z8',
-  country: 'CA', // iso2 country code
-  phone: '+17788289009',
-  email: 'pocketcaps@gmail.com'
 }
 
 // Define types for address and cart items
@@ -83,6 +71,9 @@ export async function POST(req: Request) {
     currency
   }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
     await req.json()
+
+  const url = new URL(req.url)
+  const storeId = url.pathname.split('/')[2]
 
   // Calculate total weight and price
   const totalWeight = cartItems.reduce(
@@ -161,9 +152,39 @@ export async function POST(req: Request) {
         }
       : undefined
 
+  // Get sender address from database
+  const shippingSettings = await prismadb.shippingSettings.findUnique({
+    where: {
+      storeId: storeId
+    }
+  })
+
+  if (!shippingSettings) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Sender address not found'
+      },
+      { status: 404 }
+    )
+  }
+  const shippoEnabled = shippingSettings.shippoEnabled
+  const chitchatsEnabled = shippingSettings.chitchatsEnabled
+
   // Create shipment object
   const shipmentObject = {
-    address_from: addressFromCanada,
+    address_from: {
+      name: shippingSettings.name,
+      company: shippingSettings.company,
+      street1: shippingSettings.street1,
+      city: shippingSettings.city,
+      state: shippingSettings.state,
+      zip: shippingSettings.zip,
+      country: shippingSettings.country,
+      phone: shippingSettings.phone,
+      email: shippingSettings.email,
+      is_residential: false // or true, depending on your business
+    },
     address_to: {
       name: `${address.firstName} ${address.lastName}`,
       street1: address.street,
@@ -326,13 +347,13 @@ export async function POST(req: Request) {
     }
 
     // Get rates from both providers in parallel
-    const [shippoRates] = await Promise.all([
-      getShippoRates()
-      // getChitChatsRates()
+    const [shippoRates, chitchatsRates] = await Promise.all([
+      shippoEnabled ? getShippoRates() : [],
+      chitchatsEnabled ? getChitChatsRates() : []
     ])
 
     // Combine and sort all rates by price
-    const allRates = [...shippoRates].sort(
+    const allRates = [...shippoRates, ...chitchatsRates].sort(
       (a, b) => parseFloat(a.amount) - parseFloat(b.amount)
     )
 

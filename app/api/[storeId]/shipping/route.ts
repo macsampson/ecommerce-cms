@@ -58,6 +58,15 @@ type ShippoRatesResponse = {
   messages: any[]
 }
 
+type CustomsDeclarationInfo = {
+  items: {
+    description: string
+    mass_unit: string
+    origin_country: string
+    tarrif_number: string
+  }[]
+}
+
 // Handle OPTIONS request
 export async function OPTIONS() {
   return NextResponse.json({})
@@ -123,35 +132,6 @@ export async function POST(req: Request) {
     mass_unit: 'g'
   }
 
-  // Create customs declaration for international shipping
-  const customsDeclaration =
-    address.country !== 'CA'
-      ? {
-          certify: true,
-          certify_signer: 'PocketCaps',
-          contents_explanation: 'Keyboard Keycaps',
-          contents_type: 'MERCHANDISE',
-          eel_pfc: 'NOEEI_30_36',
-          incoterm: 'DDP',
-          items: [
-            {
-              description: 'Keyboard Keycaps',
-              mass_unit: 'g',
-              net_weight: totalWeight.toString(),
-              origin_country: 'CA',
-              quantity: cartItems.reduce(
-                (acc, item) => acc + item.cartQuantity,
-                0
-              ),
-              tarrif_number: '3926.90',
-              value_amount: formatPrice(totalPrice),
-              value_currency: currency
-            }
-          ],
-          non_delivery_option: 'RETURN'
-        }
-      : undefined
-
   // Get sender address from database
   const shippingSettings = await prismadb.shippingSettings.findUnique({
     where: {
@@ -168,6 +148,38 @@ export async function POST(req: Request) {
       { status: 404 }
     )
   }
+  // Create customs declaration for international shipping
+
+  const customsDeclarationInfo =
+    shippingSettings.customsDeclaration as CustomsDeclarationInfo
+
+  if (!customsDeclarationInfo) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Customs declaration not found'
+      },
+      { status: 404 }
+    )
+  }
+
+  const customsDeclaration =
+    address.country !== 'CA'
+      ? {
+          ...customsDeclarationInfo,
+          items: customsDeclarationInfo.items.map((item: any) => ({
+            ...item,
+            net_weight: totalWeight.toString(),
+            quantity: cartItems.reduce(
+              (acc, item) => acc + item.cartQuantity,
+              0
+            ),
+            value_amount: formatPrice(totalPrice),
+            value_currency: currency
+          }))
+        }
+      : undefined
+
   const shippoEnabled = shippingSettings.shippoEnabled
   const chitchatsEnabled = shippingSettings.chitchatsEnabled
 

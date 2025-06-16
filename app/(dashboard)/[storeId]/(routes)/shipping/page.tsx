@@ -53,7 +53,6 @@ export default function ShippingPage() {
       .get(`/api/${storeId}/shipping-settings`)
       .then((res) => res.data)
       .then((data) => {
-        console.log('data', data)
         if (data) {
           setSenderAddress({ ...data })
           setShippoEnabled(data.shippoEnabled)

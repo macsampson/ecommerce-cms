@@ -40,9 +40,7 @@ const OrdersPage = () => {
       try {
         setLoading(true)
         setError(null)
-        const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        const apiUrl = `${baseUrl}/api/${storeId}/orders-summary`
+        const apiUrl = `/api/${storeId}/orders-summary`
 
         const response = await axios.get<ApiOrderData[]>(apiUrl)
         // The API returns data in a format compatible with OrderColumn

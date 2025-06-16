@@ -243,7 +243,7 @@ model State {
 
 model ShippingSettings {
   id         String   @id @default(uuid())
-  storeId    String   // Foreign key to your Store model
+  storeId    String   @map("store_id")
   name       String
   company    String
   street1    String
@@ -253,11 +253,11 @@ model ShippingSettings {
   country    String
   phone      String
   email      String
-  shippoEnabled     Boolean @default(true)
-  chitchatsEnabled  Boolean @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  customsDeclaration Json?
+  shippoEnabled     Boolean @default(true) @map("shippo_enabled")
+  chitchatsEnabled  Boolean @default(true) @map("chitchats_enabled")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  customsDeclaration Json? @map("customs_declaration")
 
   @@unique([storeId])
   @@map("shipping_settings")

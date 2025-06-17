@@ -68,6 +68,7 @@ type AddressType = {
   zip: string
   country: string
   email: string
+  phone: string | null
 }
 
 // type ShippoRate = {
@@ -212,6 +213,12 @@ export async function POST(
           isPaid: false, // set to false until payment is successful (webhook)
           totalPrice: totalPrice,
           shippingAddress: shippingAddressComponents,
+          phoneNumber: shippingAddress.phone || '',
+          customerName: (
+            shippingAddress.firstName +
+            ' ' +
+            shippingAddress.lastName
+          ).trim(),
           orderItems: {
             create: Object.entries(cartItems).flatMap(([productId, item]) => {
               // If the item is a bundle, create an orderItem for each variation

@@ -181,6 +181,8 @@ model Order {
   shippingAddress String      @default("") @map("shipping_address")
   emailAddress    String      @default("") @map("email_address")
   isAbandoned     Boolean     @default(false) @map("is_abandoned")
+  phoneNumber     String      @default("") @map("phone_number")
+  customerName    String      @default("") @map("customer_name")
   store           Store       @relation(fields: [storeId], references: [id])
   orderItems      OrderItem[]
 

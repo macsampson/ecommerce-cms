@@ -90,6 +90,45 @@ export default function ShippingPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
+      {/* Shipping Providers Section */}
+      <section className="bg-card border border-border rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xl font-bold flex items-center gap-2 text-primary">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 7h18M3 12h18M3 17h18"
+              />
+            </svg>
+            Shipping Providers
+          </span>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">Shippo</span>
+            <Switch
+              checked={shippoEnabled}
+              onCheckedChange={handleShippoToggle}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">ChitChats</span>
+            <Switch
+              checked={chitchatsEnabled}
+              onCheckedChange={handleChitchatsToggle}
+            />
+          </div>
+        </div>
+      </section>
+      <Separator className="my-2" />
       {/* Sender Address Section */}
       <section className="bg-card border border-border rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
@@ -257,45 +296,7 @@ export default function ShippingPage() {
         </form>
       </Modal>
       <Separator className="my-2" />
-      {/* Shipping Providers Section */}
-      <section className="bg-card border border-border rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xl font-bold flex items-center gap-2 text-primary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 7h18M3 12h18M3 17h18"
-              />
-            </svg>
-            Rate + Label Providers
-          </span>
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">Shippo</span>
-            <Switch
-              checked={shippoEnabled}
-              onCheckedChange={handleShippoToggle}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">ChitChats</span>
-            <Switch
-              checked={chitchatsEnabled}
-              onCheckedChange={handleChitchatsToggle}
-            />
-          </div>
-        </div>
-      </section>
-      <Separator className="my-2" />
+
       {/* Customs Declaration Section */}
       <section className="bg-card border border-border rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">

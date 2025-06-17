@@ -38,6 +38,8 @@ export type OrderColumn = {
   products: string // This is a formatted string of products and their variations/quantities
   createdAt: string
   shippingAddress: string
+  phoneNumber: string
+  customerName: string
 }
 
 export const columns: ColumnDef<OrderColumn>[] = [
@@ -65,6 +67,14 @@ export const columns: ColumnDef<OrderColumn>[] = [
   {
     accessorKey: 'address',
     header: 'Billing Address'
+  },
+  {
+    accessorKey: 'phoneNumber',
+    header: ({ column }) => renderSortableHeader(column, 'Phone Number')
+  },
+  {
+    accessorKey: 'customerName',
+    header: ({ column }) => renderSortableHeader(column, 'Customer Name')
   },
   {
     accessorKey: 'isPaid',

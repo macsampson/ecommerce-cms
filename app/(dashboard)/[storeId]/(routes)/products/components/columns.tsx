@@ -2,6 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table'
 import { CellAction } from './cell-action'
+import Image from 'next/image'
 
 export type ProductColumn = {
   id: string
@@ -51,9 +52,11 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: 'Image',
     cell: ({ row }) =>
       row.original.imageUrl ? (
-        <img
+        <Image
           src={row.original.imageUrl}
           alt={row.original.name}
+          width={48}
+          height={48}
           className="w-12 h-12 object-cover rounded-md border"
         />
       ) : (

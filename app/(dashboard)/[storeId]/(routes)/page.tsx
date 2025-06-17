@@ -9,6 +9,8 @@ import { getGraphRevenue } from '@/actions/get-graph-revenue'
 import { getTotalRevenue } from '@/actions/get-total-revenue'
 import { getSalesCount } from '@/actions/get-sales-count'
 import { getStockCount } from '@/actions/get-stock-count'
+import { getOrderYears } from '@/actions/get-graph-revenue'
+import DashboardOverview from '../../components/dashboard-overview'
 
 interface DashboardPageProps {
   params: { storeId: string }
@@ -33,6 +35,7 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
   let salesCount = 0
   let stockCount = 0
   let graphRevenue: any[] = [] // Default to empty array for chart
+  let years: number[] = []
 
   try {
     totalRevenue = await getTotalRevenue(params.storeId)
@@ -57,6 +60,12 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
   } catch (error) {
     console.error('Failed to fetch graph revenue:', error)
     // graphRevenue will remain empty array, chart will show no data or handle it gracefully
+  }
+
+  try {
+    years = await getOrderYears(params.storeId)
+  } catch (error) {
+    console.error('Failed to fetch order years:', error)
   }
 
   return (
@@ -110,14 +119,7 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
             </CardContent>
           </Card>
         </div>
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <Overview data={graphRevenue} />
-          </CardContent>
-        </Card>
+        <DashboardOverview storeId={params.storeId} years={years} />
       </div>
     </div>
   )

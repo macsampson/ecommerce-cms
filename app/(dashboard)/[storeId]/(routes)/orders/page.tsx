@@ -20,6 +20,8 @@ type ApiOrderData = {
   isPaid: boolean
   isAbandoned: boolean
   createdAt: string
+  phoneNumber: string
+  customerName: string
 }
 
 const OrdersPage = () => {

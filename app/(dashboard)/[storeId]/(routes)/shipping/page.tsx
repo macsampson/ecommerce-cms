@@ -27,8 +27,8 @@ export default function ShippingPage() {
     phone: '',
     email: ''
   })
-  const [shippoEnabled, setShippoEnabled] = useState(true)
-  const [chitchatsEnabled, setChitchatsEnabled] = useState(true)
+  const [shippoEnabled, setShippoEnabled] = useState(false)
+  const [chitchatsEnabled, setChitchatsEnabled] = useState(false)
   const [customsDeclaration, setCustomsDeclaration] = useState({
     certify: true,
     certify_signer: '',

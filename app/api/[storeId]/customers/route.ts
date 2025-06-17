@@ -64,9 +64,9 @@ export async function GET(
       if (!customerMap[email]) {
         customerMap[email] = {
           id: email, // use email as unique id
-          name,
+          name: order.customerName,
           email,
-          phone: '', // phone not available in Order model
+          phone: order.phoneNumber,
           totalOrders: 0,
           totalSpent: 0
         }

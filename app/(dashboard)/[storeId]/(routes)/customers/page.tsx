@@ -1,5 +1,5 @@
 import React from 'react'
-import CustomerClient from '@/components/customers/customer-client'
+import CustomerClient from './components/customer-client'
 
 const CustomersPage = () => {
   return (

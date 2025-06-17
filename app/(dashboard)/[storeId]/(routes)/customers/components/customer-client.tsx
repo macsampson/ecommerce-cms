@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { columns } from './columns'
-import { DataTable } from '../ui/data-table'
+import { DataTable } from '@/components/ui/data-table'
 import { useParams } from 'next/navigation'
 
 export type CustomerColumn = {

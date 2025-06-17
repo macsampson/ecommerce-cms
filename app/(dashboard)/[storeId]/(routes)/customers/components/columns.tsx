@@ -1,6 +1,7 @@
 'use client'
 
 import { ColumnDef } from '@tanstack/react-table'
+import { formatter } from '@/lib/utils'
 // import { ArrowUpDown, MoreHorizontal } from "lucide-react"; // Example icons
 // import { Button } from "@/components/ui/button"; // Example button for actions
 // import { Checkbox } from "@/components/ui/checkbox"; // Example checkbox for row selection
@@ -55,7 +56,8 @@ export const columns: ColumnDef<CustomerColumn>[] = [
   },
   {
     accessorKey: 'totalSpent',
-    header: 'Total Spent'
+    header: 'Total Spent',
+    cell: ({ row }) => formatter.format(row.original.totalSpent)
   }
   // Example for an actions column:
   // {

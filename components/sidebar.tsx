@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils' // For conditional classes
 import { useState } from 'react'
+import StoreSwitcher from '@/components/store-switcher'
 
 interface SidebarProps {
   storeId: string
@@ -66,24 +67,24 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId }) => {
 
   // Sidebar content as a separate variable for reuse
   const sidebarContent = (
-    <div className="w-64 bg-gray-800 text-white h-full p-4 space-y-6 flex flex-col">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <Link
           href={`/${storeId}`}
-          className="text-2xl font-semibold text-center hover:text-gray-300 transition-colors cursor-pointer py-2 block"
+          className="text-2xl font-semibold text-center hover:text-gray-300 transition-colors cursor-pointer p-3 md:p-2 block"
         >
           Dashboard
         </Link>
         {/* Close button for mobile */}
         <button
-          className="md:hidden p-2 ml-2 text-gray-400 hover:text-white"
+          className="md:hidden p-2 ml-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary rounded"
           onClick={() => setOpen(false)}
           aria-label="Close sidebar"
         >
           <X className="h-6 w-6" />
         </button>
       </div>
-      <nav className="flex-grow">
+      <nav className="flex-grow p-3 md:p-0">
         <ul className="space-y-2">
           {routes.map((route) => (
             <li key={route.href}>
@@ -108,13 +109,27 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId }) => {
     </div>
   )
 
+  // Animation classes for mobile sidebar
+  const sidebarDrawerClasses = cn(
+    'fixed z-50 top-0 left-0 w-64 max-w-[80vw] h-full bg-gray-800 shadow-xl transition-transform duration-300 ease-in-out',
+    open ? 'translate-x-0' : '-translate-x-full',
+    'md:hidden flex flex-col'
+  )
+  const overlayClasses = cn(
+    'fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity duration-300',
+    open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+    'md:hidden'
+  )
+
   return (
     <>
       {/* Hamburger button for mobile */}
       <button
-        className="fixed top-4 left-4 z-50 md:hidden bg-gray-800 p-2 rounded text-white shadow-lg"
+        className="fixed top-4 left-4 z-50 md:hidden bg-gray-800 p-2 rounded text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
+        aria-expanded={open}
+        aria-controls="mobile-sidebar"
       >
         <Menu className="h-6 w-6" />
       </button>
@@ -124,20 +139,21 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId }) => {
           {sidebarContent}
         </div>
       </div>
-      {/* Sidebar drawer for mobile, only rendered when open */}
-      {open ? (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-40"
-            onClick={() => setOpen(false)}
-          />
-          {/* Drawer */}
-          <div className="relative z-50 w-64 h-full bg-gray-800 shadow-xl animate-slide-in-left">
-            {sidebarContent}
-          </div>
-        </div>
-      ) : null}
+      {/* Sidebar drawer for mobile, always rendered for animation */}
+      <div
+        className={overlayClasses}
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+      />
+      <aside
+        id="mobile-sidebar"
+        className={sidebarDrawerClasses}
+        aria-hidden={!open}
+        tabIndex={open ? 0 : -1}
+        role="navigation"
+      >
+        {sidebarContent}
+      </aside>
     </>
   )
 }

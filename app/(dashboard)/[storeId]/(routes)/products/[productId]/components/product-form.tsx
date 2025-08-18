@@ -371,7 +371,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       <Textarea
                         disabled={loading}
                         placeholder="Enter a detailed product description"
-                        className="min-h-[120px] resize-none"
+                        className="min-h-[500px] resize-none"
                         {...field}
                       />
                     </FormControl>

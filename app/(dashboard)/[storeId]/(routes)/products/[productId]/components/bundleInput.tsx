@@ -59,29 +59,34 @@ const BundleInput: React.FC<BundleInputProps> = ({
             }
           }}
         />
-        <Input
-          className="w-1/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          placeholder="0%"
-          type="number"
-          step="0.01"
-          value={currentBundle.discount ? currentBundle.discount.toFixed(2) : ''}
-          onChange={(e) => {
-            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-            setCurrentBundle((prev) => ({
-              ...prev,
-              discount: value
-            }))
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              addBundle()
-            }
-          }}
-          onFocus={(e) => {
-            e.target.select()
-          }}
-        />
+        <div className="relative w-1/5">
+          <Input
+            className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            placeholder="0"
+            type="number"
+            step="0.01"
+            value={currentBundle.discount ? currentBundle.discount.toFixed(2) : ''}
+            onChange={(e) => {
+              const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+              setCurrentBundle((prev) => ({
+                ...prev,
+                discount: value
+              }))
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addBundle()
+              }
+            }}
+            onFocus={(e) => {
+              e.target.select()
+            }}
+          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+            %
+          </div>
+        </div>
         <Button type="button" className="ml-4" size="sm" onClick={addBundle}>
           Add
         </Button>
@@ -100,17 +105,22 @@ const BundleInput: React.FC<BundleInputProps> = ({
                   setBundles(newBundles)
                 }}
               />
-              <Input
-                className="w-1/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                type="number"
-                step="0.01"
-                value={bundle.discount ? bundle.discount.toFixed(2) : ''}
-                onChange={(e) => {
-                  const newBundles = [...bundles]
-                  newBundles[index].discount = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                  setBundles(newBundles)
-                }}
-              />
+              <div className="relative w-1/3">
+                <Input
+                  className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  type="number"
+                  step="0.01"
+                  value={bundle.discount ? bundle.discount.toFixed(2) : ''}
+                  onChange={(e) => {
+                    const newBundles = [...bundles]
+                    newBundles[index].discount = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                    setBundles(newBundles)
+                  }}
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  %
+                </div>
+              </div>
               <Button
                 variant="destructive"
                 onClick={() => {

@@ -56,7 +56,11 @@ export async function GET(
         category: true, // For category.name
         size: true, // For size.name
         color: true, // For color.value (hex)
-        images: true // Include images for preview
+        images: {
+          orderBy: {
+            ordering: 'asc' // Order images by ordering field ascending to get smallest first
+          }
+        }
       },
       orderBy: {
         // Replicating order from app/(dashboard)/[storeId]/(routes)/products/page.tsx

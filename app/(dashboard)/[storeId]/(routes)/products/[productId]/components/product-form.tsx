@@ -207,16 +207,22 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       if (initialData) {
         await axios.patch(
           `/api/${params.storeId}/products/${params.productId}`,
-          data
+          data,
+          { timeout: 30000 }
         )
       } else {
-        await axios.post(`/api/${params.storeId}/products`, data)
+        await axios.post(`/api/${params.storeId}/products`, data, { timeout: 30000 })
       }
       router.refresh()
       router.push(`/${params.storeId}/products`)
       toast.success(toastMessage)
     } catch (error: any) {
-      toast.error('Something went wrong.')
+      console.error('Form submission error:', error)
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please try again.')
+      } else {
+        toast.error('Something went wrong.')
+      }
     } finally {
       setLoading(false)
     }
@@ -702,8 +708,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-between pt-6 border-t">
+          {/* Spacer to account for sticky buttons */}
+          <div className="pb-24"></div>
+        </form>
+      </Form>
+
+      {/* Sticky Form Actions */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
             <div className="text-sm text-muted-foreground">
               {initialData
                 ? 'Update your product information'
@@ -720,15 +733,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </Button>
               <Button
                 disabled={loading}
-                type="submit"
+                onClick={form.handleSubmit(onSubmit)}
                 className="min-w-[120px]"
               >
                 {loading ? 'Saving...' : action}
               </Button>
             </div>
           </div>
-        </form>
-      </Form>
+        </div>
+      </div>
     </>
   )
 }

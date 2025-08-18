@@ -510,19 +510,24 @@ export async function POST(req: Request) {
         }
       }
 
-      // Revalidate product data
-      await axios.post(
-        REVALIDATE_URL,
-        {
-          tag: 'product'
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+      // Fire-and-forget revalidation request to frontend
+      if (process.env.FRONTEND_STORE_URL && process.env.REVALIDATE_TOKEN) {
+        axios.post(
+          REVALIDATE_URL,
+          {
+            tag: 'product'
+          },
+          {
+            timeout: 5000,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+            }
           }
-        }
-      )
+        ).catch(() => {
+          // Silently ignore revalidation failures
+        })
+      }
     } catch (error) {
       console.log('Error updating order:', error)
     }

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { ImagePlus, Trash } from 'lucide-react'
 import { Input } from './input'
-import { FormField } from './form'
 
 interface ImageUploadProps {
   disabled?: boolean
@@ -72,13 +71,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             >
               <div className="relative aspect-square mb-2">
                 <Button
-                  className="absolute -top-2 -right-2 z-10 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 z-10 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   type="button"
                   onClick={() => onRemove(url)}
                   variant="destructive"
                   size="sm"
                 >
-                  <Trash className="h-3 w-3" />
+                  <Trash className="h-4 w-4" />
                 </Button>
                 <Image
                   width={180}

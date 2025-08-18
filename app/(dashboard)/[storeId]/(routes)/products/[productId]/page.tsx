@@ -51,8 +51,8 @@ const ProductPage = async ({
 
   // console.log(product)
   return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-col h-full">
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
         <ProductForm
           categories={categories}
           sizes={sizes}

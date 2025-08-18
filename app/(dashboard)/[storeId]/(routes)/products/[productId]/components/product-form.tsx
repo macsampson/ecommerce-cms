@@ -211,7 +211,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           { timeout: 30000 }
         )
       } else {
-        await axios.post(`/api/${params.storeId}/products`, data, { timeout: 30000 })
+        await axios.post(`/api/${params.storeId}/products`, data, {
+          timeout: 30000
+        })
       }
       router.refresh()
       router.push(`/${params.storeId}/products`)
@@ -626,7 +628,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     render={({ field }) => {
                       return (
                         <FormItem>
-                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 hover:border-primary/20 transition-all duration-200 hover:shadow-sm">
+                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 ">
                             <div className="flex items-center space-x-2 mb-4">
                               <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                                 <div className="h-4 w-4 rounded bg-blue-500"></div>
@@ -676,7 +678,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
                       return (
                         <FormItem>
-                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 hover:border-primary/20 transition-all duration-200 hover:shadow-sm">
+                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 ">
                             <div className="flex items-center space-x-2 mb-4">
                               <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                                 <div className="h-4 w-4 rounded bg-green-500"></div>

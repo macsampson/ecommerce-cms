@@ -40,14 +40,16 @@ const BundleInput: React.FC<BundleInputProps> = ({
       <div className="flex space-x-2 p-2">
         <Input
           ref={nameInputRef}
-          className="w-1/6"
+          className="w-1/6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           placeholder="Min Qty"
           type="number"
           min="1"
+          value={currentBundle.minQuantity || ''}
           onChange={(e) => {
+            const value = e.target.value === '' ? 0 : parseInt(e.target.value)
             setCurrentBundle((prev) => ({
               ...prev,
-              minQuantity: parseInt(e.target.value)
+              minQuantity: value
             }))
           }}
           onKeyDown={(e) => {
@@ -58,14 +60,16 @@ const BundleInput: React.FC<BundleInputProps> = ({
           }}
         />
         <Input
-          className="w-1/5"
+          className="w-1/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           placeholder="0%"
           type="number"
-          value={currentBundle.discount}
+          step="0.01"
+          value={currentBundle.discount ? currentBundle.discount.toFixed(2) : ''}
           onChange={(e) => {
+            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
             setCurrentBundle((prev) => ({
               ...prev,
-              discount: parsePriceInput(e.target.value)
+              discount: value
             }))
           }}
           onKeyDown={(e) => {
@@ -87,24 +91,23 @@ const BundleInput: React.FC<BundleInputProps> = ({
           bundles.map((bundle, index) => (
             <div key={index} className="flex items-center space-x-2">
               <Input
-                className="w-1/3"
+                className="w-1/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 type="number"
-                value={bundle.minQuantity}
+                value={bundle.minQuantity || ''}
                 onChange={(e) => {
                   const newBundles = [...bundles]
-                  newBundles[index].minQuantity = parsePriceInput(
-                    e.target.value
-                  )
+                  newBundles[index].minQuantity = e.target.value === '' ? 0 : parseInt(e.target.value)
                   setBundles(newBundles)
                 }}
               />
               <Input
-                className="w-1/3"
+                className="w-1/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 type="number"
-                value={bundle.discount}
+                step="0.01"
+                value={bundle.discount ? bundle.discount.toFixed(2) : ''}
                 onChange={(e) => {
                   const newBundles = [...bundles]
-                  newBundles[index].discount = parseInt(e.target.value)
+                  newBundles[index].discount = e.target.value === '' ? 0 : parseFloat(e.target.value)
                   setBundles(newBundles)
                 }}
               />

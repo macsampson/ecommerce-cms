@@ -115,19 +115,13 @@ export async function PATCH(
       }
     })
 
-    // Assign UUIDs to images and bundles if they don't already have them
-    // const imagesWithUuid = images.map(
-    //   (image: { url: string; id?: string }) => ({
-    //     ...image,
-    //     id: image.id || Math.random().toString(36).substring(7)
-    //   })
-    // )
-
-    const bundlesWithUuid = bundles.map(
-      (bundle: { minQuantity: number; discount: number; id?: string }) => ({
-        ...bundle,
-        id: bundle.id || Math.random().toString(36).substring(7)
-      })
+    // Separate bundles for update vs create operations
+    const bundlesToUpdate = bundles.filter(
+      (bundle: { id?: string }) => bundle.id
+    )
+    
+    const bundlesToCreate = bundles.filter(
+      (bundle: { id?: string }) => !bundle.id
     )
 
     // console.log('existingProduct', existingProduct)
@@ -148,6 +142,7 @@ export async function PATCH(
 
     // console.log('variationsToCreate', variationsToCreate)
 
+    // Update the main product
     await prismadb.product.update({
       where: {
         id: params.productId
@@ -166,6 +161,7 @@ export async function PATCH(
       }
     })
 
+    // Clean up old variations
     await prismadb.productVariation.deleteMany({
       where: {
         productId: params.productId,
@@ -219,9 +215,10 @@ export async function PATCH(
     const newImages = images.filter((image: { id?: string }) => !image.id)
     if (newImages.length > 0) {
       await prismadb.image.createMany({
-        data: newImages.map((image: { url: string; credit: string }) => ({
+        data: newImages.map((image: { url: string; credit: string; ordering: number }) => ({
           url: image.url,
           credit: image.credit,
+          ordering: image.ordering,
           productId: params.productId
         }))
       })
@@ -236,11 +233,12 @@ export async function PATCH(
     //   }
     // })
 
+    // Delete bundles that are no longer in the array
     await prismadb.bundle.deleteMany({
       where: {
         productId: params.productId,
         id: {
-          notIn: bundlesWithUuid.map((bundle: { id: string }) => bundle.id)
+          notIn: bundlesToUpdate.map((bundle: { id: string }) => bundle.id)
         }
       }
     })
@@ -273,12 +271,26 @@ export async function PATCH(
       })
     }
 
+    // Update existing bundles
+    for (const bundle of bundlesToUpdate) {
+      await prismadb.bundle.update({
+        where: {
+          id: bundle.id
+        },
+        data: {
+          minQuantity: bundle.minQuantity,
+          discount: bundle.discount
+        }
+      })
+    }
+
     // Create new bundles
-    if (bundlesWithUuid.length > 0) {
+    if (bundlesToCreate.length > 0) {
       await prismadb.bundle.createMany({
-        data: bundlesWithUuid.map(
-          (bundle: { minQuantity: number; discount: number; id: string }) => ({
-            ...bundle,
+        data: bundlesToCreate.map(
+          (bundle: { minQuantity: number; discount: number }) => ({
+            minQuantity: bundle.minQuantity,
+            discount: bundle.discount,
             productId: params.productId
           })
         )
@@ -313,24 +325,34 @@ export async function PATCH(
       }
     })
 
-    // call webhook to update product on frontend
-
-    await axios.post(
-      REVALIDATE_URL,
-      {
-        tag: 'product'
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+    // Fire-and-forget revalidation request to frontend
+    if (process.env.FRONTEND_STORE_URL && process.env.REVALIDATE_TOKEN) {
+      // Don't await this - let it run in the background
+      axios.post(
+        REVALIDATE_URL,
+        {
+          tag: 'product'
+        },
+        {
+          timeout: 5000,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.REVALIDATE_TOKEN}`
+          }
         }
-      }
-    )
+      ).catch(() => {
+        // Silently ignore revalidation failures
+        // The frontend will eventually sync on next request
+      })
+    }
 
     return NextResponse.json(updatedProduct)
   } catch (error) {
-    console.log('[PRODUCT_PATCH]', error)
+    console.error('[PRODUCT_PATCH] Error updating product:', error)
+    // Return more specific error information while maintaining security
+    if (error instanceof Error) {
+      console.error('[PRODUCT_PATCH] Error details:', error.message)
+    }
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

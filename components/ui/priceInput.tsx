@@ -1,28 +1,61 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { ControllerRenderProps } from 'react-hook-form'
 
-const parsePriceInput = (value: string) => {
-  const parsed = parseFloat(value.replace(/[^0-9.-]+/g, ''))
+const parsePriceInput = (value: string | number) => {
+  if (typeof value === 'number') return value
+  const cleaned = String(value).replace(/[^0-9.-]+/g, '')
+  const parsed = parseFloat(cleaned)
   return isNaN(parsed) ? 0 : parsed
 }
 
 const formatPrice = (value: number) => {
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+  return value.toLocaleString('en-US', { 
+    style: 'currency', 
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
+const formatForInput = (value: number) => {
+  return value > 0 ? value.toFixed(2) : ''
 }
 
 interface PriceInputProps {
   field: ControllerRenderProps<any, any>
   loading: boolean
+  placeholder?: string
 }
 
-const PriceInput: React.FC<PriceInputProps> = ({ field, loading }) => {
-  const [inputValue, setInputValue] = useState(field.value)
+const PriceInput: React.FC<PriceInputProps> = ({ field, loading, placeholder = '$0.00' }) => {
+  const [inputValue, setInputValue] = useState(() => formatForInput(field.value || 0))
+  const [isFocused, setIsFocused] = useState(false)
+
+  useEffect(() => {
+    if (!isFocused) {
+      setInputValue(formatForInput(field.value || 0))
+    }
+  }, [field.value, isFocused])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // Allow only numbers, decimal point, and one decimal point
+    if (/^\d*\.?\d{0,2}$/.test(value) || value === '') {
+      setInputValue(value)
+    }
+  }
 
   const handleBlur = () => {
+    setIsFocused(false)
     const price = parsePriceInput(inputValue)
-    setInputValue(formatPrice(price))
     field.onChange(price)
+    setInputValue(formatForInput(price))
+  }
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsFocused(true)
+    e.target.select()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -36,12 +69,13 @@ const PriceInput: React.FC<PriceInputProps> = ({ field, loading }) => {
     <Input
       type="text"
       disabled={loading}
-      placeholder="9.99"
+      placeholder={placeholder}
       value={inputValue}
-      onChange={(e) => setInputValue(e.target.value)}
+      onChange={handleChange}
       onBlur={handleBlur}
-      onFocus={(e) => e.target.select()}
+      onFocus={handleFocus}
       onKeyDown={handleKeyDown}
+      className="h-10"
     />
   )
 }

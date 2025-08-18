@@ -31,7 +31,6 @@ yarn-error.log*
 .env*.local
 .env
 
-
 *.sh
 
 # vercel
@@ -44,5 +43,7 @@ next-env.d.ts
 original_refs_backup.txt
 recommit.sh.save
 
+# design images for claude use
+claude-images/
 
 

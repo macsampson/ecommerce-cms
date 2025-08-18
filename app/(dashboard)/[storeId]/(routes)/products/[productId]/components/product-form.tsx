@@ -262,7 +262,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full max-w-7xl mx-auto"
+          className="space-y-8 w-full max-w-7xl mx-auto pt-10"
         >
           {/* Product Images Section */}
           <div className="bg-card rounded-lg border p-6">

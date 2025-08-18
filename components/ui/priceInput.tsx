@@ -66,17 +66,22 @@ const PriceInput: React.FC<PriceInputProps> = ({ field, loading, placeholder = '
   }
 
   return (
-    <Input
-      type="text"
-      disabled={loading}
-      placeholder={placeholder}
-      value={inputValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onFocus={handleFocus}
-      onKeyDown={handleKeyDown}
-      className="h-10"
-    />
+    <div className="relative">
+      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+        US$
+      </div>
+      <Input
+        type="text"
+        disabled={loading}
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
+        onKeyDown={handleKeyDown}
+        className="h-10 pl-12"
+      />
+    </div>
   )
 }
 

@@ -39,7 +39,12 @@ export function DataTable<TData, TValue>({
   searchKey
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: 'quantity',
+      desc: true
+    }
+  ])
   const [modalOpen, setModalOpen] = useState(false)
   const [modalData, setModalData] = useState<TData | null>(null)
 

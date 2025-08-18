@@ -62,46 +62,45 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   // console.log('value', value)
 
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-5">
-        <div className="border-2 flex w-full flex-wrap gap-5 p-5 rounded-md">
+    <div className="space-y-4">
+      {value.length > 0 && (
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {value.map(({ url, credit, ordering }) => (
             <div
               key={url}
-              className="relative flex flex-col rounded-md overflow-hidden border p-2"
+              className="relative group bg-muted rounded-lg p-2 border hover:border-primary/50 transition-colors"
             >
-              <div className="relative">
+              <div className="relative aspect-square mb-2">
                 <Button
-                  className="z-10 absolute top-2 right-2"
+                  className="absolute -top-2 -right-2 z-10 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                   type="button"
                   onClick={() => onRemove(url)}
                   variant="destructive"
                   size="sm"
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash className="h-3 w-3" />
                 </Button>
                 <Image
-                  // sizes="(max-width: 200px) 100vw, 200px"
-                  width={300}
-                  height={300}
-                  className="object-cover mb-2 rounded-md"
-                  alt="Image"
+                  width={180}
+                  height={180}
+                  className="w-full h-full object-cover rounded-md"
+                  alt="Product image"
                   src={url}
                 />
               </div>
-              <div className="flex space-x-2">
+              <div className="space-y-2">
                 <Input
                   type="number"
-                  className="w-1/5"
-                  placeholder="order"
+                  className="h-8 text-xs"
+                  placeholder="Order"
                   value={ordering}
                   onChange={(e) =>
                     handleOrderingChange(url, Number(e.target.value))
                   }
                 />
                 <Input
-                  className="w-1/2"
-                  placeholder="credit?"
+                  className="h-8 text-xs"
+                  placeholder="Photo credit"
                   value={credit}
                   onChange={(e) => handleCreditChange(url, e.target.value)}
                 />
@@ -109,7 +108,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      )}
       <CldUploadWidget onUpload={onUpload} uploadPreset="ivwjxqjz">
         {({ open }) => {
           const onClick = () => {
@@ -120,10 +119,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <Button
               type="button"
               disabled={disabled}
-              variant="secondary"
+              variant="outline"
               onClick={onClick}
+              className="h-32 w-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
             >
-              <ImagePlus className="h-4 w-4 mr-2" />
+              <div className="flex flex-col items-center space-y-2">
+                <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Add Images
+                </span>
+              </div>
             </Button>
           )
         }}

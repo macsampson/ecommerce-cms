@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { VariationType } from './productFormSchema'
+import PriceInput from '@/components/ui/priceInput'
 
 import { formatPriceDisplay, parsePriceInput } from '@/lib/utils'
 import { Label } from '@radix-ui/react-label'
@@ -66,14 +67,15 @@ const VariationInput: React.FC<VariationInputProps> = ({
         />
         <Input
           title="Quantity"
-          className="w-1/5"
+          className="w-1/5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           placeholder="quantity"
           type="number"
-          value={currentVariation.quantity}
+          value={currentVariation.quantity || ''}
           onChange={(e) => {
+            const value = e.target.value === '' ? 0 : parseInt(e.target.value)
             setCurrentVariation((prev) => ({
               ...prev,
-              quantity: parseInt(e.target.value)
+              quantity: value
             }))
           }}
           onKeyDown={(e) => {
@@ -83,24 +85,21 @@ const VariationInput: React.FC<VariationInputProps> = ({
             }
           }}
         />
-        <Input
-          className="w-1/5"
-          placeholder="$0.00"
-          type="number"
-          value={currentVariation.price}
-          onChange={(e) => {
-            setCurrentVariation((prev) => ({
-              ...prev,
-              price: parsePriceInput(e.target.value)
-            }))
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              addVariation()
-            }
-          }}
-        />
+        <div className="w-1/5">
+          <PriceInput
+            field={{
+              value: currentVariation.price,
+              onChange: (value: number) => {
+                setCurrentVariation((prev) => ({
+                  ...prev,
+                  price: value
+                }))
+              }
+            }}
+            loading={false}
+            placeholder="$0.00"
+          />
+        </div>
         <Button type="button" className="ml-4" size="sm" onClick={addVariation}>
           Add
         </Button>
@@ -124,25 +123,29 @@ const VariationInput: React.FC<VariationInputProps> = ({
                 }}
               />
               <Input
-                className="w-1/3"
+                className="w-1/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 type="number"
-                value={variation.quantity}
+                value={variation.quantity || ''}
                 onChange={(e) => {
                   const newVariations = [...variations]
-                  newVariations[index].quantity = parseInt(e.target.value)
+                  newVariations[index].quantity = e.target.value === '' ? 0 : parseInt(e.target.value)
                   setVariations(newVariations)
                 }}
               />
-              <Input
-                className="w-1/3"
-                type="number"
-                value={variation.price.toFixed(2)}
-                onChange={(e) => {
-                  const newVariations = [...variations]
-                  newVariations[index].price = parseInt(e.target.value)
-                  setVariations(newVariations)
-                }}
-              />
+              <div className="w-1/3">
+                <PriceInput
+                  field={{
+                    value: variation.price,
+                    onChange: (value: number) => {
+                      const newVariations = [...variations]
+                      newVariations[index].price = value
+                      setVariations(newVariations)
+                    }
+                  }}
+                  loading={false}
+                  placeholder="$0.00"
+                />
+              </div>
               <Button
                 variant="destructive"
                 onClick={() => {

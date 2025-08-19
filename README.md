@@ -1,8 +1,8 @@
-# E-Commerce CMS
+# 🛒 E-Commerce CMS
 
 A full-stack multi-store e-commerce content management system built with Next.js 13, TypeScript, and PostgreSQL.
 
-## Features
+## ✨ Features
 
 - **Multi-Store Management**: Create and manage multiple stores from a single dashboard
 - **Product Management**: Full product catalog with variations, bundles, and inventory tracking
@@ -12,7 +12,7 @@ A full-stack multi-store e-commerce content management system built with Next.js
 - **Authentication**: Secure user management with Clerk
 - **Dashboard**: Comprehensive admin interface for store management
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 13 (App Router), TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, Prisma ORM
@@ -22,14 +22,14 @@ A full-stack multi-store e-commerce content management system built with Next.js
 - **Image Storage**: Cloudinary
 - **Shipping**: Shippo & ChitChats APIs
 
-## Prerequisites
+## 📋 Prerequisites
 
 - Node.js 18+ and bun
 - PostgreSQL database
 - Supabase CLI
 - Stripe CLI (for webhook testing)
 
-## Environment Variables
+## 🔧 Environment Variables
 
 Create a `.env.local` file with the following variables:
 
@@ -54,7 +54,7 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=""
 ALLOWED_ORIGINS=""
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 1. **Clone and Install**
    ```bash
@@ -88,7 +88,7 @@ ALLOWED_ORIGINS=""
    - CMS Dashboard: `http://localhost:3000`
    - Database Studio: Supabase Dashboard or `npx prisma studio`
 
-## Available Scripts
+## 📜 Available Scripts
 
 - `bun run dev` - Start development server
 - `bun run build` - Build for production
@@ -98,7 +98,7 @@ ALLOWED_ORIGINS=""
 - `bun run seed-dev` - Seed development database
 - `bun test` - Run tests
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ├── app/                    # Next.js App Router
@@ -112,13 +112,13 @@ ALLOWED_ORIGINS=""
 └── public/               # Static assets
 ```
 
-## Contributing
+## 🤝 Contributing
 
 1. Follow the existing code patterns and TypeScript conventions
 2. Ensure all API routes include proper authentication and store ownership validation
 3. Run `bun run lint` before committing
 4. Update `CLAUDE.md` with any architectural changes
 
-## Architecture Notes
+## 🏗️ Architecture Notes
 
 This is a multi-tenant system where each store is isolated by `storeId`. All database queries must filter by store ownership to ensure data security. The system uses server components for data fetching and client components for interactivity.

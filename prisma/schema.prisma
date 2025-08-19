@@ -181,6 +181,8 @@ model Order {
   shippingAddress String      @default("") @map("shipping_address")
   emailAddress    String      @default("") @map("email_address")
   isAbandoned     Boolean     @default(false) @map("is_abandoned")
+  phoneNumber     String      @default("") @map("phone_number")
+  customerName    String      @default("") @map("customer_name")
   store           Store       @relation(fields: [storeId], references: [id])
   orderItems      OrderItem[]
 
@@ -239,4 +241,26 @@ model State {
   wikiDataId  String?   @map("wikiDataId") @db.VarChar(255)
 
   @@map("states")
+}
+
+model ShippingSettings {
+  id         String   @id @default(uuid())
+  storeId    String   @map("store_id")
+  name       String
+  company    String
+  street1    String
+  city       String
+  state      String
+  zip        String
+  country    String
+  phone      String
+  email      String
+  shippoEnabled     Boolean @default(true) @map("shippo_enabled")
+  chitchatsEnabled  Boolean @default(true) @map("chitchats_enabled")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  customsDeclaration Json? @map("customs_declaration")
+
+  @@unique([storeId])
+  @@map("shipping_settings")
 }

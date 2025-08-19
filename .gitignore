@@ -15,6 +15,9 @@ node_modules
 # seed for dev
 prisma/seed-dev.ts
 prisma/seed/dev/
+prisma/seed.sql
+
+
 # production
 /build
 
@@ -31,7 +34,6 @@ yarn-error.log*
 .env*.local
 .env
 
-
 *.sh
 
 # vercel
@@ -44,5 +46,7 @@ next-env.d.ts
 original_refs_backup.txt
 recommit.sh.save
 
+# design images for claude use
+claude-images/
 
 

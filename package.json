@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../frontend && bun run dev\"",
+    "dev": "supabase start && next dev --port 3000",
+    "dev:fullstack": "concurrently --kill-others --success first \"supabase start && next dev --port 3000\" \"wait-on http://localhost:3000/sign-in && bun run cron\" \"wait-on http://localhost:3000/sign-in && stripe.exe listen --forward-to localhost:3000/api/webhook\" \"cd ../frontend && bun run dev\"",
     "cron": "node cron.js",
     "build": "next build",
     "start": "next start",
@@ -27,6 +28,7 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-switch": "^1.2.5",
     "@tanstack/react-table": "^8.10.7",
     "axios": "^1.5.1",
     "class-variance-authority": "^0.7.0",

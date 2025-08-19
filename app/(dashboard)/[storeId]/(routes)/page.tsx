@@ -5,7 +5,12 @@ import { Separator } from '@/components/ui/separator'
 import { formatter } from '@/lib/utils'
 import { CreditCard, DollarSign, Package, Users } from 'lucide-react'
 import React from 'react'
-import axios from 'axios' // Import axios
+import { getGraphRevenue } from '@/actions/get-graph-revenue'
+import { getTotalRevenue } from '@/actions/get-total-revenue'
+import { getSalesCount } from '@/actions/get-sales-count'
+import { getStockCount } from '@/actions/get-stock-count'
+import { getOrderYears } from '@/actions/get-graph-revenue'
+import DashboardOverview from '../../components/dashboard-overview'
 
 interface DashboardPageProps {
   params: { storeId: string }
@@ -30,42 +35,37 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
   let salesCount = 0
   let stockCount = 0
   let graphRevenue: any[] = [] // Default to empty array for chart
+  let years: number[] = []
 
   try {
-    const totalRevenueRes = await axios.get(
-      getApiUrl(params.storeId, 'total-revenue')
-    )
-    totalRevenue = totalRevenueRes.data.totalRevenue
+    totalRevenue = await getTotalRevenue(params.storeId)
   } catch (error) {
     console.error('Failed to fetch total revenue:', error)
   }
 
   try {
-    const salesCountRes = await axios.get(
-      getApiUrl(params.storeId, 'sales-count')
-    )
-    salesCount = salesCountRes.data.salesCount
+    salesCount = await getSalesCount(params.storeId)
   } catch (error) {
     console.error('Failed to fetch sales count:', error)
   }
 
   try {
-    const stockCountRes = await axios.get(
-      getApiUrl(params.storeId, 'stock-count')
-    )
-    stockCount = stockCountRes.data.stockCount
+    stockCount = await getStockCount(params.storeId)
   } catch (error) {
     console.error('Failed to fetch stock count:', error)
   }
 
   try {
-    const graphRevenueRes = await axios.get(
-      getApiUrl(params.storeId, 'graph-revenue')
-    )
-    graphRevenue = graphRevenueRes.data
+    graphRevenue = await getGraphRevenue(params.storeId)
   } catch (error) {
     console.error('Failed to fetch graph revenue:', error)
     // graphRevenue will remain empty array, chart will show no data or handle it gracefully
+  }
+
+  try {
+    years = await getOrderYears(params.storeId)
+  } catch (error) {
+    console.error('Failed to fetch order years:', error)
   }
 
   return (
@@ -119,14 +119,7 @@ const DashboardPage: React.FC<DashboardPageProps> = async ({ params }) => {
             </CardContent>
           </Card>
         </div>
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <Overview data={graphRevenue} />
-          </CardContent>
-        </Card>
+        <DashboardOverview storeId={params.storeId} years={years} />
       </div>
     </div>
   )

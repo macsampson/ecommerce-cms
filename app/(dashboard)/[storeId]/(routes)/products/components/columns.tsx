@@ -1,7 +1,8 @@
 'use client'
 
 import { ColumnDef } from '@tanstack/react-table'
-import { CellAction } from './cell-action'
+// import { CellAction } from './cell-action' // Removed as it's no longer used
+import Image from 'next/image'
 
 export type ProductColumn = {
   id: string
@@ -51,9 +52,11 @@ export const columns: ColumnDef<ProductColumn>[] = [
     header: 'Image',
     cell: ({ row }) =>
       row.original.imageUrl ? (
-        <img
+        <Image
           src={row.original.imageUrl}
           alt={row.original.name}
+          width={48}
+          height={48}
           className="w-12 h-12 object-cover rounded-md border"
         />
       ) : (
@@ -161,9 +164,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
     accessorKey: 'updatedAt',
     header: ({ column }) => renderSortableHeader(column, 'Last Updated'),
     enableSorting: true
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => <CellAction data={row.original} />
   }
+  // Removed Action Column:
+  // {
+  //   id: 'actions',
+  //   cell: ({ row }) => <CellAction data={row.original} />
+  // }
 ]

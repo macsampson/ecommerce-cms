@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, useEffect, use } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -47,12 +47,10 @@ import {
   Category,
   Color,
   Image,
-  Product,
   ProductVariation,
   Size,
   Bundle
 } from '@prisma/client'
-import { Decimal } from '@prisma/client/runtime/library'
 
 interface ProductFormProps {
   initialData: {
@@ -176,13 +174,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   // console.log('defaultValues', defaultValues)
 
-  const nameInputRef = useRef<HTMLInputElement>(null)
+  // Form configuration
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues
+  })
 
   useEffect(() => {
     form.setValue('images', images)
     // console.log('variations', variations)
     // console.log('images', images)
-  }, [images])
+  }, [images, form])
 
   useEffect(() => {
     form.setValue('variations', variations)
@@ -191,17 +193,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       totalVariationQuantity ? totalVariationQuantity : initialQuantity
     )
     // console.log('totalVariationQuantity', totalVariationQuantity)
-  }, [variations])
+  }, [variations, form, totalVariationQuantity, initialQuantity])
 
   useEffect(() => {
     form.setValue('bundles', bundles)
     // console.log('bundles', bundles)
-  }, [bundles])
-
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues
-  })
+  }, [bundles, form])
 
   const onSubmit = async (data: ProductFormValues) => {
     // console.log('data', data)
@@ -210,16 +207,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       if (initialData) {
         await axios.patch(
           `/api/${params.storeId}/products/${params.productId}`,
-          data
+          data,
+          { timeout: 30000 }
         )
       } else {
-        await axios.post(`/api/${params.storeId}/products`, data)
+        await axios.post(`/api/${params.storeId}/products`, data, {
+          timeout: 30000
+        })
       }
       router.refresh()
       router.push(`/${params.storeId}/products`)
       toast.success(toastMessage)
     } catch (error: any) {
-      toast.error('Something went wrong.')
+      console.error('Form submission error:', error)
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please try again.')
+      } else {
+        toast.error('Something went wrong.')
+      }
     } finally {
       setLoading(false)
     }
@@ -265,328 +270,480 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
+          className="space-y-8 w-full max-w-7xl mx-auto pt-10"
         >
-          <FormField
-            control={form.control}
-            name="images"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Images</FormLabel>
-                <FormControl>
-                  <ImageUpload
-                    value={field.value}
-                    disabled={loading}
-                    onChange={(newImages) => {
-                      field.onChange(newImages)
-                      setImages(newImages)
-                    }}
-                    onRemove={(url) => {
-                      const updatedImages = field.value.filter(
-                        (img) => img.url !== url
-                      )
-                      field.onChange(updatedImages)
-                      setImages(updatedImages)
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="md:grid md:grid-cols-3 gap-8">
+          {/* Product Images Section */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-medium mb-4 text-card-foreground">
+              Product Images
+            </h3>
             <FormField
               control={form.control}
-              name="name"
+              name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Product name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      disabled={loading}
-                      placeholder="Please enter a description"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Controller
-              name="price"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price</FormLabel>
-                  <FormControl>
-                    <PriceInput field={field} loading={false} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="quantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantity</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      disabled={loading || variations.length > 0}
-                      placeholder="0"
+                    <ImageUpload
                       value={field.value}
-                      onChange={(e) => {
-                        field.onChange(parseInt(e.target.value))
+                      disabled={loading}
+                      onChange={(newImages) => {
+                        field.onChange(newImages)
+                        setImages(newImages)
+                      }}
+                      onRemove={(url) => {
+                        const updatedImages = field.value.filter(
+                          (img) => img.url !== url
+                        )
+                        field.onChange(updatedImages)
+                        setImages(updatedImages)
                       }}
                     />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="variations"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Variations</FormLabel>
-                    <FormControl>
-                      <>
-                        <VariationInput
-                          onAdd={(variation: VariationType) => {
-                            const newVariations = [...field.value, variation]
-                            field.onChange(newVariations)
-                            setVariations(newVariations)
-                          }}
-                          variations={variations}
-                          setVariations={setVariations}
-                        />
-                      </>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )
-              }}
-            />
-
-            <FormField
-              control={form.control}
-              name="bundles"
-              render={({ field }) => {
-                const addBundleHandler = (bundle: BundleType) => {
-                  const newBundles = [...field.value, bundle]
-                  field.onChange(newBundles)
-                  setBundles(newBundles)
-                }
-
-                return (
-                  <FormItem>
-                    <FormLabel>Bundles</FormLabel>
-                    <FormControl>
-                      <>
-                        <BundleInput
-                          onAdd={addBundleHandler}
-                          bundles={bundles}
-                          setBundles={setBundles}
-                        />
-                      </>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )
-              }}
-            />
-            <FormField
-              control={form.control}
-              name="weight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Weight (grams)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      // disabled={loading || variations.length > 0}
-                      placeholder="1.00"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(parseFloat(e.target.value))
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select
-                    disabled={loading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value}
-                          placeholder="Select a category"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="sizeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Sizes <span className="text-neutral-500">(optional)</span>
-                  </FormLabel>
-                  <Select
-                    disabled={loading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value}
-                          placeholder="Select a size"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sizes.map((size) => (
-                        <SelectItem key={size.id} value={size.id}>
-                          {size.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="colorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Color <span className="text-neutral-500">(optional)</span>
-                  </FormLabel>
-                  <Select
-                    disabled={loading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value}
-                          placeholder="Select a color"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {colors.map((color) => (
-                        <SelectItem key={color.id} value={color.id}>
-                          {color.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isFeatured"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      // @ts-ignore
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Featured</FormLabel>
-                    <FormDescription>
-                      This product will appear on the home page
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isArchived"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      // @ts-ignore
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Archived</FormLabel>
-                    <FormDescription>
-                      This product will not appear anywhere in the store.
-                    </FormDescription>
-                  </div>
                 </FormItem>
               )}
             />
           </div>
-          <Button disabled={loading} className="ml-auto" type="submit">
-            {action}
-          </Button>
+
+          {/* Basic Information Section */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-medium mb-4 text-card-foreground">
+              Basic Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Product Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        placeholder="Enter product name"
+                        className="h-10"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Category
+                    </FormLabel>
+                    <Select
+                      disabled={loading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue
+                            defaultValue={field.value}
+                            placeholder="Select a category"
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="mt-6">
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Description
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        disabled={loading}
+                        placeholder="Enter a detailed product description"
+                        className="min-h-[500px] resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Pricing & Inventory Section */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-medium mb-4 text-card-foreground">
+              Pricing & Inventory
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Controller
+                name="price"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Price</FormLabel>
+                    <FormControl>
+                      <PriceInput field={field} loading={loading} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Quantity
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        disabled={loading || variations.length > 0}
+                        placeholder="0"
+                        className="h-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const value =
+                            e.target.value === '' ? 0 : parseInt(e.target.value)
+                          field.onChange(value)
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Weight (grams)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        disabled={loading}
+                        placeholder="0.00"
+                        className="h-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const value =
+                            e.target.value === ''
+                              ? 0
+                              : parseFloat(e.target.value)
+                          field.onChange(value)
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Product Attributes Section */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-medium mb-4 text-card-foreground">
+              Product Attributes
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="sizeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Size{' '}
+                      <span className="text-neutral-500 font-normal">
+                        (optional)
+                      </span>
+                    </FormLabel>
+                    <Select
+                      disabled={loading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue
+                            defaultValue={field.value}
+                            placeholder="Select a size"
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {sizes.map((size) => (
+                          <SelectItem key={size.id} value={size.id}>
+                            {size.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="colorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      Color{' '}
+                      <span className="text-neutral-500 font-normal">
+                        (optional)
+                      </span>
+                    </FormLabel>
+                    <Select
+                      disabled={loading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue
+                            defaultValue={field.value}
+                            placeholder="Select a color"
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {colors.map((color) => (
+                          <SelectItem key={color.id} value={color.id}>
+                            {color.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Product Options Section */}
+          <div className="bg-card rounded-lg border p-6">
+            <h3 className="text-lg font-medium mb-4 text-card-foreground">
+              Product Options
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="isFeatured"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-medium">
+                        Featured Product
+                      </FormLabel>
+                      <FormDescription className="text-xs">
+                        This product will appear on the home page
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isArchived"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-medium">
+                        Archived Product
+                      </FormLabel>
+                      <FormDescription className="text-xs">
+                        This product will not appear in the store
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Advanced Options Section */}
+          <div className="bg-gradient-to-br from-card via-card to-card/80 rounded-xl border border-border/50 shadow-sm">
+            <div className="p-6 border-b border-border/50">
+              <div className="flex items-center space-x-3">
+                <div className="h-2 w-2 rounded-full bg-primary"></div>
+                <h3 className="text-xl font-semibold text-card-foreground">
+                  Advanced Options
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Configure product variations and bundle pricing for enhanced
+                selling options
+              </p>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Product Variations Card */}
+                <div className="group">
+                  <FormField
+                    control={form.control}
+                    name="variations"
+                    render={({ field }) => {
+                      return (
+                        <FormItem>
+                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 ">
+                            <div className="flex items-center space-x-2 mb-4">
+                              <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <div className="h-4 w-4 rounded bg-blue-500"></div>
+                              </div>
+                              <div>
+                                <FormLabel className="text-base font-medium text-card-foreground">
+                                  Product Variations
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                  Add size, color, or style variations
+                                </p>
+                              </div>
+                            </div>
+                            <FormControl>
+                              <VariationInput
+                                onAdd={(variation: VariationType) => {
+                                  const newVariations = [
+                                    ...field.value,
+                                    variation
+                                  ]
+                                  field.onChange(newVariations)
+                                  setVariations(newVariations)
+                                }}
+                                variations={variations}
+                                setVariations={setVariations}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                </div>
+
+                {/* Bundle Pricing Card */}
+                <div className="group">
+                  <FormField
+                    control={form.control}
+                    name="bundles"
+                    render={({ field }) => {
+                      const addBundleHandler = (bundle: BundleType) => {
+                        const newBundles = [...field.value, bundle]
+                        field.onChange(newBundles)
+                        setBundles(newBundles)
+                      }
+
+                      return (
+                        <FormItem>
+                          <div className="bg-muted/30 rounded-lg border border-border/30 p-5 ">
+                            <div className="flex items-center space-x-2 mb-4">
+                              <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                <div className="h-4 w-4 rounded bg-green-500"></div>
+                              </div>
+                              <div>
+                                <FormLabel className="text-base font-medium text-card-foreground">
+                                  Bundle Pricing
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                  Set quantity-based discounts
+                                </p>
+                              </div>
+                            </div>
+                            <FormControl>
+                              <BundleInput
+                                onAdd={addBundleHandler}
+                                bundles={bundles}
+                                setBundles={setBundles}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Spacer to account for sticky buttons */}
+          <div className="pb-24"></div>
         </form>
       </Form>
+
+      {/* Sticky Form Actions */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="text-sm text-muted-foreground">
+              {initialData
+                ? 'Update your product information'
+                : 'Create a new product'}
+            </div>
+            <div className="flex space-x-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push(`/${params.storeId}/products`)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={loading}
+                onClick={form.handleSubmit(onSubmit)}
+                className="min-w-[120px]"
+              >
+                {loading ? 'Saving...' : action}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+
 import { Copy, Edit, MoreHorizontal } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useParams, useRouter } from 'next/navigation'
@@ -15,7 +16,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+
 // import { AlertModal } from '@/components/modals/alert-modal'
+
 
 interface CellActionProps {
   data: ProductColumn
@@ -25,8 +28,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const router = useRouter()
   const params = useParams()
 
+
   // const [loading, setLoading] = useState(false)
   // const [open, setOpen] = useState(false)
+
 
   const onCopy = (id: string) => {
     navigator.clipboard.writeText(id)
@@ -47,6 +52,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   //   }
   // }
 
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -62,9 +68,11 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           Copy ID
         </DropdownMenuItem>
         <DropdownMenuItem
+
           onClick={() =>
             router.push(`/${params.storeId}/products/${data.id}`)
           }
+
         >
           <Edit className="mr-2 h-4 w-4" />
           Update

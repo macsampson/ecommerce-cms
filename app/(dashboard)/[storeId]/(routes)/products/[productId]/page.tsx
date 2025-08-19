@@ -51,8 +51,15 @@ const ProductPage = async ({
 
   // console.log(product)
   return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-col h-full">
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
+        {convertedProduct && (
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground">
+              {convertedProduct.name}
+            </h1>
+          </div>
+        )}
         <ProductForm
           categories={categories}
           sizes={sizes}

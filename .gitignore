@@ -15,6 +15,9 @@ node_modules
 # seed for dev
 prisma/seed-dev.ts
 prisma/seed/dev/
+prisma/seed.sql
+
+
 # production
 /build
 

@@ -199,12 +199,6 @@ We welcome contributions! Please:
 
 MIT License - feel free to use this for commercial projects!
 
-## 🆘 Support
-
-- 📖 [Documentation](./CLAUDE.md)
-- 🐛 [Report Issues](https://github.com/your-username/ecommerce-cms/issues)
-- 💬 [Discussions](https://github.com/your-username/ecommerce-cms/discussions)
-
 ---
 
 **Ready to take control of your e-commerce business?**

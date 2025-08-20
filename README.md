@@ -1,124 +1,210 @@
-# 🛒 E-Commerce CMS
+# 🛒 Self-Hosted E-Commerce CMS
 
-A full-stack multi-store e-commerce content management system built with Next.js 13, TypeScript, and PostgreSQL.
+A complete, self-hosted e-commerce platform that provides an alternative to Etsy and Shopify. Built for individuals and small businesses who want full control over their online store without monthly fees or transaction limits.
+
+## 🎯 Why This Project?
+
+**I was tired of paying monthly fees and high transaction fees to Etsy, so I bult this app**
+
+This project gives you:
+
+- ✅ **Complete ownership** of your store and customer data
+- ✅ **Zero monthly fees** - host it yourself or deploy for free on Vercel
+- ✅ **No transaction limits** - keep 100% of your profits (minus payment processing)
+- ✅ **Full customization** - modify anything to fit your brand
+- ✅ **Professional features** - automated inventory management, order tracking, shipping integration
+- ✅ **Multi-store capability** - run multiple brands from one installation
 
 ## ✨ Features
 
-- **Multi-Store Management**: Create and manage multiple stores from a single dashboard
-- **Product Management**: Full product catalog with variations, bundles, and inventory tracking
-- **Order Processing**: Complete order lifecycle with Stripe payment integration
-- **Shipping Integration**: Integrated with Shippo and ChitChats APIs
-- **Multi-Currency Support**: Dynamic exchange rate conversion
-- **Authentication**: Secure user management with Clerk
-- **Dashboard**: Comprehensive admin interface for store management
+### 🏪 **Store Management**
+
+- Multiple stores from single dashboard
+- SEO-optimized product pages
+- Mobile-responsive design
+
+### 📦 **Product Management**
+
+- Unlimited products and variations
+- Image galleries with Cloudinary integration
+- Product bundles and categories
+
+### 💳 **Payments & Orders**
+
+- Stripe integration for secure payments
+- Complete order lifecycle management
+- Customer management system
+- Automated inventory updates
+
+### 🚚 **Shipping & Fulfillment**
+
+- Integrated shipping rate calculator (Shippo & ChitChats)
+- Automatic shipping label generation
+- Multi-currency support with live exchange rates
+- Order tracking and notifications
+
+### 📊 **Analytics & Insights**
+
+- Revenue and sales analytics
+- Customer insights
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 13 (App Router), TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL (Supabase)
-- **Authentication**: Clerk
+- **Framework**: Next.js 14 (App Router)
+- **Database**: PostgreSQL (Supabase recommended)
+- **Authentication**: Iron Session (secure, cookie-based)
 - **Payments**: Stripe
-- **Image Storage**: Cloudinary
+- **Hosting**: Deploy anywhere (Vercel, Railway, self-hosted)
+- **Images**: Cloudinary
 - **Shipping**: Shippo & ChitChats APIs
 
-## 📋 Prerequisites
+## 🚀 Quick Start
 
-- Node.js 18+ and bun
-- PostgreSQL database
-- Supabase CLI
-- Stripe CLI (for webhook testing)
+### Option 1: Deploy to Vercel (Recommended)
 
-## 🔧 Environment Variables
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/ecommerce-cms)
 
-Create a `.env.local` file with the following variables:
+1. Click "Deploy with Vercel" and connect your GitHub
+2. Set up a Supabase database (free tier available)
+3. Configure environment variables in Vercel
+4. Your CMS will be live in minutes!
+
+### Option 2: Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/ecommerce-cms
+cd ecommerce-cms
+
+# Install dependencies
+npm install
+
+# Set up database
+supabase start
+npx prisma migrate deploy
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Generate admin password
+node scripts/generate-password-hash.js
+
+# Start development server
+npm run dev
+```
+
+Visit `http://localhost:3000/login` to access your admin dashboard.
+
+## ⚙️ Environment Configuration
+
+Create a `.env.local` file with these required variables:
 
 ```env
-# Database
-DATABASE_URL=""
-DIRECT_URL=""
+# Database (Supabase)
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
 
-# Authentication (Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=""
-CLERK_SECRET_KEY=""
+# Admin Authentication
+ADMIN_EMAIL="your-email@example.com"
+ADMIN_PASSWORD_HASH="$2b$12$..." # Generate with scripts/generate-password-hash.js
+SESSION_SECRET="your-32-character-secret-key-here"
 
-# Payments (Stripe)
-STRIPE_API_KEY=""
-STRIPE_WEBHOOK_SECRET=""
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
+# Stripe Payments
+STRIPE_API_KEY="sk_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_..."
 
 # Image Storage (Cloudinary)
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=""
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
 
 # API Configuration
-ALLOWED_ORIGINS=""
+ALLOWED_ORIGINS="https://yourdomain.com,https://yourstore.com"
 ```
 
-## 🚀 Getting Started
+## 📋 Setup Guide
 
-1. **Clone and Install**
-   ```bash
-   git clone <repository-url>
-   cd cms
-   bun install
-   ```
+### 1. Database Setup
 
-2. **Database Setup**
-   ```bash
-   # Start Supabase (includes PostgreSQL)
-   supabase start
-   
-   # Deploy database migrations
-   npx prisma migrate deploy
-   
-   # Seed development data
-   bun run seed-dev
-   ```
+**Option A: Supabase (Recommended)**
 
-3. **Development Server**
-   ```bash
-   # Start development server
-   bun run dev
-   
-   # Or start full-stack environment (includes frontend, cron jobs, webhooks)
-   bun run dev:fullstack
-   ```
+1. Create account at [supabase.com](https://supabase.com)
+2. Create new project
+3. Copy database URLs to environment variables
+4. Run migrations: `npx prisma migrate deploy`
 
-4. **Access the Application**
-   - CMS Dashboard: `http://localhost:3000`
-   - Database Studio: Supabase Dashboard or `npx prisma studio`
+**Option B: Self-hosted PostgreSQL**
 
-## 📜 Available Scripts
+1. Install PostgreSQL locally or on your server
+2. Create database and user
+3. Update DATABASE_URL in environment variables
+4. Run migrations: `npx prisma migrate deploy`
 
-- `bun run dev` - Start development server
-- `bun run build` - Build for production
-- `bun run start` - Start production server
-- `bun run lint` - Run ESLint
-- `bun run cron` - Run background inventory management
-- `bun run seed-dev` - Seed development database
-- `bun test` - Run tests
+### 2. Authentication Setup
 
-## 📁 Project Structure
+Generate your admin password hash:
 
+```bash
+node scripts/generate-password-hash.js
+# Enter your desired password when prompted
+# Copy the generated hash to ADMIN_PASSWORD_HASH in .env.local
 ```
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication pages
-│   ├── (dashboard)/       # Dashboard pages
-│   └── api/               # API routes
-├── components/            # Reusable components
-├── hooks/                # Custom React hooks
-├── lib/                  # Utilities and configurations
-├── prisma/               # Database schema and migrations
-└── public/               # Static assets
-```
+
+### 3. Payment Setup
+
+1. Create [Stripe](https://stripe.com) account
+2. Get API keys from Stripe dashboard
+3. Set up webhook endpoint: `https://yourdomain.com/api/webhook`
+4. Add webhook events: `payment_intent.succeeded`, `checkout.session.completed`
+
+### 4. Image Storage Setup
+
+1. Create [Cloudinary](https://cloudinary.com) account (free tier available)
+2. Get cloud name from dashboard
+3. Add to NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+
+## 📊 Production Checklist
+
+Before going live:
+
+- [ ] Set up production database (Supabase/PostgreSQL)
+- [ ] Configure secure SESSION_SECRET (32+ characters)
+- [ ] Set up Stripe webhook endpoint
+- [ ] Configure Cloudinary for image storage
+- [ ] Set ALLOWED_ORIGINS for your domain(s)
+- [ ] Test payment flow end-to-end
+- [ ] Set up SSL certificate
+- [ ] Configure backup strategy
+
+## 🔒 Security Features
+
+- Session-based authentication with encrypted cookies
+- CSRF protection on all forms
+- SQL injection protection via Prisma ORM
+- Environment-based configuration
+- Secure password hashing with bcrypt
+- Rate limiting on sensitive endpoints
 
 ## 🤝 Contributing
 
-1. Follow the existing code patterns and TypeScript conventions
-2. Ensure all API routes include proper authentication and store ownership validation
-3. Run `bun run lint` before committing
-4. Update `CLAUDE.md` with any architectural changes
+We welcome contributions! Please:
 
-## 🏗️ Architecture Notes
+1. Fork the repository
+2. Create a feature branch
+3. Follow existing code patterns
+4. Test thoroughly
+5. Submit a pull request
 
-This is a multi-tenant system where each store is isolated by `storeId`. All database queries must filter by store ownership to ensure data security. The system uses server components for data fetching and client components for interactivity.
+## 📄 License
+
+MIT License - feel free to use this for commercial projects!
+
+## 🆘 Support
+
+- 📖 [Documentation](./CLAUDE.md)
+- 🐛 [Report Issues](https://github.com/your-username/ecommerce-cms/issues)
+- 💬 [Discussions](https://github.com/your-username/ecommerce-cms/discussions)
+
+---
+
+**Ready to take control of your e-commerce business?** Deploy your store today and say goodbye to monthly fees! 🚀

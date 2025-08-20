@@ -45,7 +45,7 @@ This project gives you:
 
 ### 📊 **Analytics & Insights**
 
-- Revenue and sales analytics
+- Revenue and sales display
 - Customer insights
 
 ## 🛠️ Tech Stack

@@ -1,16 +1,19 @@
 import { GET } from './route'; // Adjust path as necessary
 import { NextResponse } from 'next/server';
 import prismadb from '@/lib/prismadb';
-import { auth } from '@clerk/nextjs';
+import { isAuthenticated } from '@/lib/auth';
 import { PrismaClient, Product, Category, Size, Color } from '@prisma/client'; // For typing the mock
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { format } from 'date-fns';
 import { formatter } from '@/lib/utils'; // Actual formatter will be used
 
+// Mock the auth module
+jest.mock('@/lib/auth');
+
 // Explicitly type the mock for prismadb
 const prismaMock = prismadb as unknown as DeepMockProxy<PrismaClient>;
 // Explicitly type the mock for auth
-const authMock = auth as jest.Mock;
+const authMock = isAuthenticated as jest.Mock;
 
 describe('GET /api/[storeId]/products-summary', () => {
   const storeId = 'test-store-id';
@@ -56,11 +59,11 @@ describe('GET /api/[storeId]/products-summary', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    authMock.mockReturnValue({ userId: mockUserId });
+    authMock.mockResolvedValue(true);
   });
 
   it('should return formatted products when authenticated and store found', async () => {
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: mockUserId } as any);
+    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
     prismaMock.product.findMany.mockResolvedValue(mockProducts);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
@@ -103,7 +106,7 @@ describe('GET /api/[storeId]/products-summary', () => {
   });
 
   it('should return an empty array if no products are found', async () => {
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: mockUserId } as any);
+    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
     prismaMock.product.findMany.mockResolvedValue([]);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
@@ -115,7 +118,7 @@ describe('GET /api/[storeId]/products-summary', () => {
   });
   
   it('should return 401 if user is not authenticated', async () => {
-    authMock.mockReturnValue({ userId: null });
+    authMock.mockResolvedValue(false);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
     const response = await GET(request, { params: { storeId } });
@@ -134,7 +137,7 @@ describe('GET /api/[storeId]/products-summary', () => {
 
   it('should return 500 if there is an internal server error', async () => {
     prismaMock.product.findMany.mockRejectedValue(new Error('Database error'));
-     prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: mockUserId } as any);
+     prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
 
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);

@@ -1,6 +1,6 @@
 import ProductsPage from '@/app/(dashboard)/[storeId]/(routes)/products/page'
 import prismadb from '@/lib/prismadb'
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
 import { Decimal } from '@prisma/client/runtime/library'
@@ -54,7 +54,7 @@ export async function PATCH(
   { params }: { params: { productId: string; storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const {
@@ -75,7 +75,7 @@ export async function PATCH(
 
     // console.log('images', images)
 
-    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
+    if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!name) return new NextResponse('Name is required', { status: 400 })
 
@@ -96,7 +96,7 @@ export async function PATCH(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId
+        userId: "single-user"
       }
     })
 
@@ -362,9 +362,9 @@ export async function DELETE(
   { params }: { params: { storeId: string; productId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
 
-    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
+    if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!params.productId)
       return new NextResponse('Product ID is required', { status: 400 })
@@ -372,7 +372,7 @@ export async function DELETE(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId
+        userId: "single-user"
       }
     })
 

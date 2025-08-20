@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
 import { format } from 'date-fns'
 import { formatter } from '@/lib/utils' // Assuming this is accessible
@@ -25,9 +25,9 @@ export async function GET(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
 
-    if (!userId) {
+    if (!authenticated) {
       return new NextResponse('Unauthenticated', { status: 401 })
     }
 
@@ -38,7 +38,7 @@ export async function GET(
     const store = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId
+        userId: "single-user"
       }
     })
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
 import { getGraphRevenue } from '@/actions/get-graph-revenue'
 

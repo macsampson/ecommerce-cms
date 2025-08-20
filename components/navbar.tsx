@@ -1,20 +1,21 @@
-import { UserButton, auth } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
 import prismadb from '@/lib/prismadb'
+import { isAuthenticated } from '@/lib/auth'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { MainNav } from '@/components/main-nav'
+import { LogoutButton } from '@/components/logout-button'
 import StoreSwitcher from '@/components/store-switcher'
 
 const Navbar = async () => {
-  const { userId } = auth()
-  if (!userId) {
-    redirect('/sign-in')
+  const authenticated = await isAuthenticated()
+  if (!authenticated) {
+    redirect('/login')
   }
 
   const stores = await prismadb.store.findMany({
     where: {
-      userId
+      userId: "single-user"
     }
   })
 
@@ -27,7 +28,7 @@ const Navbar = async () => {
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4">
           <ThemeToggle />
-          <UserButton afterSignOutUrl="/" />
+          <LogoutButton />
         </div>
       </div>
     </div>

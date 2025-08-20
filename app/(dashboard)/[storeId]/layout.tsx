@@ -1,6 +1,6 @@
 import Navbar from '@/components/navbar'
 import prismadb from '@/lib/prismadb'
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 import Sidebar from '@/components/sidebar' // Import the Sidebar component
@@ -12,16 +12,16 @@ export default async function DashboardLayout({
   children: React.ReactNode
   params: { storeId: string }
 }) {
-  const { userId } = auth()
+  const authenticated = await isAuthenticated()
 
-  if (!userId) {
-    redirect('/sign-in')
+  if (!authenticated) {
+    redirect('/login')
   }
 
   const store = await prismadb.store.findFirst({
     where: {
       id: params.storeId,
-      userId
+      userId: "single-user"
     }
   })
 

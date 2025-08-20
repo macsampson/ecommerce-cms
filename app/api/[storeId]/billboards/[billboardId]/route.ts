@@ -1,5 +1,5 @@
 import prismadb from "@/lib/prismadb"
-import { auth } from "@clerk/nextjs"
+import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
 
 export async function GET(
@@ -25,12 +25,12 @@ export async function PATCH(
   { params }: { params: { billboardId: string; storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const { label, imageUrl, landingPage } = body
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthenticated", { status: 401 })
 
     // if (!label) return new NextResponse("Label is required", { status: 400 })
 
@@ -43,7 +43,7 @@ export async function PATCH(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId,
+        userId: "single-user",
       },
     })
 
@@ -104,9 +104,9 @@ export async function DELETE(
   { params }: { params: { storeId: string; billboardId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthenticated", { status: 401 })
 
     if (!params.billboardId)
       return new NextResponse("Billboard ID is required", { status: 400 })
@@ -114,7 +114,7 @@ export async function DELETE(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId,
+        userId: "single-user",
       },
     })
 

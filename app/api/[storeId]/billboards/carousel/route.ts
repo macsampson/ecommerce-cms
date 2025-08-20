@@ -1,7 +1,7 @@
 import prismadb from '@/lib/prismadb'
 import { NextResponse } from 'next/server'
 
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import { CarouselImage } from '@prisma/client'
 
 export async function GET(
@@ -31,13 +31,13 @@ export async function POST(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const { images } = body
     // console.log("image urls: ", images)
 
-    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
+    if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!images)
       return new NextResponse('Image URL is required', { status: 400 })
@@ -69,13 +69,13 @@ export async function PATCH(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const { images } = body
     // console.log("image urls: ", images)
 
-    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
+    if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!images)
       return new NextResponse('Image URL is required', { status: 400 })

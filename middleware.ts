@@ -1,13 +1,34 @@
-import { authMiddleware } from "@clerk/nextjs"
-
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 }
 
-export default authMiddleware({
-  publicRoutes: ["/api/:path*", "/webhook"],
-})
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Allow public routes
+  if (
+    pathname.startsWith("/api/webhook") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/login") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next()
+  }
+
+  // Check for session cookie
+  const sessionCookie = request.cookies.get("cms_session")
+  
+  if (!sessionCookie || !sessionCookie.value) {
+    // Redirect to login page
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // For now, assume valid cookie means authenticated
+  // The actual session validation happens in getSession()
+  return NextResponse.next()
+}

@@ -1,14 +1,17 @@
 import { GET } from './route'; // Adjust path as necessary
 import { NextResponse } from 'next/server';
 import prismadb from '@/lib/prismadb';
-import { auth } from '@clerk/nextjs';
+import { isAuthenticated } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client'; // For typing the mock
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+
+// Mock the auth module
+jest.mock('@/lib/auth');
 
 // Explicitly type the mock for prismadb
 const prismaMock = prismadb as unknown as DeepMockProxy<PrismaClient>;
 // Explicitly type the mock for auth
-const authMock = auth as jest.Mock;
+const authMock = isAuthenticated as jest.Mock;
 
 describe('GET /api/[storeId]/overview/total-revenue', () => {
   const storeId = 'test-store-id';
@@ -17,7 +20,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
   beforeEach(() => {
     jest.resetAllMocks(); // Reset mocks before each test
     // Default auth mock for most tests
-    authMock.mockReturnValue({ userId: mockUserId });
+    authMock.mockResolvedValue(true);
   });
 
   it('should return total revenue when authenticated and store found', async () => {
@@ -33,7 +36,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
       },
     ];
 
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: mockUserId } as any);
+    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
     prismaMock.order.findMany.mockResolvedValue(mockOrders as any);
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
@@ -43,7 +46,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     expect(response.status).toBe(200);
     // Calculation based on original logic: (100+50) + 200 = 350
     expect(data.totalRevenue).toBe(350); 
-    expect(prismaMock.store.findFirst).toHaveBeenCalledWith({ where: { id: storeId, userId: mockUserId } });
+    expect(prismaMock.store.findFirst).toHaveBeenCalledWith({ where: { id: storeId, userId: 'single-user' } });
     expect(prismaMock.order.findMany).toHaveBeenCalledWith({
       where: { storeId, isPaid: true },
       include: { orderItems: { include: { product: true } } },
@@ -51,7 +54,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
   });
 
   it('should return 0 revenue if no paid orders are found', async () => {
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: mockUserId } as any);
+    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
     prismaMock.order.findMany.mockResolvedValue([]); // No orders
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
@@ -63,7 +66,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
   });
 
   it('should return 401 if user is not authenticated', async () => {
-    authMock.mockReturnValue({ userId: null }); // Simulate unauthenticated user
+    authMock.mockResolvedValue(false); // Simulate unauthenticated user
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
     const response = await GET(request, { params: { storeId } });

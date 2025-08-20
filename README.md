@@ -4,7 +4,7 @@ A complete, self-hosted e-commerce platform that provides an alternative to Etsy
 
 ## 🎯 Why This Project?
 
-**I was tired of paying monthly fees and high transaction fees to Etsy, so I bult this app**
+**I was tired of paying monthly fees and high transaction fees to Etsy or Shopify, so I built this app**
 
 This project gives you:
 
@@ -207,4 +207,4 @@ MIT License - feel free to use this for commercial projects!
 
 ---
 
-**Ready to take control of your e-commerce business?** Deploy your store today and say goodbye to monthly fees! 🚀
+**Ready to take control of your e-commerce business?**

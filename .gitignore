@@ -17,7 +17,6 @@ prisma/seed-dev.ts
 prisma/seed/dev/
 prisma/seed.sql
 
-
 # production
 /build
 
@@ -48,5 +47,10 @@ recommit.sh.save
 
 # design images for claude use
 claude-images/
+
+MIGRATION.md
+CLAUDE.md
+generate-password-hash.js
+
 
 

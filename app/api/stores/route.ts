@@ -1,21 +1,21 @@
-import { auth } from "@clerk/nextjs"
 import { NextResponse } from "next/server"
+import { isAuthenticated } from "@/lib/auth"
 import prismadb from "@/lib/prismadb"
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const { name } = body
 
-    if (!userId) return new NextResponse("Unauthorized", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthorized", { status: 401 })
     if (!name) return new NextResponse("Missing name", { status: 400 })
 
     const store = await prismadb.store.create({
       data: {
         name: name,
-        userId: userId,
+        userId: "single-user", // Constant userId for single-user setup
       },
     })
 

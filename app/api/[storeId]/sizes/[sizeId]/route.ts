@@ -1,5 +1,5 @@
 import prismadb from "@/lib/prismadb"
-import { auth } from "@clerk/nextjs"
+import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
 
 export async function GET(
@@ -25,12 +25,12 @@ export async function PATCH(
   { params }: { params: { sizeId: string; storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const { name, value } = body
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthenticated", { status: 401 })
 
     if (!name) return new NextResponse("Name is required", { status: 400 })
 
@@ -42,7 +42,7 @@ export async function PATCH(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId,
+        userId: "single-user",
       },
     })
 
@@ -72,9 +72,9 @@ export async function DELETE(
   { params }: { params: { storeId: string; sizeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
 
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthenticated", { status: 401 })
 
     if (!params.sizeId)
       return new NextResponse("Size ID is required", { status: 400 })
@@ -82,7 +82,7 @@ export async function DELETE(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId,
+        userId: "single-user",
       },
     })
 

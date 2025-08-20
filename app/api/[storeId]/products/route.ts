@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs'
+import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { useParams } from 'next/navigation'
@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const { userId } = auth()
+    const authenticated = await isAuthenticated()
     const body = await req.json()
 
     const {
@@ -27,7 +27,7 @@ export async function POST(
       isFeatured
     } = body
 
-    if (!userId) return new NextResponse('Unauthenticated', { status: 401 })
+    if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
     if (!name) return new NextResponse('Name is required', { status: 400 })
 
@@ -54,7 +54,7 @@ export async function POST(
     const storeWithUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
-        userId: userId
+        userId: "single-user"
       }
     })
 

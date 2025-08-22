@@ -15,36 +15,33 @@ on:
 jobs:
   rollback:
     runs-on: ubuntu-latest
-    
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
-    - name: Verify confirmation
-      run: |
-        if [ "${{ github.event.inputs.confirm }}" != "CONFIRM" ]; then
-          echo "Rollback not confirmed. Exiting."
-          exit 1
-        fi
-    
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Rollback migration
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        DIRECT_URL: ${{ secrets.DIRECT_URL }}
-      run: |
-        echo "Rolling back to migration: ${{ github.event.inputs.migration_name }}"
-        npx prisma migrate resolve --rolled-back ${{ github.event.inputs.migration_name }}
-        
-    - name: Generate Prisma client
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        DIRECT_URL: ${{ secrets.DIRECT_URL }}
-      run: npx prisma generate
+      - name: Verify confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "CONFIRM" ]; then
+            echo "Rollback not confirmed. Exiting."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rollback migration
+
+        run: |
+          echo "Rolling back to migration: ${{ github.event.inputs.migration_name }}"
+          npx prisma migrate resolve --rolled-back ${{ github.event.inputs.migration_name }}
+
+      - name: Generate Prisma client
+        run: npx prisma generate

@@ -104,8 +104,8 @@ export async function GET(
         customerName: order.customerName || '',
         products: productString,
         variations: variationsString,
-        totalPrice: order.totalPrice
-          ? formatter.format(order.totalPrice.toNumber())
+        totalPrice: order.totalPriceInCents
+          ? formatter.format(order.totalPriceInCents / 100)
           : 'N/A',
         isPaid: order.isPaid,
         isAbandoned: order.isAbandoned, // Assuming this field exists on the Order model

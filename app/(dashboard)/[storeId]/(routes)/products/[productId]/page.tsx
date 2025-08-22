@@ -37,14 +37,14 @@ const ProductPage = async ({
     ? {
         ...product,
         weight: product.weight.toNumber(), // Convert Decimal to number
-        price: product.price.toNumber(), // Convert Decimal to number
+        price: product.priceInCents / 100, // Convert cents to dollars
         variations: product.variations.map((variation) => ({
           ...variation,
-          price: variation.price.toNumber() // Convert Decimal to number
+          price: variation.priceInCents / 100 // Convert cents to dollars
         })),
         bundles: product.bundles.map((bundle) => ({
           ...bundle,
-          discount: bundle.discount.toNumber() // Convert Decimal to number
+          discount: bundle.discountPercentage // Already an integer
         }))
       }
     : null

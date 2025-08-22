@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Edit,
-  Truck
+  Truck,
+  Percent
 } from 'lucide-react'
 import { cn } from '@/lib/utils' // For conditional classes
 import { useState } from 'react'
@@ -42,6 +43,12 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId }) => {
       label: 'Products',
       icon: <Box className="h-5 w-5 mr-3" />,
       active: pathname === `/${storeId}/products`
+    },
+    {
+      href: `/${storeId}/sales`,
+      label: 'Sales',
+      icon: <Percent className="h-5 w-5 mr-3" />,
+      active: pathname === `/${storeId}/sales`
     },
     {
       href: `/${storeId}/customers`,

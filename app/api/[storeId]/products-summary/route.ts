@@ -66,7 +66,7 @@ export async function GET(
       name: product.name,
       isFeatured: product.isFeatured,
       isArchived: product.isArchived,
-      price: product.price ? formatter.format(product.price.toNumber()) : 'N/A',
+      price: product.priceInCents ? formatter.format(product.priceInCents / 100) : 'N/A',
       quantity: product.quantity,
       category: product.category?.name || 'N/A', // category should exist due to schema
       size: product.size?.name, // Optional, so can be undefined

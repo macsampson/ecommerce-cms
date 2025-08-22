@@ -8,7 +8,7 @@ import axios from 'axios'
 // import { v4 as uuidv4 } from 'uuid'
 
 // Function to format prices to 2 decimal places
-function formatPrice(price: Decimal): string {
+function formatPrice(price: number): string {
   return price.toFixed(2) // Ensures 2 decimal places
 }
 
@@ -36,7 +36,7 @@ export async function GET(
     if (product) {
       return NextResponse.json({
         ...product,
-        price: formatPrice(product.price)
+        price: formatPrice(product.priceInCents / 100)
       })
     }
 
@@ -149,7 +149,7 @@ export async function PATCH(
       },
       data: {
         name,
-        price,
+        priceInCents: Math.round(price * 100),
         quantity,
         description,
         weight,
@@ -250,7 +250,7 @@ export async function PATCH(
         },
         data: {
           name: variation.name,
-          price: variation.price,
+          priceInCents: Math.round(variation.price * 100),
           quantity: variation.quantity
         }
       })
@@ -262,7 +262,7 @@ export async function PATCH(
           ...variationsToCreate.map(
             (variation: { name: string; price: number; quantity: number }) => ({
               name: variation.name,
-              price: variation.price,
+              priceInCents: Math.round(variation.price * 100),
               productId: params.productId,
               quantity: variation.quantity
             })
@@ -279,7 +279,7 @@ export async function PATCH(
         },
         data: {
           minQuantity: bundle.minQuantity,
-          discount: bundle.discount
+          discountPercentage: bundle.discount
         }
       })
     }
@@ -290,7 +290,7 @@ export async function PATCH(
         data: bundlesToCreate.map(
           (bundle: { minQuantity: number; discount: number }) => ({
             minQuantity: bundle.minQuantity,
-            discount: bundle.discount,
+            discountPercentage: bundle.discount,
             productId: params.productId
           })
         )

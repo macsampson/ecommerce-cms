@@ -26,6 +26,3 @@ ALTER TABLE "product_variation" DROP COLUMN "price";
 ALTER TABLE "bundle" DROP COLUMN "discount";
 ALTER TABLE "order" DROP COLUMN "total_price";
 ALTER TABLE "order_item" DROP COLUMN "price";
-
--- Convert sale percentage from decimal to integer
-ALTER TABLE "sale" ALTER COLUMN "percentage" TYPE INTEGER USING ROUND("percentage");

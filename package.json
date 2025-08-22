@@ -11,6 +11,7 @@
     "lint": "next lint",
     "postinstall": "prisma generate && prisma migrate deploy",
     "deploy": "prisma migrate deploy",
+    "migrate:rollback": "prisma migrate resolve --rolled-back",
     "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts"
   },
   "prisma": {

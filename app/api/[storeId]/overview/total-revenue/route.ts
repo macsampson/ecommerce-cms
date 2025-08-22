@@ -51,8 +51,8 @@ export async function GET(
         // this logic still only adds the product's unit price once for that line item.
         // Example: If OrderItem is { product: { price: 10 }, quantity: 3 }, this adds 10, not 30.
         // This matches the provided get-total-revenue.ts.
-        if (orderItem.product && orderItem.product.price) {
-          return currentOrderSum + orderItem.product.price.toNumber();
+        if (orderItem.product && orderItem.product.priceInCents) {
+          return currentOrderSum + (orderItem.product.priceInCents / 100);
         }
         return currentOrderSum;
       }, 0);

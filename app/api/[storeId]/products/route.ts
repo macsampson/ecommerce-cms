@@ -65,7 +65,7 @@ export async function POST(
     const product = await prismadb.product.create({
       data: {
         name,
-        price,
+        priceInCents: Math.round(price * 100),
         quantity,
         description,
         weight,
@@ -73,7 +73,10 @@ export async function POST(
           createMany: {
             data: [
               ...variations.map(
-                (variation: { name: string; price: number }) => variation
+                (variation: { name: string; price: number }) => ({
+                  name: variation.name,
+                  priceInCents: Math.round(variation.price * 100)
+                })
               )
             ]
           }

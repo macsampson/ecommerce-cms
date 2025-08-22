@@ -18,7 +18,7 @@ const VariationInput: React.FC<VariationInputProps> = ({
   const name = variation?.name || ""
   const displayPrice = formatter.format(variation?.price || 0)
 
-  const [price, setPrice] = useState(variation?.price.toString())
+  const [price, setPrice] = useState((variation?.price || 0).toString())
   const [isPriceFocused, setIsPriceFocused] = useState(false)
 
   const formattedPrice = isPriceFocused ? price : displayPrice

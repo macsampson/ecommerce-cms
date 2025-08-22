@@ -72,7 +72,7 @@ export async function GET(
         }
       }
       customerMap[email].totalOrders += 1
-      customerMap[email].totalSpent += order.totalPrice?.toNumber?.() || 0
+      customerMap[email].totalSpent += (order.totalPriceInCents / 100) || 0
     }
     const customers: ApiCustomer[] = Object.values(customerMap)
     return NextResponse.json(customers)

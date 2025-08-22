@@ -20,6 +20,7 @@ model Store {
   colors         Color[]
   orders         Order[]
   products       Product[]
+  sales          Sale[]
   sizes          Size[]
 
   @@map("store")
@@ -102,7 +103,7 @@ model Product {
   storeId     String             @map("store_id")
   categoryId  String             @map("category_id")
   name        String             @map("name")
-  price       Decimal            @map("price") @db.Decimal(10, 2)
+  priceInCents Int               @map("price_in_cents")
   isFeatured  Boolean            @default(false) @map("is_featured")
   isArchived  Boolean            @default(false) @map("is_archived")
   sizeId      String?            @map("size_id")
@@ -115,6 +116,7 @@ model Product {
   bundles     Bundle[]
   images      Image[]
   orderItems  OrderItem[]
+  saleProducts SaleProduct[]
   category    Category           @relation(fields: [categoryId], references: [id])
   color       Color?             @relation(fields: [colorId], references: [id])
   size        Size?              @relation(fields: [sizeId], references: [id])
@@ -132,7 +134,7 @@ model ProductVariation {
   id         String      @id @default(uuid())
   productId  String      @map("product_id")
   name       String      @map("name")
-  price      Decimal     @map("price") @db.Decimal(10, 2)
+  priceInCents Int       @map("price_in_cents")
   createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   quantity   Int         @default(0) @map("quantity")
@@ -146,7 +148,7 @@ model ProductVariation {
 model Bundle {
   id          String   @id @default(uuid())
   minQuantity Int      @map("min_quantity")
-  discount    Decimal  @default(0.00) @map("discount") @db.Decimal(5, 2)
+  discountPercentage Int @default(0) @map("discount_percentage")
   productId   String   @map("product_id")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -177,7 +179,7 @@ model Order {
   billingAddress  String      @default("") @map("address")
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  totalPrice      Decimal     @default(0.00) @map("total_price") @db.Decimal(10, 2)
+  totalPriceInCents Int       @default(0) @map("total_price_in_cents")
   shippingAddress String      @default("") @map("shipping_address")
   emailAddress    String      @default("") @map("email_address")
   isAbandoned     Boolean     @default(false) @map("is_abandoned")
@@ -198,7 +200,7 @@ model OrderItem {
   updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
   quantity           Int               @default(1) @map("quantity")
   productVariationId String?           @map("product_variation_id")
-  price              Decimal           @default(0.00) @map("price") @db.Decimal(10, 2)
+  priceInCents       Int               @default(0) @map("price_in_cents")
   name               String            @default("") @map("name")
   order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product            Product           @relation(fields: [productId], references: [id])
@@ -263,4 +265,38 @@ model ShippingSettings {
 
   @@unique([storeId])
   @@map("shipping_settings")
+}
+
+model Sale {
+  id          String    @id @default(uuid())
+  storeId     String    @map("store_id")
+  name        String    @map("name")
+  description String?   @map("description")
+  percentage  Int       @map("percentage")
+  startDate   DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate     DateTime  @map("end_date") @db.Timestamptz(6)
+  isActive    Boolean   @default(true) @map("is_active")
+  isStoreWide Boolean   @default(false) @map("is_store_wide")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  store       Store     @relation(fields: [storeId], references: [id])
+  products    SaleProduct[]
+
+  @@index([storeId])
+  @@index([startDate, endDate])
+  @@map("sale")
+}
+
+model SaleProduct {
+  id        String  @id @default(uuid())
+  saleId    String  @map("sale_id")
+  productId String  @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([saleId, productId])
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_product")
 }

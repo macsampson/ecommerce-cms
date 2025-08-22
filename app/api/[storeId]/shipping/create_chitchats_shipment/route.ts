@@ -112,7 +112,7 @@ export async function POST(
       line_items: cartItems.map((item) => ({
         quantity: item.cartQuantity,
         description: item.name,
-        value_amount: item.price.toFixed(2),
+        value_amount: (item.price).toFixed(2),
         currency_code: currency.toUpperCase(),
         weight: item.weight.toString(), // Weight per line item
         weight_unit: 'g',

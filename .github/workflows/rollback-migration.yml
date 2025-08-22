@@ -38,6 +38,7 @@ jobs:
     - name: Rollback migration
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DIRECT_URL: ${{ secrets.DIRECT_URL }}
       run: |
         echo "Rolling back to migration: ${{ github.event.inputs.migration_name }}"
         npx prisma migrate resolve --rolled-back ${{ github.event.inputs.migration_name }}
@@ -45,4 +46,5 @@ jobs:
     - name: Generate Prisma client
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DIRECT_URL: ${{ secrets.DIRECT_URL }}
       run: npx prisma generate

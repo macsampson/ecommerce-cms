@@ -23,6 +23,11 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
+      - name: Run database migrations
+        run: npm run deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          
       - name: Build project
         run: npm run build
 

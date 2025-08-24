@@ -2,11 +2,40 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
+import type { Store } from '@prisma/client'
+
+interface CartItem {
+  name: string
+  priceInCents?: number
+  price?: number
+  quantity: number
+  category?: string
+  variations?: Record<string, any>
+  weight?: number
+}
+
+interface CartItems {
+  [productId: string]: CartItem
+}
+
+interface ShippingType {
+  id: string
+  title: string
+  rate: number
+}
+
+interface ShippingAddress {
+  street: string
+  city: string
+  state: string
+  zipCode: string
+  country: string
+}
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 }
 
 export async function OPTIONS() {
@@ -20,49 +49,81 @@ export async function POST(
   try {
     const { storeId } = params
     const body = await req.json()
-    const { cartItems, totalPrice, shippingType, shippingAddress, currency } = body
+    const {
+      cartItems,
+      totalPrice,
+      shippingType,
+      shippingAddress,
+      currency
+    }: {
+      cartItems: CartItems
+      totalPrice: number
+      shippingType?: ShippingType
+      shippingAddress: ShippingAddress
+      currency: string
+    } = body
 
     if (!cartItems || Object.keys(cartItems).length === 0) {
-      return new NextResponse("Cart items are required", { status: 400 })
+      return new NextResponse('Cart items are required', { status: 400 })
     }
 
     if (!totalPrice) {
-      return new NextResponse("Total price is required", { status: 400 })
+      return new NextResponse('Total price is required', { status: 400 })
     }
 
     if (!shippingAddress) {
-      return new NextResponse("Shipping address is required", { status: 400 })
+      return new NextResponse('Shipping address is required', { status: 400 })
     }
 
     // Verify store exists
     const store = await prismadb.store.findUnique({
       where: {
         id: storeId,
-        userId: "single-user"
+        userId: 'single-user'
       }
     })
 
     if (!store) {
-      return new NextResponse("Store not found", { status: 404 })
+      return new NextResponse('Store not found', { status: 404 })
     }
 
     // Create line items for Stripe checkout
-    const line_items: any[] = []
-    
-    for (const [productId, item] of Object.entries(cartItems as any)) {
+    const line_items: Array<{
+      price_data: {
+        currency: string
+        product_data: {
+          name: string
+          metadata: Record<string, string>
+        }
+        unit_amount: number
+      }
+      quantity: number
+    }> = []
+
+    for (const [productId, item] of Object.entries(cartItems)) {
       // Debug logging
       console.log('Processing item:', { productId, item })
-      
+
       // Ensure price is a valid number (frontend sends priceInCents)
-      const priceInCents = item.priceInCents || item.price // Handle both field names  
-      const itemPriceInCents = typeof priceInCents === 'number' ? priceInCents : parseFloat(priceInCents)
-      const itemQuantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity)
-      
+      const priceInCents = item.priceInCents || item.price || 0 // Handle both field names
+      const itemPriceInCents =
+        typeof priceInCents === 'number'
+          ? priceInCents
+          : parseFloat(priceInCents)
+      const itemQuantity =
+        typeof item.quantity === 'number'
+          ? item.quantity
+          : parseInt(item.quantity)
+
       if (isNaN(itemPriceInCents) || isNaN(itemQuantity)) {
-        console.error('Invalid price or quantity:', { productId, priceInCents, quantity: item.quantity })
+        console.error('Invalid price or quantity:', {
+          productId,
+          priceInCents,
+          quantity: item.quantity
+        })
         continue // Skip invalid items
       }
-      
+
       line_items.push({
         price_data: {
           currency: currency.toLowerCase(),
@@ -70,21 +131,24 @@ export async function POST(
             name: item.name,
             metadata: {
               productId,
-              category: item.category,
+              category: item.category ?? '',
               variations: JSON.stringify(item.variations || {}),
-              weight: item.weight?.toString() || "0"
+              weight: (item.weight ?? 0).toString()
             }
           },
-          unit_amount: Math.round(itemPriceInCents), // Already in cents
+          unit_amount: Math.round(itemPriceInCents) // Already in cents
         },
-        quantity: itemQuantity,
+        quantity: itemQuantity
       })
     }
 
     // Add shipping as a line item if there's a cost
     if (shippingType && shippingType.rate > 0) {
-      const shippingRate = typeof shippingType.rate === 'number' ? shippingType.rate : parseFloat(shippingType.rate)
-      
+      const shippingRate =
+        typeof shippingType.rate === 'number'
+          ? shippingType.rate
+          : parseFloat(shippingType.rate)
+
       if (!isNaN(shippingRate) && shippingRate > 0) {
         line_items.push({
           price_data: {
@@ -96,16 +160,16 @@ export async function POST(
                 shippingTitle: shippingType.title
               }
             },
-            unit_amount: Math.round(shippingRate * 100), // Convert dollars to cents
+            unit_amount: Math.round(shippingRate * 100) // Convert dollars to cents
           },
-          quantity: 1,
+          quantity: 1
         })
       }
     }
 
     // Ensure we have valid line items
     if (line_items.length === 0) {
-      return new NextResponse("No valid items to checkout", { status: 400 })
+      return new NextResponse('No valid items to checkout', { status: 400 })
     }
 
     // Create Stripe checkout session
@@ -114,7 +178,7 @@ export async function POST(
       mode: 'payment',
       billing_address_collection: 'required',
       phone_number_collection: {
-        enabled: true,
+        enabled: true
       },
       customer_creation: 'always',
       success_url: `${process.env.FRONTEND_STORE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -131,6 +195,6 @@ export async function POST(
     return NextResponse.json({ url: session.url }, { headers: corsHeaders })
   } catch (error: any) {
     console.log('[CHECKOUT_POST]', error)
-    return new NextResponse("Internal error", { status: 500 })
+    return new NextResponse('Internal error', { status: 500 })
   }
 }

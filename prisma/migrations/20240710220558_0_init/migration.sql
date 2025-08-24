@@ -107,7 +107,7 @@ CREATE TABLE "product_variation" (
 CREATE TABLE "bundle" (
     "id" TEXT NOT NULL,
     "min_quantity" INTEGER NOT NULL,
-    "discount" DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    "discount_percentage" DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     "product_id" TEXT NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,

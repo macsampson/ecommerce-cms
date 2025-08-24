@@ -15,12 +15,14 @@ interface AddressType {
 }
 
 interface CartItemType {
-  productId: string
-  name: string
-  price: number
-  cartQuantity: number
-  weight: number
-  // Add other relevant fields if needed for line_items
+  item: {
+    id: string
+    name: string
+    priceInCents: number
+    weight: string
+  }
+  totalQuantity: number
+  bundlePrice?: number
 }
 
 interface CreateChitChatsShipmentRequestBody {
@@ -95,9 +97,9 @@ export async function POST(
       email: address.email,
       package_contents: 'merchandise',
       description: cartItems
-        .map((item) => `${item.cartQuantity}x Keycaps`) // TODO: use item category
+        .map((cartItem) => `${cartItem.totalQuantity}x Keycaps`) // TODO: use item category
         .join(', '),
-      value: totalPrice.toFixed(2),
+      value: (totalPrice / 100).toFixed(2),
       value_currency: currency.toUpperCase(),
       package_type: 'thick_envelope', // Or determine more dynamically if needed, e.g. 'thick_envelope'
       postage_type: selectedPostageType, // Use the selected postage type
@@ -109,12 +111,12 @@ export async function POST(
       weight: totalWeight,
       insurance_requested: true, // Or make this configurable
       ship_date: 'today', // Or allow selection
-      line_items: cartItems.map((item) => ({
-        quantity: item.cartQuantity,
-        description: item.name,
-        value_amount: (item.price).toFixed(2),
+      line_items: cartItems.map((cartItem) => ({
+        quantity: cartItem.totalQuantity,
+        description: cartItem.item.name,
+        value_amount: ((cartItem.bundlePrice || (cartItem.item.priceInCents * cartItem.totalQuantity)) / 100).toFixed(2),
         currency_code: currency.toUpperCase(),
-        weight: item.weight.toString(), // Weight per line item
+        weight: cartItem.item.weight.toString(), // Weight per line item
         weight_unit: 'g',
         origin_country: 'CA', // Assuming origin is Canada
         hs_tariff_code: '3926.90' // Example HS code, make this configurable if items vary

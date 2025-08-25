@@ -16,7 +16,7 @@ const REVALIDATE_URL = process.env.FRONTEND_STORE_URL + '/api/revalidate'
 
 export async function GET(
   req: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: { productId: string; storeId: string } }
 ) {
   try {
     const product = await prismadb.product.findUnique({
@@ -29,20 +29,86 @@ export async function GET(
         color: true,
         size: true,
         variations: true,
-        bundles: true
+        bundles: true,
+        saleProducts: {
+          include: {
+            sale: true
+          }
+        }
       }
     })
 
-    if (product) {
-      return NextResponse.json({
-        ...product,
-        price: formatPrice(product.priceInCents / 100)
-      })
+    if (!product) {
+      return NextResponse.json(null)
     }
 
-    // console.log(product)
+    // Get active sales for this store
+    const now = new Date()
+    const activeSales = await prismadb.sale.findMany({
+      where: {
+        storeId: params.storeId,
+        isActive: true,
+        startDate: {
+          lte: now
+        },
+        endDate: {
+          gte: now
+        }
+      },
+      include: {
+        products: {
+          select: {
+            productId: true
+          }
+        }
+      }
+    })
 
-    return NextResponse.json(product)
+    // Calculate sale info for this product
+    const { calculateProductSalePrice } = await import('@/lib/utils')
+    
+    let saleInfo
+    
+    // Don't apply sales to sold-out products
+    if (product.quantity === 0) {
+      saleInfo = {
+        originalPriceInCents: product.priceInCents,
+        salePriceInCents: null,
+        discountPercentage: null,
+        sale: null,
+        hasActiveSale: false
+      }
+    } else {
+      // Check if product is in any specific sales
+      const productSpecificSales = activeSales.filter(sale => 
+        !sale.isStoreWide && sale.products.some(sp => sp.productId === product.id)
+      )
+      
+      // Get store-wide sales
+      const storeWideSales = activeSales.filter(sale => sale.isStoreWide)
+      
+      // Combine all applicable sales
+      const applicableSales = [...productSpecificSales, ...storeWideSales]
+      
+      saleInfo = calculateProductSalePrice(
+        product.priceInCents,
+        applicableSales.map(sale => ({
+          id: sale.id,
+          name: sale.name,
+          percentage: sale.percentage,
+          startDate: sale.startDate,
+          endDate: sale.endDate,
+          isActive: sale.isActive,
+          isStoreWide: sale.isStoreWide
+        }))
+      )
+    }
+
+    return NextResponse.json({
+      ...product,
+      price: formatPrice(product.priceInCents / 100),
+      saleInfo
+    })
   } catch (error) {
     console.log('[PRODUCT_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })

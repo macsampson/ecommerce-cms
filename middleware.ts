@@ -16,15 +16,18 @@ export async function middleware(request: NextRequest) {
   // Handle store-scoped API routes with CORS validation
   if (pathname.match(/^\/api\/[a-f0-9-]+\//)) {
     const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
     
     // Allow same-origin requests (no origin header) or authorized origins
-    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    // Also allow requests from the same host (for same-origin requests from the CMS itself)
+    if (origin && !ALLOWED_ORIGINS.includes(origin) && origin !== `https://${host}` && origin !== `http://${host}`) {
+      console.log(`CORS blocked origin: ${origin}, allowed: ${ALLOWED_ORIGINS.join(', ')}, host: ${host}`)
       return new NextResponse('Forbidden', { status: 403 })
     }
     
     // Add CORS headers to response
     const response = NextResponse.next()
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    if (origin && (ALLOWED_ORIGINS.includes(origin) || origin === `https://${host}` || origin === `http://${host}`)) {
       response.headers.set('Access-Control-Allow-Origin', origin)
       response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
       response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')

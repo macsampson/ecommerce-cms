@@ -28,6 +28,8 @@ This project gives you:
 - Unlimited products and variations
 - Image galleries with Cloudinary integration
 - Product bundles and categories
+- Sales and promotions with percentage-based discounts
+- Store-wide or product-specific sales
 
 ### 💳 **Payments & Orders**
 

@@ -72,6 +72,20 @@ export async function GET(
 
     // Calculate sale prices for each product
     const productsWithSales = products.map(product => {
+      // Don't apply sales to sold-out products
+      if (product.quantity === 0) {
+        return {
+          ...product,
+          saleInfo: {
+            originalPriceInCents: product.priceInCents,
+            salePriceInCents: null,
+            discountPercentage: null,
+            sale: null,
+            hasActiveSale: false
+          }
+        }
+      }
+
       // Check if product is in any specific sales
       const productSpecificSales = activeSales.filter(sale => 
         !sale.isStoreWide && sale.products.some(sp => sp.productId === product.id)

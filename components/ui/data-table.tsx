@@ -114,21 +114,10 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                const original: any = row.original
-                const isProductRow = original && original.id && original.name
                 return (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
-                    className={isProductRow ? 'cursor-pointer' : ''}
-                    onClick={
-                      isProductRow
-                        ? () =>
-                            router.push(
-                              `/${params.storeId}/products/${original.id}`
-                            )
-                        : undefined
-                    }
                   >
                     {row.getVisibleCells().map((cell, i) => {
                       const cellClass =

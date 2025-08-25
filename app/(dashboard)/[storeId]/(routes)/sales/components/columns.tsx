@@ -20,6 +20,26 @@ export const columns: ColumnDef<SaleColumn>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      const router = require('next/navigation').useRouter()
+      const params = require('next/navigation').useParams()
+      return (
+        <button
+          className="text-primary underline hover:text-primary/80 text-left w-full"
+          onClick={() =>
+            router.push(`/${params.storeId}/sales/${row.original.id}`)
+          }
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer'
+          }}
+        >
+          {row.original.name}
+        </button>
+      )
+    }
   },
   {
     accessorKey: "percentage",

@@ -3,6 +3,27 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { CellAction } from "./cell-action"
 import { Badge } from "@/components/ui/badge"
+import { useRouter, useParams } from "next/navigation"
+
+const SaleNameCell = ({ saleId, name }: { saleId: string, name: string }) => {
+  const router = useRouter()
+  const params = useParams()
+
+  return (
+    <button
+      className="text-primary underline hover:text-primary/80 text-left w-full"
+      onClick={() => router.push(`/${params.storeId}/sales/${saleId}`)}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer'
+      }}
+    >
+      {name}
+    </button>
+  )
+}
 
 export type SaleColumn = {
   id: string
@@ -21,24 +42,7 @@ export const columns: ColumnDef<SaleColumn>[] = [
     accessorKey: "name",
     header: "Name",
     cell: ({ row }) => {
-      const router = require('next/navigation').useRouter()
-      const params = require('next/navigation').useParams()
-      return (
-        <button
-          className="text-primary underline hover:text-primary/80 text-left w-full"
-          onClick={() =>
-            router.push(`/${params.storeId}/sales/${row.original.id}`)
-          }
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer'
-          }}
-        >
-          {row.original.name}
-        </button>
-      )
+      return <SaleNameCell saleId={row.original.id} name={row.original.name} />
     }
   },
   {

@@ -192,5 +192,3 @@ Before going live:
 MIT License - feel free to use this for commercial projects!
 
 ---
-
-**Ready to take control of your e-commerce business?**

@@ -285,11 +285,11 @@ export async function POST(req: Request) {
               phone: address.phone || '',
               email: address.email,
               description: cartItems
-                .map((cartItem) => `${cartItem.cartQuantity}x Keycaps`)
+                .map((cartItem) => `${cartItem.cartQuantity}x Keycaps`) // TODO: use item category
                 .join(', '),
               value: (totalPrice / 100)?.toString() || '0',
               value_currency: currency,
-              package_type: 'thick_envelope',
+              package_type: 'thick_envelope', // TODO: use package type from customs declaration
               postage_type: 'unknown',
               size_unit: 'cm',
               size_x: 23,

@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
     await req.json()
 
-  console.log('CART ITEMS: ', cartItems)
+  // console.log('CART ITEMS: ', cartItems)
 
   const url = new URL(req.url)
   const storeId = url.pathname.split('/')[2]
@@ -85,23 +85,23 @@ export async function POST(req: Request) {
   )
 
   const totalPrice = cartItems.reduce((acc, cartItem) => {
-    console.log(cartItem)
+    // console.log(cartItem)
 
     // Use bundlePrice if available (already calculated by frontend), otherwise calculate from base price
     if (cartItem.bundlePrice) {
-      console.log('USING BUNDLE PRICE: ', cartItem.bundlePrice)
+      // console.log('USING BUNDLE PRICE: ', cartItem.bundlePrice)
       return acc + cartItem.bundlePrice
     }
 
     const itemPrice = cartItem.priceInCents * cartItem.cartQuantity
-    console.log('USING ITEM PRICE: ', itemPrice)
-    console.log('PRICE: ', cartItem.priceInCents)
-    console.log('QUANTITY: ', cartItem.cartQuantity)
+    // console.log('USING ITEM PRICE: ', itemPrice)
+    // console.log('PRICE: ', cartItem.priceInCents)
+    // console.log('QUANTITY: ', cartItem.cartQuantity)
 
     return acc + itemPrice
   }, 0)
 
-  console.log('TOTAL PRICE: ', totalPrice)
+  // console.log('TOTAL PRICE: ', totalPrice)
 
   // Create line items for Shippo
   const lineItems = cartItems.map((cartItem) => ({
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     manufacture_country: 'CA'
   }))
 
-  console.log('TOTAL WEIGHT: ', totalWeight)
+  // console.log('TOTAL WEIGHT: ', totalWeight)
 
   // Create parcel data
   const parcelData = {

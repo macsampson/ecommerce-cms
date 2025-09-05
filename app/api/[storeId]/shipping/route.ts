@@ -181,6 +181,8 @@ export async function POST(req: Request) {
         }
       : undefined
 
+  // console.log('CUSTOMS DECLARATION: ', customsDeclaration)
+
   const shippoEnabled = shippingSettings.shippoEnabled
   const chitchatsEnabled = shippingSettings.chitchatsEnabled
 
@@ -298,6 +300,7 @@ export async function POST(req: Request) {
               is_insured: true,
               is_insurance_requested: true,
               ship_date: 'today',
+              hs_tariff_code: customsDeclarationInfo.items[0].tariff_number,
               line_items: cartItems.map((cartItem) => ({
                 quantity: cartItem.cartQuantity || 1,
                 description: cartItem.name || 'Keycap',

@@ -55,7 +55,7 @@ type CustomsDeclarationInfo = {
     description: string
     mass_unit: string
     origin_country: string
-    tarrif_number: string
+    tariff_number: string
   }[]
 }
 
@@ -293,7 +293,7 @@ export async function POST(req: Request) {
               size_x: 23,
               size_y: 16,
               size_z: 5,
-              weight_unit: 'g',
+              weight_unit: customsDeclarationInfo.items[0].mass_unit,
               weight: totalWeight || 0,
               is_insured: true,
               is_insurance_requested: true,
@@ -308,9 +308,9 @@ export async function POST(req: Request) {
                       cartItem.priceInCents * cartItem.cartQuantity) / 100
                   )?.toString() || '0',
                 weight: cartItem.weight?.toString() || '1',
-                weight_unit: 'g',
-                origin_country: 'CA',
-                hs_tariff_code: '3926.90'
+                weight_unit: customsDeclarationInfo.items[0].mass_unit,
+                origin_country: customsDeclarationInfo.items[0].origin_country,
+                hs_tariff_code: customsDeclarationInfo.items[0].tariff_number
               }))
             })
           }

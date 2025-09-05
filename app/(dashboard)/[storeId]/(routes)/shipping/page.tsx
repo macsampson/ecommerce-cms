@@ -42,7 +42,7 @@ export default function ShippingPage() {
         description: '',
         mass_unit: '',
         origin_country: '',
-        tarrif_number: ''
+        tariff_number: ''
       }
     ]
   })
@@ -380,7 +380,7 @@ export default function ShippingPage() {
           </div>
           <div>
             <span className="font-semibold">Item Tariff Number:</span>{' '}
-            {customsDeclaration.items[0]?.tarrif_number || 'N/A'}
+            {customsDeclaration.items[0]?.tariff_number || 'N/A'}
           </div>
         </div>
       </section>
@@ -516,11 +516,11 @@ export default function ShippingPage() {
               />
               <Label>Tariff Number</Label>
               <Input
-                value={customsDeclaration.items[0].tarrif_number}
+                value={customsDeclaration.items[0].tariff_number}
                 onChange={(e) =>
                   setCustomsDeclaration((cd) => ({
                     ...cd,
-                    items: [{ ...cd.items[0], tarrif_number: e.target.value }]
+                    items: [{ ...cd.items[0], tariff_number: e.target.value }]
                   }))
                 }
                 placeholder="Tariff Number"

@@ -152,7 +152,7 @@ export async function POST(req: Request) {
   const customsDeclarationInfo =
     shippingSettings.customsDeclaration as CustomsDeclarationInfo
 
-  console.log(customsDeclarationInfo)
+  // console.log(customsDeclarationInfo)
 
   if (!customsDeclarationInfo) {
     return NextResponse.json(

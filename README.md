@@ -3,7 +3,7 @@
 A complete, self-hosted e-commerce platform that provides an alternative to Etsy and Shopify. Built for individuals and small businesses who want full control over their online store without monthly fees or transaction limits.
 
 ![CMS Dashboard](https://github.com/macsampson/ecommerce-cms/blob/main/images/1.png)
-*Demo CMS Dashboard*
+_Demo CMS Dashboard_
 
 ## Why This Project?
 

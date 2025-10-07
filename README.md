@@ -191,6 +191,6 @@ Before going live:
 
 ## License
 
-MIT License - feel free to use this for commercial projects!
+MIT License
 
 ---

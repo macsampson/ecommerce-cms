@@ -2,28 +2,30 @@
 
 A complete, self-hosted e-commerce platform that provides an alternative to Etsy and Shopify. Built for individuals and small businesses who want full control over their online store without monthly fees or transaction limits.
 
-## 🎯 Why This Project?
+![CMS Dashboard](https://github.com/macsampson/ecommerce-cms/blob/main/images/1.png)
+
+## Why This Project?
 
 **I was tired of paying monthly fees and high transaction fees to Etsy or Shopify, so I built this app**
 
 This project gives you:
 
-- ✅ **Complete ownership** of your store and customer data
-- ✅ **Zero monthly fees** - host it yourself or deploy for free on Vercel
-- ✅ **No transaction limits** - keep 100% of your profits (minus payment processing)
-- ✅ **Full customization** - modify anything to fit your brand
-- ✅ **Professional features** - automated inventory management, order tracking, shipping integration
-- ✅ **Multi-store capability** - run multiple brands from one installation
+- **Complete ownership** of your store and customer data
+- **Zero monthly fees** - host it yourself or deploy for free on Vercel
+- **No transaction limits** - keep 100% of your profits (minus payment processing)
+- **Full customization** - modify anything to fit your brand
+- **Professional features** - automated inventory management, order tracking, shipping integration
+- **Multi-store capability** - run multiple brands from one installation
 
-## ✨ Features
+## Features
 
-### 🏪 **Store Management**
+### **Store Management**
 
 - Multiple stores from single dashboard
 - SEO-optimized product pages
 - Mobile-responsive design
 
-### 📦 **Product Management**
+### **Product Management**
 
 - Unlimited products and variations
 - Image galleries with Cloudinary integration
@@ -31,26 +33,26 @@ This project gives you:
 - Sales and promotions with percentage-based discounts
 - Store-wide or product-specific sales
 
-### 💳 **Payments & Orders**
+### **Payments & Orders**
 
 - Stripe integration for secure payments
 - Complete order lifecycle management
 - Customer management system
 - Automated inventory updates
 
-### 🚚 **Shipping & Fulfillment**
+### **Shipping & Fulfillment**
 
 - Integrated shipping rate calculator (Shippo & ChitChats)
 - Automatic shipping label generation
 - Multi-currency support with live exchange rates
 - Order tracking and notifications
 
-### 📊 **Analytics & Insights**
+### **Analytics & Insights**
 
 - Revenue and sales display
 - Customer insights
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Database**: PostgreSQL (Supabase recommended)
@@ -60,7 +62,7 @@ This project gives you:
 - **Images**: Cloudinary
 - **Shipping**: Shippo & ChitChats APIs
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Deploy to Vercel (Recommended)
 
@@ -98,7 +100,7 @@ npm run dev
 
 Visit `http://localhost:3000/login` to access your admin dashboard.
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 Create a `.env.local` file with these required variables:
 
@@ -124,7 +126,7 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
 ALLOWED_ORIGINS="https://yourdomain.com,https://yourstore.com"
 ```
 
-## 📋 Setup Guide
+## Setup Guide
 
 ### 1. Database Setup
 
@@ -165,7 +167,7 @@ node scripts/generate-password-hash.js
 2. Get cloud name from dashboard
 3. Add to NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
-## 📊 Production Checklist
+## Production Checklist
 
 Before going live:
 
@@ -178,7 +180,7 @@ Before going live:
 - [ ] Set up SSL certificate
 - [ ] Configure backup strategy
 
-## 🔒 Security Features
+## Security Features
 
 - Session-based authentication with encrypted cookies
 - CSRF protection on all forms
@@ -187,7 +189,7 @@ Before going live:
 - Secure password hashing with bcrypt
 - Rate limiting on sensitive endpoints
 
-## 📄 License
+## License
 
 MIT License - feel free to use this for commercial projects!
 

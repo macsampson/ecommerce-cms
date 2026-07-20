@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { isDemoWriteBlocked } from "@/lib/demo-mode"
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3001',
   'https://your-production-domain.com'
 ]
+
+// Inlined rather than imported from lib/demo-mode.ts: importing any local module
+// (even a zero-dependency one) into this file broke on Vercel's Edge middleware
+// bundler — first as a build-time "unsupported module" error via the `@/` alias,
+// then as a runtime `ReferenceError: __dirname is not defined` via a relative
+// import. The identical, unit-tested logic lives in lib/demo-mode.ts for reuse
+// anywhere else; middleware.ts keeps its own copy to stay import-free.
+const DEMO_WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const DEMO_ALWAYS_ALLOWED_PATHS = ['/api/auth/login', '/api/auth/logout', '/api/webhook', '/api/cron']
+
+function isDemoWriteBlocked(method: string, pathname: string): boolean {
+  if (process.env.DEMO_MODE !== 'true') return false
+  if (!DEMO_WRITE_METHODS.has(method.toUpperCase())) return false
+  if (!pathname.startsWith('/api/')) return false
+  if (DEMO_ALWAYS_ALLOWED_PATHS.some((allowed) => pathname.startsWith(allowed))) return false
+  return true
+}
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],

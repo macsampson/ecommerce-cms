@@ -12,9 +12,9 @@ _Demo: managing products, orders, and billboards from the dashboard_
 
 ## Live Demo
 
-**[ecommerce-admin-wine-delta.vercel.app](https://ecommerce-admin-wine-delta.vercel.app/login)** — log in with `demo@example.com` / `TODO_SET_DEMO_PASSWORD`
+**[pocketcaps-cms-demo.vercel.app](https://pocketcaps-cms-demo.vercel.app/login)** — log in with `demo@example.com` / `Demo-558383d8!`
 
-This deployment runs in **read-only demo mode**: browse the full dashboard with real seeded data, but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) below for how that works.
+This is a separate, dedicated demo deployment with its own seeded database — not the deployment that ran the real business. It runs in **read-only demo mode**: browse the full dashboard with real seeded data, but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) below for how that works.
 
 ## Why This Project?
 
@@ -187,10 +187,12 @@ With `DEMO_MODE=true`, `middleware.ts` rejects any `POST`/`PUT`/`PATCH`/`DELETE`
 against the admin API (`/api/...`) with a `403`, regardless of who's logged in — login,
 logout, the Stripe webhook, and the cron endpoint are explicitly exempted since those
 aren't a visitor mutating store data. The dashboard itself shows a small banner so it's
-obvious why write actions are disabled. The gating logic lives in
-[lib/demo-mode.ts](lib/demo-mode.ts) as a plain, unit-tested function — it isn't full
-row-level access control, just a blanket switch appropriate for a single seeded demo
-store that isn't holding real customer data.
+obvious why write actions are disabled. The gating logic is unit-tested in
+[lib/demo-mode.ts](lib/demo-mode.ts); `middleware.ts` keeps its own inline copy rather
+than importing it, since importing any local module into this particular middleware
+broke on Vercel's Edge bundler (see the comment at the top of `middleware.ts`). It isn't
+full row-level access control, just a blanket switch appropriate for a single seeded
+demo store that isn't holding real customer data.
 
 ## Production Checklist
 

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 
 import { isAuthenticated } from '@/lib/auth'
 import { CarouselImage } from '@prisma/client'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -21,7 +22,7 @@ export async function GET(
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log('[CAROUSEL_IMAGES_GET]', error)
+    logger.info('[CAROUSEL_IMAGES_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -35,7 +36,7 @@ export async function POST(
     const body = await req.json()
 
     const { images } = body
-    // console.log("image urls: ", images)
+    // logger.info("image urls: ", images)
 
     if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
@@ -59,7 +60,7 @@ export async function POST(
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log('[CAROUSEL_IMAGES_POST]', error)
+    logger.info('[CAROUSEL_IMAGES_POST]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -73,7 +74,7 @@ export async function PATCH(
     const body = await req.json()
 
     const { images } = body
-    // console.log("image urls: ", images)
+    // logger.info("image urls: ", images)
 
     if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
@@ -98,7 +99,7 @@ export async function PATCH(
 
     return NextResponse.json(carouselImages)
   } catch (error) {
-    console.log('[CAROUSEL_IMAGES_PATCH]', error)
+    logger.info('[CAROUSEL_IMAGES_PATCH]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

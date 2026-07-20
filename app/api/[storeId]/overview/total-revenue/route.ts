@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import prismadb from '@/lib/prismadb';
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request, // req is not used but is part of the signature
@@ -62,7 +63,7 @@ export async function GET(
     return NextResponse.json({ totalRevenue });
 
   } catch (error) {
-    console.error('[TOTAL_REVENUE_GET]', error);
+    logger.error('[TOTAL_REVENUE_GET]', error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

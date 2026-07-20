@@ -28,6 +28,11 @@ describe('POST /api/webhook', () => {
     ;(headers as jest.Mock).mockReturnValue({
       get: jest.fn(() => 'test-signature')
     })
+    prismaMock.processedWebhookEvent.create.mockResolvedValue({
+      id: 'pwe-1',
+      stripeEventId: 'evt_1',
+      createdAt: new Date()
+    })
   })
 
   it('rejects requests with an invalid Stripe signature', async () => {
@@ -43,6 +48,7 @@ describe('POST /api/webhook', () => {
 
   it('rejects a completed checkout session with no storeId in metadata', async () => {
     constructEventMock.mockReturnValue({
+      id: 'evt_1',
       type: 'checkout.session.completed',
       data: { object: { id: 'sess_1', metadata: {} } }
     })
@@ -64,6 +70,7 @@ describe('POST /api/webhook', () => {
     }
 
     constructEventMock.mockReturnValue({
+      id: 'evt_1',
       type: 'checkout.session.completed',
       data: {
         object: {
@@ -135,6 +142,7 @@ describe('POST /api/webhook', () => {
 
   it('returns 500 if order processing throws', async () => {
     constructEventMock.mockReturnValue({
+      id: 'evt_1',
       type: 'checkout.session.completed',
       data: {
         object: {
@@ -151,5 +159,29 @@ describe('POST /api/webhook', () => {
     const response = await POST(makeRequest('{}'))
 
     expect(response.status).toBe(500)
+  })
+
+  it('ignores a redelivered event it has already processed, without creating a duplicate order', async () => {
+    constructEventMock.mockReturnValue({
+      id: 'evt_1',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'sess_1',
+          metadata: {
+            storeId: 'store-1',
+            cartItems: JSON.stringify({})
+          }
+        }
+      }
+    })
+    const duplicateError: any = new Error('Unique constraint failed')
+    duplicateError.code = 'P2002'
+    prismaMock.processedWebhookEvent.create.mockRejectedValue(duplicateError)
+
+    const response = await POST(makeRequest('{}'))
+
+    expect(response.status).toBe(200)
+    expect(prismaMock.order.create).not.toHaveBeenCalled()
   })
 })

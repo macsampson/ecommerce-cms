@@ -1,5 +1,6 @@
 import prismadb from "@/lib/prismadb"
 import { NextResponse } from "next/server"
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -18,7 +19,7 @@ export async function GET(
 
     return NextResponse.json(landingBoard)
   } catch (error) {
-    console.log("[LANDINGBOARD_GET]", error)
+    logger.info("[LANDINGBOARD_GET]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }

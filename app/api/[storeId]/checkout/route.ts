@@ -3,6 +3,8 @@ import { stripe } from '@/lib/stripe'
 import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
 import type { Store } from '@prisma/client'
+import { logger } from '@/lib/logger'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 interface CartItem {
   name: string
@@ -47,6 +49,16 @@ export async function POST(
   { params }: { params: { storeId: string } }
 ) {
   try {
+    const ip = getClientIp(req)
+    const { allowed } = rateLimit(`checkout:${ip}`, 20, 60_000)
+
+    if (!allowed) {
+      return new NextResponse('Too many requests. Please try again shortly.', {
+        status: 429,
+        headers: corsHeaders
+      })
+    }
+
     const { storeId } = params
     const body = await req.json()
     const {
@@ -102,7 +114,7 @@ export async function POST(
 
     for (const [productId, item] of Object.entries(cartItems)) {
       // Debug logging
-      console.log('Processing item:', { productId, item })
+      logger.info('Processing item:', { productId, item })
 
       // Ensure price is a valid number (frontend sends priceInCents)
       const priceInCents = item.priceInCents || item.price || 0 // Handle both field names
@@ -116,7 +128,7 @@ export async function POST(
           : parseInt(item.quantity)
 
       if (isNaN(itemPriceInCents) || isNaN(itemQuantity)) {
-        console.error('Invalid price or quantity:', {
+        logger.error('Invalid price or quantity:', {
           productId,
           priceInCents,
           quantity: item.quantity
@@ -194,7 +206,7 @@ export async function POST(
 
     return NextResponse.json({ url: session.url }, { headers: corsHeaders })
   } catch (error: any) {
-    console.log('[CHECKOUT_POST]', error)
+    logger.info('[CHECKOUT_POST]', error)
     return new NextResponse('Internal error', { status: 500 })
   }
 }

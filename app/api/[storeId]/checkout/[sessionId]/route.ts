@@ -1,6 +1,7 @@
 // pages/api/checkout/checkout-session.ts
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
+import { logger } from '@/lib/logger'
 
 // create options method
 export async function OPTIONS(req: Request, res: Response) {}
@@ -10,7 +11,7 @@ export async function GET(
   { params }: { params: { sessionId: string } }
 ) {
   const session_id = params.sessionId
-  // console.log(session_id)
+  // logger.info(session_id)
 
   try {
     const session = await stripe.checkout.sessions.retrieve(

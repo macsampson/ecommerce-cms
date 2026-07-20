@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import prismadb from '@/lib/prismadb';
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -44,7 +45,7 @@ export async function GET(
     return NextResponse.json({ stockCount });
 
   } catch (error) {
-    console.error('[STOCK_COUNT_GET]', error);
+    logger.error('[STOCK_COUNT_GET]', error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

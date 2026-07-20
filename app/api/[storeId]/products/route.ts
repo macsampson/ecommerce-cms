@@ -2,6 +2,7 @@ import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { useParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 export async function POST(
   req: Request,
@@ -99,7 +100,7 @@ export async function POST(
 
     return NextResponse.json(product)
   } catch (error) {
-    console.log('[PRODUCTS_POST]', error)
+    logger.info('[PRODUCTS_POST]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -117,7 +118,7 @@ export async function GET(
     const amountToFetch = searchParams.get('amountToFetch') || undefined
     const excludeProductId = searchParams.get('excludeProductId') || undefined
 
-    // console.log('searchParams: ', searchParams)
+    // logger.info('searchParams: ', searchParams)
 
     if (!params.storeId) {
       return new NextResponse('Store ID is required', { status: 400 })
@@ -152,7 +153,7 @@ export async function GET(
 
     return NextResponse.json(products)
   } catch (error) {
-    console.log('[PRODUCTS_GET]', error)
+    logger.info('[PRODUCTS_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

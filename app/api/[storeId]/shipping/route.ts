@@ -2,6 +2,7 @@
 import { ProductVariation } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 // Helper function to format prices from cents to dollars with 2 decimal places
 const formatPrice = (priceInCents: number): string => {
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
   }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
     await req.json()
 
-  // console.log('CART ITEMS: ', cartItems)
+  // logger.info('CART ITEMS: ', cartItems)
 
   const url = new URL(req.url)
   const storeId = url.pathname.split('/')[2]
@@ -85,23 +86,23 @@ export async function POST(req: Request) {
   )
 
   const totalPrice = cartItems.reduce((acc, cartItem) => {
-    // console.log(cartItem)
+    // logger.info(cartItem)
 
     // Use bundlePrice if available (already calculated by frontend), otherwise calculate from base price
     if (cartItem.bundlePrice) {
-      // console.log('USING BUNDLE PRICE: ', cartItem.bundlePrice)
+      // logger.info('USING BUNDLE PRICE: ', cartItem.bundlePrice)
       return acc + cartItem.bundlePrice
     }
 
     const itemPrice = cartItem.priceInCents * cartItem.cartQuantity
-    // console.log('USING ITEM PRICE: ', itemPrice)
-    // console.log('PRICE: ', cartItem.priceInCents)
-    // console.log('QUANTITY: ', cartItem.cartQuantity)
+    // logger.info('USING ITEM PRICE: ', itemPrice)
+    // logger.info('PRICE: ', cartItem.priceInCents)
+    // logger.info('QUANTITY: ', cartItem.cartQuantity)
 
     return acc + itemPrice
   }, 0)
 
-  // console.log('TOTAL PRICE: ', totalPrice)
+  // logger.info('TOTAL PRICE: ', totalPrice)
 
   // Create line items for Shippo
   const lineItems = cartItems.map((cartItem) => ({
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
     manufacture_country: 'CA'
   }))
 
-  // console.log('TOTAL WEIGHT: ', totalWeight)
+  // logger.info('TOTAL WEIGHT: ', totalWeight)
 
   // Create parcel data
   const parcelData = {
@@ -152,7 +153,7 @@ export async function POST(req: Request) {
   const customsDeclarationInfo =
     shippingSettings.customsDeclaration as CustomsDeclarationInfo
 
-  // console.log(customsDeclarationInfo)
+  // logger.info(customsDeclarationInfo)
 
   if (!customsDeclarationInfo) {
     return NextResponse.json(
@@ -181,7 +182,7 @@ export async function POST(req: Request) {
         }
       : undefined
 
-  // console.log('CUSTOMS DECLARATION: ', customsDeclaration)
+  // logger.info('CUSTOMS DECLARATION: ', customsDeclaration)
 
   const shippoEnabled = shippingSettings.shippoEnabled
   const chitchatsEnabled = shippingSettings.chitchatsEnabled
@@ -217,7 +218,7 @@ export async function POST(req: Request) {
     line_items: lineItems
   }
 
-  // console.log('shipmentObject: ', shipmentObject)
+  // logger.info('shipmentObject: ', shipmentObject)
 
   try {
     // Create separate functions for each shipping provider
@@ -236,7 +237,7 @@ export async function POST(req: Request) {
         )
         const shippoData = await shippoResponse.json()
 
-        // console.log('SHIPPO RATES: ', shippoData.rates)
+        // logger.info('SHIPPO RATES: ', shippoData.rates)
 
         return shippoData.rates.map((rate: ShippoRate) => ({
           id: rate.object_id,
@@ -260,7 +261,7 @@ export async function POST(req: Request) {
           provider_image: rate.provider_image_200
         }))
       } catch (error) {
-        console.error('Shippo rate error:', error)
+        logger.error('Shippo rate error:', error)
         return []
       }
     }
@@ -326,7 +327,7 @@ export async function POST(req: Request) {
           !chitchatsData.shipment ||
           !chitchatsData.shipment.rates
         ) {
-          console.error(
+          logger.error(
             'ChitChats API returned unexpected response:',
             chitchatsData
           )
@@ -346,7 +347,7 @@ export async function POST(req: Request) {
               }
             )
           } catch (deleteError) {
-            console.error('Failed to delete temporary shipment:', deleteError)
+            logger.error('Failed to delete temporary shipment:', deleteError)
             // Non-critical error, continue with returning rates
           }
         }
@@ -376,7 +377,7 @@ export async function POST(req: Request) {
         // Filter out Canada Post rates
         return rates.filter((rate: any) => !rate.title.includes('Canada Post'))
       } catch (error) {
-        console.error('Chit Chats rate error:', error)
+        logger.error('Chit Chats rate error:', error)
         return []
       }
     }
@@ -397,7 +398,7 @@ export async function POST(req: Request) {
       rates: allRates
     })
 
-    // console.log('shipmentData: ', shipmentData.rates)
+    // logger.info('shipmentData: ', shipmentData.rates)
 
     // Format rates for frontend display
     // const formattedRates = shipmentData.rates
@@ -454,7 +455,7 @@ export async function POST(req: Request) {
     //   rates: formattedRates
     // })
   } catch (error) {
-    console.error('Shipping rate error:', error)
+    logger.error('Shipping rate error:', error)
     return NextResponse.json(
       {
         success: false,
@@ -477,7 +478,7 @@ export async function POST(req: Request) {
 //     })
 
 //     const data: ShippoRatesResponse = await response.json()
-//     console.log('data: ', data)
+//     logger.info('data: ', data)
 
 //     // Format the rates for frontend display
 //     if (data.results && data.results.length > 0) {
@@ -524,7 +525,7 @@ export async function POST(req: Request) {
 //       // Sort rates by price
 //       formattedRates.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount))
 
-//       // console.log('formattedRates: ', formattedRates)
+//       // logger.info('formattedRates: ', formattedRates)
 
 //       return NextResponse.json({
 //         success: true,
@@ -540,7 +541,7 @@ export async function POST(req: Request) {
 //       )
 //     }
 //   } catch (error) {
-//     console.error('Shipping rate error:', error)
+//     logger.error('Shipping rate error:', error)
 //     return NextResponse.json(
 //       {
 //         success: false,

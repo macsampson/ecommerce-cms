@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 // Define types for the request body, mirroring what you'd send from the frontend
 // These should align with the types used in your main shipping route (AddressType, CartItemType)
@@ -76,7 +77,7 @@ export async function POST(
     const CHITCHATS_API_KEY = process.env.CHITCHATS_API_KEY
 
     if (!CHITCHATS_API_URL || !CHITCHATS_CLIENT_ID || !CHITCHATS_API_KEY) {
-      console.error('Chit Chats API environment variables are not set')
+      logger.error('Chit Chats API environment variables are not set')
       return NextResponse.json(
         {
           success: false,
@@ -138,7 +139,7 @@ export async function POST(
     const responseData = await response.json()
 
     if (!response.ok || responseData.error) {
-      console.error(
+      logger.error(
         'Chit Chats Create Shipment Error:',
         responseData.error || response.statusText
       )
@@ -161,7 +162,7 @@ export async function POST(
       shipment: responseData.shipment
     })
   } catch (error: any) {
-    console.error('Create Chit Chats Shipment Error:', error)
+    logger.error('Create Chit Chats Shipment Error:', error)
     return NextResponse.json(
       {
         success: false,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { ExchangeRate } from '@prisma/client'
+import { logger } from '@/lib/logger'
 
 interface ExchangeRateResponse {
   result: string
@@ -43,7 +44,7 @@ const fetchExchangeRates = async (
       const rateAge = currentTime.getTime() - existingRate.updatedAt.getTime()
 
       if (!IS_PRODUCTION || rateAge < CACHE_DURATION_MS) {
-        console.log(
+        logger.info(
           'Using cached exchange rates from database for:',
           baseCurrency
         )
@@ -52,18 +53,18 @@ const fetchExchangeRates = async (
     }
 
     // Otherwise fetch fresh data from the API
-    console.log('Fetching exchange rates for:', baseCurrency)
+    logger.info('Fetching exchange rates for:', baseCurrency)
     const response = await fetch(
       `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${baseCurrency}`
     )
-    // console.log('Exchange API Response status:', response.status)
+    // logger.info('Exchange API Response status:', response.status)
 
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`)
     }
 
     const data: ExchangeRateResponse = await response.json()
-    // console.log('Exchange rates:', data.conversion_rates)
+    // logger.info('Exchange rates:', data.conversion_rates)
 
     // Store in database (upsert to create or update)
     await prismadb.exchangeRate.upsert({
@@ -82,7 +83,7 @@ const fetchExchangeRates = async (
 
     return data.conversion_rates
   } catch (error) {
-    console.error('Error fetching exchange rates:', error)
+    logger.error('Error fetching exchange rates:', error)
     return defaultExchangeRates // Fallback to static rates
   }
 }
@@ -122,7 +123,7 @@ export async function GET(
         : null
     })
   } catch (error) {
-    console.error('Error in exchange rate API:', error)
+    logger.error('Error in exchange rate API:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to get exchange rates' },
       { status: 500 }

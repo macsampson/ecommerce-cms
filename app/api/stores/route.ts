@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { isAuthenticated } from "@/lib/auth"
 import prismadb from "@/lib/prismadb"
+import { logger } from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(store)
   } catch (error) {
-    console.log("[STORES_POST]", error)
+    logger.info("[STORES_POST]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }

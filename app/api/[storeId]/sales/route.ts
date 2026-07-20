@@ -1,6 +1,7 @@
 import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 export async function POST(
   req: Request,
@@ -142,7 +143,7 @@ export async function POST(
 
     return NextResponse.json(sale)
   } catch (error) {
-    console.log('[SALES_POST]', error)
+    logger.info('[SALES_POST]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -178,7 +179,7 @@ export async function GET(
 
     return NextResponse.json(sales)
   } catch (error) {
-    console.log('[SALES_GET]', error)
+    logger.info('[SALES_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

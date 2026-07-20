@@ -1,6 +1,7 @@
 import prismadb from "@/lib/prismadb"
 import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -15,7 +16,7 @@ export async function GET(
 
     return NextResponse.json(color)
   } catch (error) {
-    console.log("[COLOR_GET]", error)
+    logger.info("[COLOR_GET]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
@@ -62,7 +63,7 @@ export async function PATCH(
 
     return NextResponse.json(color)
   } catch (error) {
-    console.log("[COLOR_PATCH]", error)
+    logger.info("[COLOR_PATCH]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
@@ -98,7 +99,7 @@ export async function DELETE(
 
     return NextResponse.json(color)
   } catch (error) {
-    console.log("[COLOR_DELETE]", error)
+    logger.info("[COLOR_DELETE]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }

@@ -50,8 +50,9 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 - **Shipping**: Shippo & ChitChats APIs
 - **Images**: Cloudinary
 - **UI**: Tailwind CSS, shadcn/ui (Radix primitives), Zustand, React Hook Form + Zod
+- **Logging**: Structured JSON logs via `pino` on the API layer
 - **Testing**: Jest
-- **CI**: GitHub Actions (lint, typecheck, test, build)
+- **CI/CD**: GitHub Actions — lint, typecheck, test, build gate deploy; CodeQL + Dependabot for security scanning
 
 ## Architecture
 
@@ -92,15 +93,13 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your configuration
 
-# Set up the database
-supabase start
-npx prisma migrate deploy
-
 # Generate an admin password hash
 node scripts/generate-password-hash.js
 
-npm run dev
+npm run dev:docker
 ```
+
+`npm run dev:docker` spins up a local Postgres via Docker Compose, runs migrations, and starts the dev server — no Supabase account needed. If you'd rather use the Supabase CLI (matches the hosted setup more closely), run `supabase start && npx prisma migrate deploy` instead, then `npm run dev`.
 
 Visit `http://localhost:3000/login` to access the admin dashboard.
 
@@ -184,16 +183,16 @@ Create a [Cloudinary](https://cloudinary.com) account (free tier available) and 
 ## Security Notes
 
 - Session-based auth with encrypted, `httpOnly` cookies (`iron-session`)
-- Stripe webhook signatures verified before processing any order
+- Stripe webhook signatures verified before processing any order, with idempotency handling so a redelivered event can't create a duplicate order or double-decrement inventory
 - SQL injection protection via Prisma's parameterized queries
 - Passwords hashed with bcrypt; credentials configured via environment variables, never committed
 - CORS allow-list (`ALLOWED_ORIGINS`) restricting which origins can call the store-scoped API
+- Rate limiting on login and checkout (in-memory, per-IP — see [lib/rate-limit.ts](lib/rate-limit.ts) for the tradeoffs of that approach on serverless)
 
 ## Roadmap / Planned
 
 - Proper drag-to-reorder for billboard carousel images (currently unordered)
 - Loading skeleton components in place of plain "Loading..." states
-- Rate limiting on public-facing endpoints
 
 ## License
 

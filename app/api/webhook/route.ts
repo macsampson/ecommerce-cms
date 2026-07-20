@@ -4,6 +4,7 @@ import Stripe from 'stripe'
 
 import { stripe } from '@/lib/stripe'
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 interface CartItem {
   name: string
@@ -54,11 +55,26 @@ export async function POST(req: Request) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === 'checkout.session.completed') {
-    console.log('Processing checkout.session.completed webhook', session.id)
+    logger.info('Processing checkout.session.completed webhook', session.id)
 
     if (!session?.metadata?.storeId) {
-      console.error('No store ID in session metadata')
+      logger.error('No store ID in session metadata')
       return new NextResponse('Store ID is required', { status: 400 })
+    }
+
+    // Stripe may redeliver the same event (e.g. on a timeout or retry), so
+    // record it before doing any work and bail out if we've already processed it.
+    // Otherwise a redelivered event would create a duplicate order and double-decrement inventory.
+    try {
+      await prismadb.processedWebhookEvent.create({
+        data: { stripeEventId: event.id }
+      })
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        logger.info('Ignoring already-processed webhook event', event.id)
+        return new NextResponse(null, { status: 200 })
+      }
+      throw error
     }
 
     try {
@@ -72,10 +88,10 @@ export async function POST(req: Request) {
         session.metadata.cartItems || '{}'
       )
 
-      console.log('Processing order for store:', storeId)
-      console.log('Cart items:', Object.keys(cartItems).length)
-      console.log('Shipping method:', shippingType.title || 'None')
-      console.log('Currency:', currency.toUpperCase())
+      logger.info('Processing order for store:', storeId)
+      logger.info('Cart items:', Object.keys(cartItems).length)
+      logger.info('Shipping method:', shippingType.title || 'None')
+      logger.info('Currency:', currency.toUpperCase())
 
       // Calculate total price in cents from session
       const totalPriceInCents = Math.round(session.amount_total || 0)
@@ -184,9 +200,9 @@ export async function POST(req: Request) {
 
       // Customer info is stored in the order itself, no separate customer table
 
-      console.log('Order created successfully:', order.id)
+      logger.info('Order created successfully:', order.id)
     } catch (error) {
-      console.error('Error processing webhook:', error)
+      logger.error('Error processing webhook:', error)
       return new NextResponse('Error processing order', { status: 500 })
     }
   }

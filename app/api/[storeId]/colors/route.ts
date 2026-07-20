@@ -2,6 +2,7 @@ import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
 import prismadb from "@/lib/prismadb"
 import { useParams } from "next/navigation"
+import { logger } from '@/lib/logger'
 
 export async function POST(
   req: Request,
@@ -44,7 +45,7 @@ export async function POST(
 
     return NextResponse.json(color)
   } catch (error) {
-    console.log("[COLORS_POST]", error)
+    logger.info("[COLORS_POST]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
@@ -66,7 +67,7 @@ export async function GET(
 
     return NextResponse.json(colors)
   } catch (error) {
-    console.log("[COLORS_GET]", error)
+    logger.info("[COLORS_GET]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }

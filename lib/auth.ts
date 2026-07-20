@@ -1,6 +1,7 @@
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import { logger } from '@/lib/logger'
 
 export interface SessionData {
   isAuthenticated: boolean
@@ -35,7 +36,7 @@ export async function login(email: string, password: string): Promise<boolean> {
   const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
 
   if (!adminEmail || !adminPasswordHash) {
-    console.error('Admin credentials not configured')
+    logger.error('Admin credentials not configured')
     return false
   }
 

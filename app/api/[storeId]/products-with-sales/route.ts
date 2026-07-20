@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { calculateProductSalePrice, SaleInfo } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -122,7 +123,7 @@ export async function GET(
 
     return NextResponse.json(productsWithSales)
   } catch (error) {
-    console.log('[PRODUCTS_WITH_SALES_GET]', error)
+    logger.info('[PRODUCTS_WITH_SALES_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

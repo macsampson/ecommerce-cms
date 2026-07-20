@@ -1,6 +1,7 @@
 // API cron job that handles scheduled tasks
 import { NextRequest, NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 // This cron job runs globally across all stores (there's no per-store schedule):
 // 1. Checks for unpaid orders made in the last hour and reincrements the product quantities
@@ -75,7 +76,7 @@ async function executeCronJob(req: NextRequest) {
         where: { id: sale.id },
         data: { isActive: true }
       })
-      console.log(`Activated sale: ${sale.name}`)
+      logger.info(`Activated sale: ${sale.name}`)
     }
 
     // Deactivate sales that have ended
@@ -93,15 +94,15 @@ async function executeCronJob(req: NextRequest) {
         where: { id: sale.id },
         data: { isActive: false }
       })
-      console.log(`Deactivated sale: ${sale.name}`)
+      logger.info(`Deactivated sale: ${sale.name}`)
     }
 
     const messages = []
     if (orders.length === 0) {
-      console.log('No abandoned orders found')
+      logger.info('No abandoned orders found')
       messages.push('No abandoned orders found')
     } else {
-      console.log(`Released inventory for ${orders.length} abandoned orders`)
+      logger.info(`Released inventory for ${orders.length} abandoned orders`)
       messages.push(`Released inventory for ${orders.length} abandoned orders`)
     }
 
@@ -119,7 +120,7 @@ async function executeCronJob(req: NextRequest) {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error in cron job:', error)
+    logger.error('Error in cron job:', error)
     return NextResponse.json(
       { error: 'Error in cron job execution' },
       { status: 500 }

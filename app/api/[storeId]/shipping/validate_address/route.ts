@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import axios from 'axios'
+import { logger } from '@/lib/logger'
 
 type Address = {
   firstName: string
@@ -74,7 +75,7 @@ const validateAddress = async (
 
     return { isValid }
   } catch (error) {
-    console.error('Address validation error:', error)
+    logger.error('Address validation error:', error)
     return { isValid: false }
   }
 }
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(validationResponse)
   } catch (error) {
-    console.error('Error validating address:', error)
+    logger.error('Error validating address:', error)
     return new NextResponse('Error validating address', { status: 500 })
   }
 }

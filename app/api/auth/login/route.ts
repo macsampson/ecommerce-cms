@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server"
 import { login } from "@/lib/auth"
+import { logger } from '@/lib/logger'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req)
+    const { allowed } = rateLimit(`login:${ip}`, 5, 60_000)
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again in a minute." },
+        { status: 429 }
+      )
+    }
+
     const { email, password } = await req.json()
 
     if (!email || !password) {
@@ -23,7 +35,7 @@ export async function POST(req: Request) {
       )
     }
   } catch (error) {
-    console.error("Login error:", error)
+    logger.error("Login error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

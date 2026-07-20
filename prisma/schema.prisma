@@ -300,3 +300,11 @@ model SaleProduct {
   @@index([productId])
   @@map("sale_product")
 }
+
+model ProcessedWebhookEvent {
+  id             String   @id @default(uuid())
+  stripeEventId  String   @unique @map("stripe_event_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("processed_webhook_event")
+}

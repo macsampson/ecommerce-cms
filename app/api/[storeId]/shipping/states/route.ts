@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 export async function OPTIONS(req: Request) {
   return new NextResponse()
@@ -13,7 +14,7 @@ export async function GET(
   try {
     const { searchParams } = new URL(req.url)
     const countryCode = searchParams.get('countryCode')
-    // console.log('countryCode: ', countryCode)
+    // logger.info('countryCode: ', countryCode)
 
     if (!countryCode) {
       return NextResponse.json(
@@ -44,7 +45,7 @@ export async function GET(
       })
     })
 
-    // console.log('states: ', states)
+    // logger.info('states: ', states)
 
     // turn id into string
     const statesWithStringId = states.map((state) => ({
@@ -57,7 +58,7 @@ export async function GET(
       states: statesWithStringId
     })
   } catch (error) {
-    console.log('[STATES_GET]', error)
+    logger.info('[STATES_GET]', error)
     return NextResponse.json(
       {
         success: false,

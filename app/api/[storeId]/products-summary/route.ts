@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
 import { format } from 'date-fns'
 import { formatter } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 // This should match or be compatible with ProductColumn in the frontend
 export type ApiProductSummary = {
@@ -85,7 +86,7 @@ export async function GET(
 
     return NextResponse.json(formattedProducts)
   } catch (error) {
-    console.error('[PRODUCTS_SUMMARY_GET]', error)
+    logger.error('[PRODUCTS_SUMMARY_GET]', error)
     return new NextResponse('Internal error', { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import prismadb from "@/lib/prismadb"
 import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
@@ -15,7 +16,7 @@ export async function GET(
 
     return NextResponse.json(billboard)
   } catch (error) {
-    console.log("[BILLBOARD_GET]", error)
+    logger.info("[BILLBOARD_GET]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
@@ -94,7 +95,7 @@ export async function PATCH(
 
     return NextResponse.json(billboard)
   } catch (error) {
-    console.log("[BILLBOARD_PATCH]", error)
+    logger.info("[BILLBOARD_PATCH]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
@@ -130,7 +131,7 @@ export async function DELETE(
 
     return NextResponse.json(billboard)
   } catch (error) {
-    console.log("[BILLBOARD_DELETE]", error)
+    logger.info("[BILLBOARD_DELETE]", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }

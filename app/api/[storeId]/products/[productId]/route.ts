@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 
 import { Decimal } from '@prisma/client/runtime/library'
 import axios from 'axios'
+import { logger } from '@/lib/logger'
 // import { v4 as uuidv4 } from 'uuid'
 
 // Function to format prices to 2 decimal places
@@ -110,7 +111,7 @@ export async function GET(
       saleInfo
     })
   } catch (error) {
-    console.log('[PRODUCT_GET]', error)
+    logger.info('[PRODUCT_GET]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
@@ -139,7 +140,7 @@ export async function PATCH(
       isArchived
     } = body
 
-    // console.log('images', images)
+    // logger.info('images', images)
 
     if (!authenticated) return new NextResponse('Unauthenticated', { status: 401 })
 
@@ -190,7 +191,7 @@ export async function PATCH(
       (bundle: { id?: string }) => !bundle.id
     )
 
-    // console.log('existingProduct', existingProduct)
+    // logger.info('existingProduct', existingProduct)
 
     if (!existingProduct) {
       return new NextResponse('Product not found', { status: 404 })
@@ -200,13 +201,13 @@ export async function PATCH(
       (variation: { id: string }) => variation.id
     )
 
-    // console.log('variationsToUpdate', variationsToUpdate)
+    // logger.info('variationsToUpdate', variationsToUpdate)
 
     const variationsToCreate = variations.filter(
       (variation: { id: string }) => !variation.id
     )
 
-    // console.log('variationsToCreate', variationsToCreate)
+    // logger.info('variationsToCreate', variationsToCreate)
 
     // Update the main product
     await prismadb.product.update({
@@ -262,7 +263,7 @@ export async function PATCH(
       }
     })
 
-    // console.log('allImages', allImages)
+    // logger.info('allImages', allImages)
 
     // Update existing images
     for (const image of images) {
@@ -414,10 +415,10 @@ export async function PATCH(
 
     return NextResponse.json(updatedProduct)
   } catch (error) {
-    console.error('[PRODUCT_PATCH] Error updating product:', error)
+    logger.error('[PRODUCT_PATCH] Error updating product:', error)
     // Return more specific error information while maintaining security
     if (error instanceof Error) {
-      console.error('[PRODUCT_PATCH] Error details:', error.message)
+      logger.error('[PRODUCT_PATCH] Error details:', error.message)
     }
     return new NextResponse('Internal Server Error', { status: 500 })
   }
@@ -454,7 +455,7 @@ export async function DELETE(
 
     return NextResponse.json(product)
   } catch (error) {
-    console.log('[PRODUCT_DELETE]', error)
+    logger.info('[PRODUCT_DELETE]', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

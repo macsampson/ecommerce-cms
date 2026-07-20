@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
 import { format } from 'date-fns'
 import { formatter } from '@/lib/utils' // Assuming this is accessible
+import { logger } from '@/lib/logger'
 
 // This should match or be compatible with OrderColumn in the frontend
 export type ApiOrderSummary = {
@@ -117,7 +118,7 @@ export async function GET(
 
     return NextResponse.json(formattedOrders)
   } catch (error) {
-    console.error('[ORDERS_SUMMARY_GET]', error)
+    logger.error('[ORDERS_SUMMARY_GET]', error)
     return new NextResponse('Internal error', { status: 500 })
   }
 }

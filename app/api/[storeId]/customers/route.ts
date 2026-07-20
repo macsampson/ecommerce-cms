@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import prismadb from '@/lib/prismadb'
+import { logger } from '@/lib/logger'
 
 export type ApiCustomer = {
   id: string
@@ -77,7 +78,7 @@ export async function GET(
     const customers: ApiCustomer[] = Object.values(customerMap)
     return NextResponse.json(customers)
   } catch (error) {
-    console.error('[CUSTOMERS_GET]', error)
+    logger.error('[CUSTOMERS_GET]', error)
     return new NextResponse('Internal error', { status: 500 })
   }
 }

@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate && prisma migrate deploy",
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "deploy": "prisma migrate deploy",
     "migrate:rollback": "prisma migrate resolve --rolled-back",
     "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts"

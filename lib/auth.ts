@@ -34,9 +34,6 @@ export async function login(email: string, password: string): Promise<boolean> {
   const adminEmail = process.env.ADMIN_EMAIL
   const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
 
-  console.log('admin email: ', adminEmail)
-  console.log('admin password: ', adminPasswordHash)
-
   if (!adminEmail || !adminPasswordHash) {
     console.error('Admin credentials not configured')
     return false
@@ -49,8 +46,6 @@ export async function login(email: string, password: string): Promise<boolean> {
 
   // Check password
   const isValid = await bcrypt.compare(password, adminPasswordHash)
-
-  // console.log('passwrod is: ' + isValid)
 
   if (isValid) {
     const session = await getSession()
@@ -74,8 +69,8 @@ export async function isAuthenticated(): Promise<boolean> {
   return session.isAuthenticated || false
 }
 
-// Mock function to maintain compatibility with existing code
-// This returns a constant userId since we're single-user now
+// This app is single-admin, so there's no real user table to look up —
+// callers that expect a userId (carried over from a prior multi-tenant auth setup) get a fixed one.
 export function auth() {
   return { userId: 'single-user' }
 }

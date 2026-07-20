@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: 'postgresql://postgres:password@localhost:54322/postgres?schema=public'
+      DIRECT_URL: 'postgresql://postgres:password@localhost:54322/postgres?schema=public'
+      STRIPE_API_KEY: 'sk_test_dummy'
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD_HASH: '$2b$12$abcdefghijklmnopqrstuvwxyz0123456789'
+      SESSION_SECRET: 'ci_placeholder_secret_at_least_32_chars'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

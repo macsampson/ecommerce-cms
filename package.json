@@ -51,7 +51,7 @@
     "react-day-picker": "^9.9.0",
     "react-dom": "^18",
     "react-hook-form": "^7.47.0",
-    "react-hot-toast": "^2.4.1",
+    "react-hot-toast": "^2.6.0",
     "react-spinners": "^0.13.8",
     "recharts": "^2.9.0",
     "shippo": "^1.7.1",

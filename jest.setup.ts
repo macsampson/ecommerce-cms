@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals'
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended'
-import React from 'react'
 
 // Mock Prisma Client
 jest.mock('@/lib/prismadb', () => ({
@@ -8,17 +7,10 @@ jest.mock('@/lib/prismadb', () => ({
   default: mockDeep<typeof import('@prisma/client').PrismaClient>()
 }))
 
-// Mock Clerk's auth
-jest.mock('@clerk/nextjs', () => ({
-  auth: jest.fn(() => ({ userId: 'mock-user-id' })), // Default mock for authenticated user
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
-  UserButton: () =>
-    React.createElement(
-      'div',
-      { 'data-testid': 'user-button-mock' },
-      'UserButtonMock'
-    )
-  // Add other Clerk components or functions you use and want to mock globally
+// Mock our session-based auth (single-admin, cookie-based)
+jest.mock('@/lib/auth', () => ({
+  isAuthenticated: jest.fn(() => Promise.resolve(true)),
+  auth: jest.fn(() => ({ userId: 'single-user' }))
 }))
 
 // Mock next/navigation (if needed for components that use useRouter, usePathname, etc.)

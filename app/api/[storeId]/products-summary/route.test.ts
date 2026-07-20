@@ -20,11 +20,11 @@ describe('GET /api/[storeId]/products-summary', () => {
   const mockUserId = 'mock-user-id';
   const dateNow = new Date();
 
-  const mockProducts: (Product & { category: Category; size: Size | null; color: Color | null; })[] = [
+  const mockProducts: (Product & { category: Category; size: Size | null; color: Color | null; images: { id: string; url: string; ordering: number }[] })[] = [
     {
       id: 'prod1',
       name: 'Product 1',
-      price: { toNumber: () => 19.99 } as any, // Prisma Decimal mock
+      priceInCents: 1999,
       quantity: 10,
       isFeatured: true,
       isArchived: false,
@@ -37,11 +37,12 @@ describe('GET /api/[storeId]/products-summary', () => {
       category: { id: 'cat1', storeId: storeId, billboardId: 'bill1', name: 'Category 1', createdAt: dateNow, updatedAt: dateNow },
       size: { id: 'size1', storeId: storeId, name: 'Small', value: 'S', createdAt: dateNow, updatedAt: dateNow },
       color: { id: 'color1', storeId: storeId, name: 'Red', value: '#FF0000', createdAt: dateNow, updatedAt: dateNow },
+      images: [{ id: 'img1', url: 'https://example.com/prod1.png', ordering: 0 }],
     },
     {
       id: 'prod2',
       name: 'Product 2',
-      price: { toNumber: () => 29.99 } as any,
+      priceInCents: 2999,
       quantity: 5,
       isFeatured: false,
       isArchived: false,
@@ -54,16 +55,16 @@ describe('GET /api/[storeId]/products-summary', () => {
       category: { id: 'cat2', storeId: storeId, billboardId: 'bill2', name: 'Category 2', createdAt: dateNow, updatedAt: dateNow },
       size: null,
       color: null,
+      images: [],
     },
-  ];
+  ] as any;
 
   beforeEach(() => {
     jest.resetAllMocks();
     authMock.mockResolvedValue(true);
   });
 
-  it('should return formatted products when authenticated and store found', async () => {
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
+  it('should return formatted products when authenticated', async () => {
     prismaMock.product.findMany.mockResolvedValue(mockProducts);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
@@ -84,6 +85,7 @@ describe('GET /api/[storeId]/products-summary', () => {
       isArchived: false,
       createdAt: format(dateNow, 'MMMM do, yyyy'),
       updatedAt: format(dateNow, 'MMMM do, yyyy'),
+      imageUrl: 'https://example.com/prod1.png',
     });
     expect(data[1]).toEqual({
       id: 'prod2',
@@ -97,16 +99,16 @@ describe('GET /api/[storeId]/products-summary', () => {
       isArchived: false,
       createdAt: format(dateNow, 'MMMM do, yyyy'),
       updatedAt: format(dateNow, 'MMMM do, yyyy'),
+      imageUrl: null,
     });
     expect(prismaMock.product.findMany).toHaveBeenCalledWith({
       where: { storeId },
-      include: { category: true, size: true, color: true },
+      include: { category: true, size: true, color: true, images: { orderBy: { ordering: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     });
   });
 
   it('should return an empty array if no products are found', async () => {
-    prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
     prismaMock.product.findMany.mockResolvedValue([]);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
@@ -126,19 +128,8 @@ describe('GET /api/[storeId]/products-summary', () => {
     expect(response.status).toBe(401);
   });
   
-  it('should return 403 if store is not found for the user', async () => {
-    prismaMock.store.findFirst.mockResolvedValue(null);
-
-    const request = new Request(`http://localhost/api/${storeId}/products-summary`);
-    const response = await GET(request, { params: { storeId } });
-
-    expect(response.status).toBe(403);
-  });
-
   it('should return 500 if there is an internal server error', async () => {
     prismaMock.product.findMany.mockRejectedValue(new Error('Database error'));
-     prismaMock.store.findFirst.mockResolvedValue({ id: storeId, userId: 'single-user' } as any);
-
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
     const response = await GET(request, { params: { storeId } });

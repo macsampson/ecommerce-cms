@@ -27,12 +27,12 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     const mockOrders = [
       {
         orderItems: [
-          { product: { price: { toNumber: () => 100 } } },
-          { product: { price: { toNumber: () => 50 } } },
+          { product: { priceInCents: 10000 } },
+          { product: { priceInCents: 5000 } },
         ],
       },
       {
-        orderItems: [{ product: { price: { toNumber: () => 200 } } }],
+        orderItems: [{ product: { priceInCents: 20000 } }],
       },
     ];
 

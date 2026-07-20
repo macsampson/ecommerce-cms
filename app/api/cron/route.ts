@@ -2,10 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 
-// This cron job handles:
+// This cron job runs globally across all stores (there's no per-store schedule):
 // 1. Checks for unpaid orders made in the last hour and reincrements the product quantities
 // 2. Activates/deactivates sales based on their scheduled start/end dates
-// TODO: implement a solution to clear by store id - currently all stores in the database are checked?
 export async function POST(req: NextRequest) {
   return executeCronJob(req)
 }

@@ -1,109 +1,122 @@
 # 🛒 Self-Hosted E-Commerce CMS
 
-A complete, self-hosted e-commerce platform that provides an alternative to Etsy and Shopify. Built for individuals and small businesses who want full control over their online store without monthly fees or transaction limits.
+[![CI](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![CMS Dashboard](https://github.com/macsampson/ecommerce-cms/blob/main/public/cms.gif)
-_Demo CMS Dashboard_
+A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
+
+![CMS Dashboard](public/cms.gif)
+_Demo: managing products, orders, and billboards from the dashboard_
+
+> **Note:** This repo is the CMS/admin side of the platform — the customer-facing storefront that reads from this API lives in a separate repository.
 
 ## Why This Project?
 
-**I was tired of paying monthly fees and high transaction fees to Etsy or Shopify, so I built this app**
-
-This project gives you:
+I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify, so I built this instead. It gives you:
 
 - **Complete ownership** of your store and customer data
-- **Zero monthly fees** - host it yourself or deploy for free on Vercel
-- **No transaction limits** - keep 100% of your profits (minus payment processing)
-- **Full customization** - modify anything to fit your brand
-- **Professional features** - automated inventory management, order tracking, shipping integration
-- **Multi-store capability** - run multiple brands from one installation
+- **Zero monthly fees** — host it yourself or deploy for free on Vercel
+- **No transaction limits** — keep 100% of your profits (minus payment processing)
+- **Full customization** — modify anything to fit your brand
+- **Multi-store capability** — run multiple brands from one installation
 
 ## Features
 
-### **Store Management**
+**Store & Product Management**
+- Multiple stores from a single dashboard
+- Products with variations (size/color), image galleries via Cloudinary, categories
+- Quantity-based bundle discounts
+- Time-boxed sales and promotions (store-wide or per-product), auto activated/deactivated on a schedule
 
-- Multiple stores from single dashboard
-- SEO-optimized product pages
-- Mobile-responsive design
+**Payments & Orders**
+- Stripe Checkout integration with signature-verified webhook fulfillment
+- Order lifecycle tracking, abandoned-order cleanup with automatic inventory release
+- Automated inventory decrement/increment on purchase and cancellation
 
-### **Product Management**
+**Shipping & Fulfillment**
+- Live shipping rate calculation and label generation via Shippo and ChitChats
+- Address validation and customs declarations for international orders
+- Multi-currency support with stored live exchange rates
 
-- Unlimited products and variations
-- Image galleries with Cloudinary integration
-- Product bundles and categories
-- Sales and promotions with percentage-based discounts
-- Store-wide or product-specific sales
-
-### **Payments & Orders**
-
-- Stripe integration for secure payments
-- Complete order lifecycle management
-- Customer management system
-- Automated inventory updates
-
-### **Shipping & Fulfillment**
-
-- Integrated shipping rate calculator (Shippo & ChitChats)
-- Automatic shipping label generation
-- Multi-currency support with live exchange rates
-- Order tracking and notifications
-
-### **Analytics & Insights**
-
-- Revenue and sales display
-- Customer insights
+**Analytics**
+- Revenue, sales, and stock overview widgets on the dashboard
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Database**: PostgreSQL (Supabase recommended)
-- **Authentication**: Iron Session (secure, cookie-based)
+- **Framework**: Next.js 14 (App Router), TypeScript
+- **Database**: PostgreSQL via Prisma (Supabase recommended)
+- **Auth**: Single-admin session auth with `iron-session` (encrypted, cookie-based) + bcrypt
 - **Payments**: Stripe
-- **Hosting**: Deploy anywhere (Vercel, Railway, self-hosted)
-- **Images**: Cloudinary
 - **Shipping**: Shippo & ChitChats APIs
+- **Images**: Cloudinary
+- **UI**: Tailwind CSS, shadcn/ui (Radix primitives), Zustand, React Hook Form + Zod
+- **Testing**: Jest
+- **CI**: GitHub Actions (lint, typecheck, test, build)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Admin[Admin Browser] -->|Login / Manage| CMS[Next.js CMS<br/>this repo]
+    Storefront[Customer Storefront<br/>separate repo] -->|REST API<br/>CORS-restricted| CMS
+
+    CMS -->|Prisma ORM| DB[(PostgreSQL<br/>Supabase)]
+    CMS -->|Checkout + Webhook| Stripe[Stripe]
+    CMS -->|Rates + Labels| Shippo[Shippo / ChitChats]
+    CMS -->|Image uploads| Cloudinary[Cloudinary]
+    Cron[Scheduled Cron Job] -->|Abandoned order cleanup<br/>Sale activation| CMS
+```
+
+The CMS exposes a store-scoped REST API (`/api/[storeId]/...`) that the separate storefront app consumes; `middleware.ts` enforces CORS against an allow-list for those routes while the dashboard itself sits behind session auth. Stripe webhooks create orders and decrement inventory; a cron job (`app/api/cron`) periodically releases inventory held by abandoned checkouts and flips sales in/out of `active` based on their scheduled dates.
 
 ## Quick Start
 
-### Option 1: Deploy to Vercel (Recommended)
+### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/ecommerce-cms)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/ecommerce-cms)
 
 1. Click "Deploy with Vercel" and connect your GitHub
 2. Set up a Supabase database (free tier available)
-3. Configure environment variables in Vercel
-4. Your CMS will be live in minutes!
+3. Configure environment variables in Vercel (see below)
+4. Your CMS will be live in minutes
 
 ### Option 2: Local Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/ecommerce-cms
+git clone https://github.com/macsampson/ecommerce-cms
 cd ecommerce-cms
 
-# Install dependencies
 npm install
-
-# Set up database
-supabase start
-npx prisma migrate deploy
 
 # Set up environment variables
 cp .env.example .env.local
 # Edit .env.local with your configuration
 
-# Generate admin password
+# Set up the database
+supabase start
+npx prisma migrate deploy
+
+# Generate an admin password hash
 node scripts/generate-password-hash.js
 
-# Start development server
 npm run dev
 ```
 
-Visit `http://localhost:3000/login` to access your admin dashboard.
+Visit `http://localhost:3000/login` to access the admin dashboard.
+
+## Testing
+
+```bash
+npm test        # run the Jest suite
+npm run lint     # ESLint
+npm run typecheck # tsc --noEmit
+```
+
+Tests cover the money-critical paths most likely to break silently: the Stripe webhook order-creation/inventory-decrement flow, and the read-side summary/revenue endpoints. CI runs lint, typecheck, tests, and a production build on every push and PR to `main`.
 
 ## Environment Configuration
 
-Create a `.env.local` file with these required variables:
+Create a `.env.local` file with these variables:
 
 ```env
 # Database (Supabase)
@@ -125,73 +138,63 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
 
 # API Configuration
 ALLOWED_ORIGINS="https://yourdomain.com,https://yourstore.com"
+
+# Optional: Shipping & exchange rate APIs
+SHIPPO_API_KEY=""
+CHITCHATS_API_KEY=""
+EXCHANGE_RATE_API_KEY=""
 ```
 
 ## Setup Guide
 
-### 1. Database Setup
+### 1. Database
 
-**Option A: Supabase (Recommended)**
+**Supabase (recommended):** create a project at [supabase.com](https://supabase.com), copy the database URLs into your env vars, then run `npx prisma migrate deploy`.
 
-1. Create account at [supabase.com](https://supabase.com)
-2. Create new project
-3. Copy database URLs to environment variables
-4. Run migrations: `npx prisma migrate deploy`
+**Self-hosted PostgreSQL:** point `DATABASE_URL`/`DIRECT_URL` at your own instance and run the same migration command.
 
-**Option B: Self-hosted PostgreSQL**
-
-1. Install PostgreSQL locally or on your server
-2. Create database and user
-3. Update DATABASE_URL in environment variables
-4. Run migrations: `npx prisma migrate deploy`
-
-### 2. Authentication Setup
-
-Generate your admin password hash:
+### 2. Authentication
 
 ```bash
 node scripts/generate-password-hash.js
-# Enter your desired password when prompted
-# Copy the generated hash to ADMIN_PASSWORD_HASH in .env.local
+# Enter your desired password, copy the hash to ADMIN_PASSWORD_HASH
 ```
 
-### 3. Payment Setup
+This app is single-admin: one email + password hash configured via environment variables, not a user table.
 
-1. Create [Stripe](https://stripe.com) account
-2. Get API keys from Stripe dashboard
-3. Set up webhook endpoint: `https://yourdomain.com/api/webhook`
-4. Add webhook events: `payment_intent.succeeded`, `checkout.session.completed`
+### 3. Payments
 
-### 4. Image Storage Setup
+Create a [Stripe](https://stripe.com) account, grab your API keys, and set up a webhook endpoint at `https://yourdomain.com/api/webhook` listening for `checkout.session.completed`.
 
-1. Create [Cloudinary](https://cloudinary.com) account (free tier available)
-2. Get cloud name from dashboard
-3. Add to NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+### 4. Images
+
+Create a [Cloudinary](https://cloudinary.com) account (free tier available) and set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
 
 ## Production Checklist
 
-Before going live:
+- [ ] Production database configured (Supabase/PostgreSQL)
+- [ ] `SESSION_SECRET` set to a secure 32+ character value
+- [ ] Stripe webhook endpoint configured
+- [ ] Cloudinary configured for image storage
+- [ ] `ALLOWED_ORIGINS` set for your storefront domain(s)
+- [ ] Payment flow tested end-to-end
+- [ ] SSL certificate configured
+- [ ] Backup strategy in place for the database
 
-- [ ] Set up production database (Supabase/PostgreSQL)
-- [ ] Configure secure SESSION_SECRET (32+ characters)
-- [ ] Set up Stripe webhook endpoint
-- [ ] Configure Cloudinary for image storage
-- [ ] Set ALLOWED_ORIGINS for your domain(s)
-- [ ] Test payment flow end-to-end
-- [ ] Set up SSL certificate
-- [ ] Configure backup strategy
+## Security Notes
 
-## Security Features
+- Session-based auth with encrypted, `httpOnly` cookies (`iron-session`)
+- Stripe webhook signatures verified before processing any order
+- SQL injection protection via Prisma's parameterized queries
+- Passwords hashed with bcrypt; credentials configured via environment variables, never committed
+- CORS allow-list (`ALLOWED_ORIGINS`) restricting which origins can call the store-scoped API
 
-- Session-based authentication with encrypted cookies
-- CSRF protection on all forms
-- SQL injection protection via Prisma ORM
-- Environment-based configuration
-- Secure password hashing with bcrypt
-- Rate limiting on sensitive endpoints
+## Roadmap / Planned
+
+- Proper drag-to-reorder for billboard carousel images (currently unordered)
+- Loading skeleton components in place of plain "Loading..." states
+- Rate limiting on public-facing endpoints
 
 ## License
 
-MIT License
-
----
+[MIT](LICENSE)

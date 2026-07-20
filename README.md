@@ -10,6 +10,12 @@ _Demo: managing products, orders, and billboards from the dashboard_
 
 > **Note:** This repo is the CMS/admin side of the platform — the customer-facing storefront that reads from this API lives in a separate repository.
 
+## Live Demo
+
+**[ecommerce-admin-wine-delta.vercel.app](https://ecommerce-admin-wine-delta.vercel.app/login)** — log in with `demo@example.com` / `TODO_SET_DEMO_PASSWORD`
+
+This deployment runs in **read-only demo mode**: browse the full dashboard with real seeded data, but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) below for how that works.
+
 ## Why This Project?
 
 I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify, so I built this instead. It gives you:
@@ -168,6 +174,23 @@ Create a [Stripe](https://stripe.com) account, grab your API keys, and set up a 
 ### 4. Images
 
 Create a [Cloudinary](https://cloudinary.com) account (free tier available) and set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
+
+## Demo Mode
+
+Set `DEMO_MODE="true"` to run a deployment as a public, read-only showcase:
+
+```bash
+npm run seed-demo   # populates a "Demo Store" with sample products, a billboard, and a sale
+```
+
+With `DEMO_MODE=true`, `middleware.ts` rejects any `POST`/`PUT`/`PATCH`/`DELETE` request
+against the admin API (`/api/...`) with a `403`, regardless of who's logged in — login,
+logout, the Stripe webhook, and the cron endpoint are explicitly exempted since those
+aren't a visitor mutating store data. The dashboard itself shows a small banner so it's
+obvious why write actions are disabled. The gating logic lives in
+[lib/demo-mode.ts](lib/demo-mode.ts) as a plain, unit-tested function — it isn't full
+row-level access control, just a blanket switch appropriate for a single seeded demo
+store that isn't holding real customer data.
 
 ## Production Checklist
 

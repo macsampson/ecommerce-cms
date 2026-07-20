@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import prismadb from '@/lib/prismadb'
 import { isAuthenticated } from '@/lib/auth'
+import { isDemoModeEnabled } from '@/lib/demo-mode'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { MainNav } from '@/components/main-nav'
@@ -21,6 +22,11 @@ const Navbar = async () => {
 
   return (
     <div className="border-b">
+      {isDemoModeEnabled() && (
+        <div className="bg-yellow-500/90 px-2 py-1.5 text-center text-xs font-medium text-black sm:text-sm">
+          Public read-only demo — changes you make here won't be saved.
+        </div>
+      )}
       <div className="flex h-16 items-center justify-between px-2 sm:px-4">
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* <StoreSwitcher items={stores} /> */}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { isDemoWriteBlocked } from "@/lib/demo-mode"
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3001',
@@ -12,7 +13,17 @@ export const config = {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
+
+  // Public read-only demo: reject any write against the admin API before it reaches
+  // a route handler, so a visitor can click around freely without being able to
+  // vandalize the demo data for the next visitor.
+  if (isDemoWriteBlocked(request.method, pathname)) {
+    return NextResponse.json(
+      { error: 'This is a public read-only demo — write actions are disabled.' },
+      { status: 403 }
+    )
+  }
+
   // Handle store-scoped API routes with CORS validation
   if (pathname.match(/^\/api\/[a-f0-9-]+\//)) {
     const origin = request.headers.get('origin')

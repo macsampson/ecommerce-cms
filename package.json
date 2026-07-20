@@ -15,7 +15,8 @@
     "postinstall": "prisma generate",
     "deploy": "prisma migrate deploy",
     "migrate:rollback": "prisma migrate resolve --rolled-back",
-    "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts"
+    "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
+    "seed-demo": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-demo.ts"
   },
   "prisma": {
     "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed-dev.ts"

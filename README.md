@@ -1,4 +1,4 @@
-# 🛒 Self-Hosted E-Commerce CMS
+# Self-Hosted E-Commerce CMS
 
 [![CI](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

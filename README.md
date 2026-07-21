@@ -4,7 +4,7 @@ Self-hosted e-commerce CMS
 
 [![CI](https://github.com/macsampson/cargobay/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/cargobay/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://cargobay-demo.vercel.app/login)
+<a href="https://cargobay-demo.vercel.app/login" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
 A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
@@ -15,9 +15,8 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## 🔗 Live Demo
 
-**[cargobay-demo.vercel.app](https://cargobay-demo.vercel.app/login)**
+**<a href="https://cargobay-demo.vercel.app/login" target="_blank" rel="noopener noreferrer">cargobay-demo.vercel.app</a>**
 
-This is a separate, dedicated demo deployment with its own seeded database — not the deployment that ran the real business. It runs in **read-only demo mode**: browse the full dashboard with real seeded data (products, orders, customers, a populated revenue graph), but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) for how that works.
 
 ## Contents
 
@@ -31,7 +30,6 @@ This is a separate, dedicated demo deployment with its own seeded database — n
   - [Quick Start](#quick-start)
   - [Environment Configuration](#environment-configuration)
   - [Setup Guide](#setup-guide)
-  - [Demo Mode](#demo-mode)
   - [Production Checklist](#production-checklist)
 - [Roadmap / Planned](#roadmap--planned)
 
@@ -206,16 +204,6 @@ Create a [Stripe](https://stripe.com) account, grab your API keys, and set up a 
 **4. Images**
 
 Create a [Cloudinary](https://cloudinary.com) account (free tier available) and set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
-
-### Demo Mode
-
-Set `DEMO_MODE="true"` to run a deployment as a public, read-only showcase:
-
-```bash
-npm run seed-demo   # populates a "Demo Store" with sample products, orders, customers, and a sale
-```
-
-With `DEMO_MODE=true`, `middleware.ts` rejects any `POST`/`PUT`/`PATCH`/`DELETE` request against the admin API (`/api/...`) with a `403`, regardless of who's logged in — login, logout, the Stripe webhook, and the cron endpoint are explicitly exempted since those aren't a visitor mutating store data. The dashboard itself shows a small banner so it's obvious why write actions are disabled. The gating logic is unit-tested in [lib/demo-mode.ts](lib/demo-mode.ts); `middleware.ts` keeps its own inline copy rather than importing it, since importing any local module into this particular middleware broke on Vercel's Edge bundler (see the comment at the top of `middleware.ts`). It isn't full row-level access control, just a blanket switch appropriate for a single seeded demo store that isn't holding real customer data.
 
 ### Production Checklist
 

@@ -1,10 +1,10 @@
-# Cargobay
+# Stockroom
 
 Self-hosted e-commerce CMS
 
-[![CI](https://github.com/macsampson/cargobay/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/cargobay/actions/workflows/ci.yml)
+[![CI](https://github.com/macsampson/stockroom/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/stockroom/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-<a href="https://cargobay-demo.vercel.app/login" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
+<a href="https://stockroom-demo.vercel.app/login" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
 A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
@@ -15,7 +15,7 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## 🔗 Live Demo
 
-**<a href="https://cargobay-demo.vercel.app/login" target="_blank" rel="noopener noreferrer">cargobay-demo.vercel.app</a>**
+**<a href="https://stockroom-demo.vercel.app/login" target="_blank" rel="noopener noreferrer">stockroom-demo.vercel.app</a>**
 
 
 ## Contents
@@ -120,7 +120,7 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 
 #### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/cargobay)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/stockroom)
 
 1. Click "Deploy with Vercel" and connect your GitHub
 2. Set up a Supabase database (free tier available)
@@ -130,8 +130,8 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 #### Option 2: Local Development
 
 ```bash
-git clone https://github.com/macsampson/cargobay
-cd cargobay
+git clone https://github.com/macsampson/stockroom
+cd stockroom
 
 npm install
 

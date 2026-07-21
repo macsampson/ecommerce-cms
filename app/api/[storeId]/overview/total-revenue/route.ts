@@ -4,9 +4,11 @@ import prismadb from '@/lib/prismadb';
 import { logger } from '@/lib/logger'
 
 export async function GET(
-  req: Request, // req is not used but is part of the signature
-  { params }: { params: { storeId: string } }
+  // req is not used but is part of the signature
+  req: Request,
+  props: { params: Promise<{ storeId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated();
 

@@ -5,10 +5,8 @@ import { isAuthenticated } from '@/lib/auth'
 import { CarouselImage } from '@prisma/client'
 import { logger } from '@/lib/logger'
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     if (!params.storeId) {
       return new NextResponse('Store ID is required', { status: 400 })
@@ -27,10 +25,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function POST(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()
@@ -65,10 +61,8 @@ export async function POST(
   }
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()

@@ -16,11 +16,12 @@ const getStore = cache((storeId: string) =>
   })
 )
 
-export async function generateMetadata({
-  params
-}: {
-  params: { storeId: string }
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ storeId: string }>
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const store = await getStore(params.storeId)
 
   return {
@@ -31,13 +32,18 @@ export async function generateMetadata({
   }
 }
 
-export default async function DashboardLayout({
-  children,
-  params
-}: {
-  children: React.ReactNode
-  params: { storeId: string }
-}) {
+export default async function DashboardLayout(
+  props: {
+    children: React.ReactNode
+    params: Promise<{ storeId: string }>
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const authenticated = await isAuthenticated()
 
   if (!authenticated) {

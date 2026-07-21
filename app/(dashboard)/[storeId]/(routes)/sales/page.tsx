@@ -3,11 +3,12 @@ import prismadb from "@/lib/prismadb"
 import { SaleClient } from "./components/client"
 import { SaleColumn } from "./components/columns"
 
-const SalesPage = async ({
-  params
-}: {
-  params: { storeId: string }
-}) => {
+const SalesPage = async (
+  props: {
+    params: Promise<{ storeId: string }>
+  }
+) => {
+  const params = await props.params;
   const sales = await prismadb.sale.findMany({
     where: {
       storeId: params.storeId

@@ -90,7 +90,7 @@ const fetchExchangeRates = async (
 
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string } }
+  props: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const { searchParams } = new URL(req.url)

@@ -9,7 +9,8 @@ interface SettingsPageProps {
   }
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = async ({ params }) => {
+const SettingsPage: React.FC<SettingsPageProps> = async props => {
+  const params = await props.params;
   const authenticated = await isAuthenticated()
   if (!authenticated) {
     redirect("/login")

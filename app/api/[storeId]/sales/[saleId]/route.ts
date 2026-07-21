@@ -5,8 +5,9 @@ import { logger } from '@/lib/logger'
 
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string; saleId: string } }
+  props: { params: Promise<{ storeId: string; saleId: string }> }
 ) {
+  const params = await props.params;
   try {
     if (!params.saleId) {
       return new NextResponse('Sale ID is required', { status: 400 })
@@ -40,8 +41,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; saleId: string } }
+  props: { params: Promise<{ storeId: string; saleId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()
@@ -220,8 +222,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; saleId: string } }
+  props: { params: Promise<{ storeId: string; saleId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
 

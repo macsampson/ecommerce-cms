@@ -3,10 +3,8 @@ import prismadb from '@/lib/prismadb'
 import { calculateProductSalePrice, SaleInfo } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const { searchParams } = new URL(req.url)
     const categoryId = searchParams.get('categoryId') || undefined

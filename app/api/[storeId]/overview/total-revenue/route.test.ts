@@ -40,7 +40,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     prismaMock.order.findMany.mockResolvedValue(mockOrders as any);
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -58,7 +58,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     prismaMock.order.findMany.mockResolvedValue([]); // No orders
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -69,7 +69,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     authMock.mockResolvedValue(false); // Simulate unauthenticated user
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     
     expect(response.status).toBe(401);
     const text = await response.text();
@@ -80,7 +80,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     // This case is mostly for type safety / completeness, as Next.js routing handles param presence.
     const request = new Request(`http://localhost/api//overview/total-revenue`); // No storeId
     // @ts-ignore // Simulating missing params for test
-    const response = await GET(request, { params: {} }); 
+    const response = await GET(request, { params: Promise.resolve({}) });
     expect(response.status).toBe(400);
   });
   
@@ -88,7 +88,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     prismaMock.store.findFirst.mockResolvedValue(null); // Store not found or not owned by user
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
 
     expect(response.status).toBe(403);
     const text = await response.text();
@@ -99,7 +99,7 @@ describe('GET /api/[storeId]/overview/total-revenue', () => {
     prismaMock.store.findFirst.mockRejectedValue(new Error('Database error')); // Simulate DB error
 
     const request = new Request(`http://localhost/api/${storeId}/overview/total-revenue`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
 
     expect(response.status).toBe(500);
     const text = await response.text();

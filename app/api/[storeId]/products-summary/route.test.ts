@@ -68,7 +68,7 @@ describe('GET /api/[storeId]/products-summary', () => {
     prismaMock.product.findMany.mockResolvedValue(mockProducts);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -112,7 +112,7 @@ describe('GET /api/[storeId]/products-summary', () => {
     prismaMock.product.findMany.mockResolvedValue([]);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -123,7 +123,7 @@ describe('GET /api/[storeId]/products-summary', () => {
     authMock.mockResolvedValue(false);
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
     
     expect(response.status).toBe(401);
   });
@@ -132,7 +132,7 @@ describe('GET /api/[storeId]/products-summary', () => {
     prismaMock.product.findMany.mockRejectedValue(new Error('Database error'));
 
     const request = new Request(`http://localhost/api/${storeId}/products-summary`);
-    const response = await GET(request, { params: { storeId } });
+    const response = await GET(request, { params: Promise.resolve({ storeId }) });
 
     expect(response.status).toBe(500);
   });

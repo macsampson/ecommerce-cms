@@ -1,9 +1,11 @@
-import { isDemoModeEnabled, isDemoWriteBlocked } from './demo-mode'
+import { isDemoModeEnabled, isDemoWriteBlocked, isPublicDemoModeEnabled } from './demo-mode'
 
 const ORIGINAL_ENV = process.env.DEMO_MODE
+const ORIGINAL_PUBLIC_ENV = process.env.NEXT_PUBLIC_DEMO_MODE
 
 afterEach(() => {
   process.env.DEMO_MODE = ORIGINAL_ENV
+  process.env.NEXT_PUBLIC_DEMO_MODE = ORIGINAL_PUBLIC_ENV
 })
 
 describe('isDemoModeEnabled', () => {
@@ -18,6 +20,27 @@ describe('isDemoModeEnabled', () => {
 
     process.env.DEMO_MODE = 'yes'
     expect(isDemoModeEnabled()).toBe(false)
+  })
+})
+
+describe('isPublicDemoModeEnabled', () => {
+  it('is false when NEXT_PUBLIC_DEMO_MODE is unset', () => {
+    delete process.env.NEXT_PUBLIC_DEMO_MODE
+    expect(isPublicDemoModeEnabled()).toBe(false)
+  })
+
+  it('is true only when NEXT_PUBLIC_DEMO_MODE is exactly "true"', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    expect(isPublicDemoModeEnabled()).toBe(true)
+
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'yes'
+    expect(isPublicDemoModeEnabled()).toBe(false)
+  })
+
+  it('is independent of the server-only DEMO_MODE var', () => {
+    process.env.DEMO_MODE = 'true'
+    delete process.env.NEXT_PUBLIC_DEMO_MODE
+    expect(isPublicDemoModeEnabled()).toBe(false)
   })
 })
 

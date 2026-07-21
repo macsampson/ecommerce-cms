@@ -72,3 +72,36 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
           vercel-version: latest
+
+  deploy-demo:
+    needs: ci
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DEMO_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run database migrations against the demo database
+        run: npm run deploy
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to Vercel (demo project)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.DEMO_VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          vercel-version: latest

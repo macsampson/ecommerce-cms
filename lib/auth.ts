@@ -2,6 +2,7 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import { logger } from '@/lib/logger'
+import { isDemoModeEnabled } from '@/lib/demo-mode'
 
 export interface SessionData {
   isAuthenticated: boolean
@@ -66,6 +67,11 @@ export async function logout() {
 
 // Utility function to check if user is authenticated
 export async function isAuthenticated(): Promise<boolean> {
+  // The public demo publishes its own credentials in the README, so the login
+  // gate adds friction without adding security — writes are independently
+  // blocked in demo mode regardless of auth state (see lib/demo-mode.ts).
+  if (isDemoModeEnabled()) return true
+
   const session = await getSession()
   return session.isAuthenticated || false
 }

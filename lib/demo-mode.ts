@@ -9,6 +9,14 @@ export function isDemoModeEnabled(): boolean {
   return process.env.DEMO_MODE === 'true'
 }
 
+// Client components can't read the server-only DEMO_MODE var, and image uploads go
+// straight from the browser to Cloudinary — they never hit our /api/... routes, so
+// the middleware write-block (isDemoWriteBlocked) never sees them. This is the one
+// place client code needs to know demo mode is on, hence the separate NEXT_PUBLIC_ var.
+export function isPublicDemoModeEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+}
+
 /**
  * Returns true if this request should be rejected because the deployment is running
  * in read-only demo mode. Kept as a pure function (no NextRequest/NextResponse) so it

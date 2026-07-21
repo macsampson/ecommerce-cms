@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { ImagePlus, Trash, GripVertical } from 'lucide-react'
 import { Input } from './input'
+import { isPublicDemoModeEnabled } from '@/lib/demo-mode'
 
 interface ImageUploadProps {
   disabled?: boolean
@@ -195,30 +196,51 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      <CldUploadWidget onUpload={onUpload} uploadPreset="ivwjxqjz">
-        {({ open }) => {
-          const onClick = () => {
-            open()
-          }
+      {isPublicDemoModeEnabled() ? (
+        // Uploads go straight from the browser to Cloudinary — they never hit our
+        // /api/... routes, so the demo-mode write-block in middleware.ts can't see
+        // them. Don't even mount the upload widget here rather than rely on `disabled`
+        // alone, since that's just a button attribute, not something that stops a
+        // determined visitor from triggering the widget another way.
+        <Button
+          type="button"
+          disabled
+          variant="outline"
+          className="h-32 w-full border-2 border-dashed border-muted-foreground/25"
+        >
+          <div className="flex flex-col items-center space-y-2">
+            <ImagePlus className="h-8 w-8 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Image upload disabled in read-only demo
+            </span>
+          </div>
+        </Button>
+      ) : (
+        <CldUploadWidget onUpload={onUpload} uploadPreset="ivwjxqjz">
+          {({ open }) => {
+            const onClick = () => {
+              open()
+            }
 
-          return (
-            <Button
-              type="button"
-              disabled={disabled}
-              variant="outline"
-              onClick={onClick}
-              className="h-32 w-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
-            >
-              <div className="flex flex-col items-center space-y-2">
-                <ImagePlus className="h-8 w-8 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Add Images
-                </span>
-              </div>
-            </Button>
-          )
-        }}
-      </CldUploadWidget>
+            return (
+              <Button
+                type="button"
+                disabled={disabled}
+                variant="outline"
+                onClick={onClick}
+                className="h-32 w-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Add Images
+                  </span>
+                </div>
+              </Button>
+            )
+          }}
+        </CldUploadWidget>
+      )}
     </div>
   )
 }

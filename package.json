@@ -13,7 +13,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
-    "deploy": "prisma migrate deploy",
+    "deploy": "DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL_UNPOOLED}\" prisma migrate deploy",
     "migrate:rollback": "prisma migrate resolve --rolled-back",
     "seed-dev": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
     "seed-demo": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-demo.ts"

@@ -73,9 +73,11 @@ export async function isAuthenticated(): Promise<boolean> {
   if (isDemoModeEnabled()) return true
 
   // Skip the login gate for local development so the dashboard is reachable
-  // without needing the admin password. `next build`/`next start` always set
-  // NODE_ENV=production, so this never applies to a deployed instance.
-  if (process.env.NODE_ENV !== 'production') return true
+  // without needing the admin password. This is an explicit opt-in (rather
+  // than keying off NODE_ENV) so a misconfigured or non-Vercel deployment
+  // fails closed — auth is enforced unless this is deliberately set, never
+  // because some other env var was left unset.
+  if (process.env.DISABLE_AUTH_FOR_LOCAL_DEV === 'true') return true
 
   const session = await getSession()
   return session.isAuthenticated || false

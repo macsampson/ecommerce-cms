@@ -24,10 +24,10 @@ export async function generateMetadata({
   const store = await getStore(params.storeId)
 
   return {
-    title: store ? `${store.name} — Admin` : 'PocketCaps Admin',
+    title: store ? `${store.name} — Admin` : 'Cargobay',
     description: store
       ? `Order, inventory, and fulfillment console for ${store.name}`
-      : 'Order, inventory, and fulfillment console for PocketCaps'
+      : 'Order, inventory, and fulfillment console for Cargobay'
   }
 }
 

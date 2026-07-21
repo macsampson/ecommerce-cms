@@ -20,8 +20,8 @@ const data = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Cargobay Admin',
-  description: 'Order, inventory, and fulfillment console for Cargobay'
+  title: 'Stockroom Admin',
+  description: 'Order, inventory, and fulfillment console for Stockroom'
 }
 
 export default function RootLayout({

@@ -91,7 +91,7 @@ export function DataTable<TData, TValue>({
           className="w-full max-w-xs sm:max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

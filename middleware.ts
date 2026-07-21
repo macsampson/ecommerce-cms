@@ -74,6 +74,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Skip the login gate for local development, matching the isAuthenticated()
+  // bypass in lib/auth.ts. `next build`/`next start` always set
+  // NODE_ENV=production, so this never applies to a deployed instance.
+  if (process.env.NODE_ENV !== 'production') {
+    if (pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    return NextResponse.next()
+  }
+
   // Allow other public routes
   if (
     pathname.startsWith("/api/webhook") ||

@@ -22,7 +22,7 @@ export const sessionOptions = {
 }
 
 export async function getSession() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions)
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
 
   // Set default session values
   if (!session.isAuthenticated) {
@@ -71,6 +71,11 @@ export async function isAuthenticated(): Promise<boolean> {
   // gate adds friction without adding security — writes are independently
   // blocked in demo mode regardless of auth state (see lib/demo-mode.ts).
   if (isDemoModeEnabled()) return true
+
+  // Skip the login gate for local development so the dashboard is reachable
+  // without needing the admin password. `next build`/`next start` always set
+  // NODE_ENV=production, so this never applies to a deployed instance.
+  if (process.env.NODE_ENV !== 'production') return true
 
   const session = await getSession()
   return session.isAuthenticated || false

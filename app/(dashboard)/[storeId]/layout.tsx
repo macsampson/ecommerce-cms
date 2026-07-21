@@ -55,7 +55,7 @@ export default async function DashboardLayout({
       <Navbar />
       <div className="flex pt-16 min-h-screen">
         <Sidebar storeId={params.storeId} storeName={store.name} />
-        <main className="flex-1 p-2 sm:p-4 md:pl-[272px] md:pr-4">
+        <main className="flex-1 min-w-0 p-2 sm:p-4 md:pl-[272px] md:pr-4">
           {children}
         </main>
       </div>

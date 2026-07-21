@@ -67,7 +67,7 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router), TypeScript
-- **Database**: PostgreSQL via Prisma (Supabase recommended)
+- **Database**: PostgreSQL via Prisma (Neon Postgres auto-provisioned by the Deploy to Vercel button; Supabase or any Postgres instance also supported)
 - **Auth**: Single-admin session auth with `iron-session` (encrypted, cookie-based) + bcrypt
 - **Payments**: Stripe
 - **Shipping**: Shippo & ChitChats APIs
@@ -120,12 +120,15 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 
 #### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/stockroom)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom&project-name=stockroom&repository-name=stockroom&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D&env=ADMIN_EMAIL%2CADMIN_PASSWORD_HASH%2CSESSION_SECRET%2CSTRIPE_API_KEY%2CSTRIPE_WEBHOOK_SECRET%2CNEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY%2CNEXT_PUBLIC_CLOUDINARY_CLOUD_NAME%2CALLOWED_ORIGINS&envDescription=Admin+login%2C+session+secret%2C+Stripe+keys%2C+Cloudinary+cloud+name%2C+and+allowed+storefront+origins+-+see+the+Setup+Guide+below+for+where+to+get+each+one&envLink=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom%23setup-guide)
 
 1. Click "Deploy with Vercel" and connect your GitHub
-2. Set up a Supabase database (free tier available)
-3. Configure environment variables in Vercel (see below)
-4. Your CMS will be live in minutes
+2. Vercel provisions a Neon Postgres database for you automatically (no separate Supabase/Neon account needed) and sets `DATABASE_URL`/`DATABASE_URL_UNPOOLED`
+3. You'll be prompted right there in the deploy flow for the remaining required values: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, Stripe keys, Cloudinary cloud name, and `ALLOWED_ORIGINS` — see the [Setup Guide](#setup-guide) below for where to get each one (run `node scripts/set-admin-password.js` locally first to get `ADMIN_PASSWORD_HASH`)
+4. After the first deploy finishes, run `npm run deploy` locally (with the same `DATABASE_URL`/`DATABASE_URL_UNPOOLED` values from your Vercel project) to apply database migrations — see the [Production Checklist](#production-checklist)
+5. Your CMS is live
+
+> Prefer Supabase, or already have a Postgres instance? Skip the bundled database prompt in the deploy flow and set `DATABASE_URL`/`DIRECT_URL` yourself instead — see [Database](#1-database) below.
 
 #### Option 2: Local Development
 
@@ -191,7 +194,9 @@ EXCHANGE_RATE_API_KEY=""
 
 **1. Database**
 
-**Supabase (recommended):** create a project at [supabase.com](https://supabase.com), copy the database URLs into your env vars, then run `npx prisma migrate deploy`.
+**Deploy to Vercel button (default):** a Neon Postgres database is provisioned for you automatically, with `DATABASE_URL`/`DATABASE_URL_UNPOOLED` set in your Vercel project already — nothing to create by hand. After deploying, run `npm run deploy` locally (pointed at the same database) to apply migrations.
+
+**Supabase:** create a project at [supabase.com](https://supabase.com), copy the database URLs into `DATABASE_URL`/`DIRECT_URL`, then run `npx prisma migrate deploy`.
 
 **Self-hosted PostgreSQL:** point `DATABASE_URL`/`DIRECT_URL` at your own instance and run the same migration command.
 

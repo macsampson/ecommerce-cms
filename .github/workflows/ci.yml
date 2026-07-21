@@ -17,7 +17,7 @@ jobs:
       ADMIN_PASSWORD_HASH: '$2b$12$abcdefghijklmnopqrstuvwxyz0123456789'
       SESSION_SECRET: 'ci_placeholder_secret_at_least_32_chars'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,7 +48,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -81,7 +81,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
       DIRECT_URL: ${{ secrets.DEMO_DIRECT_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

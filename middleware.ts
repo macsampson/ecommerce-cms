@@ -75,9 +75,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Skip the login gate for local development, matching the isAuthenticated()
-  // bypass in lib/auth.ts. `next build`/`next start` always set
-  // NODE_ENV=production, so this never applies to a deployed instance.
-  if (process.env.NODE_ENV !== 'production') {
+  // bypass in lib/auth.ts. Explicit opt-in rather than keying off NODE_ENV,
+  // so a misconfigured or non-Vercel deployment fails closed.
+  if (process.env.DISABLE_AUTH_FOR_LOCAL_DEV === 'true') {
     if (pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', request.url))
     }

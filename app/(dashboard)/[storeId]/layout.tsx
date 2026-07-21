@@ -1,9 +1,35 @@
+import { cache } from 'react'
+import { Metadata } from 'next'
 import Navbar from '@/components/navbar'
 import prismadb from '@/lib/prismadb'
 import { isAuthenticated } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 import Sidebar from '@/components/sidebar' // Import the Sidebar component
+
+const getStore = cache((storeId: string) =>
+  prismadb.store.findFirst({
+    where: {
+      id: storeId,
+      userId: 'single-user'
+    }
+  })
+)
+
+export async function generateMetadata({
+  params
+}: {
+  params: { storeId: string }
+}): Promise<Metadata> {
+  const store = await getStore(params.storeId)
+
+  return {
+    title: store ? `${store.name} — Admin` : 'PocketCaps Admin',
+    description: store
+      ? `Order, inventory, and fulfillment console for ${store.name}`
+      : 'Order, inventory, and fulfillment console for PocketCaps'
+  }
+}
 
 export default async function DashboardLayout({
   children,
@@ -18,12 +44,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const store = await prismadb.store.findFirst({
-    where: {
-      id: params.storeId,
-      userId: "single-user"
-    }
-  })
+  const store = await getStore(params.storeId)
 
   if (!store) {
     redirect('/')

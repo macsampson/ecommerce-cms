@@ -21,10 +21,8 @@ export type ApiOrderSummary = {
   createdAt: string // Formatted date string 'yyyy-MM-dd hh:mm a'
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
 

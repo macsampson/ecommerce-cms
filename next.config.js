@@ -1,8 +1,6 @@
 /**  @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['pino', 'pino-pretty']
-  },
+  serverExternalPackages: ['pino', 'pino-pretty'],
 
   async headers() {
     // Read the ALLOWED_ORIGINS environment variable and convert it to an array
@@ -38,7 +36,12 @@ const nextConfig = {
   },
 
   images: {
-    domains: ['res.cloudinary.com']
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com'
+      }
+    ]
   }
 }
 

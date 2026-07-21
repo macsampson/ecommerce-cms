@@ -9,7 +9,7 @@ export async function OPTIONS(req: Request) {
 
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string } }
+  props: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const { searchParams } = new URL(req.url)

@@ -4,12 +4,13 @@ import { stripe } from '@/lib/stripe'
 import { logger } from '@/lib/logger'
 
 // create options method
-export async function OPTIONS(req: Request, res: Response) {}
-
-export async function GET(
+export async function OPTIONS(
   req: Request,
-  { params }: { params: { sessionId: string } }
-) {
+  props: { params: Promise<{ storeId: string; sessionId: string }> }
+) {}
+
+export async function GET(req: Request, props: { params: Promise<{ sessionId: string }> }) {
+  const params = await props.params;
   const session_id = params.sessionId
   // logger.info(session_id)
 

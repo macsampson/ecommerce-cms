@@ -44,7 +44,7 @@ interface CreateChitChatsShipmentRequestBody {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { storeId: string } }
+  props: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const {

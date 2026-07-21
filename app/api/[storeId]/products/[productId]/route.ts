@@ -17,8 +17,9 @@ const REVALIDATE_URL = process.env.FRONTEND_STORE_URL + '/api/revalidate'
 
 export async function GET(
   req: Request,
-  { params }: { params: { productId: string; storeId: string } }
+  props: { params: Promise<{ productId: string; storeId: string }> }
 ) {
+  const params = await props.params;
   try {
     const product = await prismadb.product.findUnique({
       where: {
@@ -118,8 +119,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { productId: string; storeId: string } }
+  props: { params: Promise<{ productId: string; storeId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()
@@ -426,8 +428,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; productId: string } }
+  props: { params: Promise<{ storeId: string; productId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
 

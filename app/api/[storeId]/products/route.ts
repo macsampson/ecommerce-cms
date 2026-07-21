@@ -1,13 +1,10 @@
 import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
-import { useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
 
-export async function POST(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function POST(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()
@@ -105,10 +102,8 @@ export async function POST(
   }
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const { searchParams } = new URL(req.url)
     const categoryId = searchParams.get('categoryId') || undefined

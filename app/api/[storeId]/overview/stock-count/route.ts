@@ -3,10 +3,8 @@ import { isAuthenticated } from '@/lib/auth';
 import prismadb from '@/lib/prismadb';
 import { logger } from '@/lib/logger'
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated();
 

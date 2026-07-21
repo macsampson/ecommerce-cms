@@ -44,10 +44,8 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders })
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function POST(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const ip = getClientIp(req)
     const { allowed } = rateLimit(`checkout:${ip}`, 20, 60_000)

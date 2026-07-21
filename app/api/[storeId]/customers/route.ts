@@ -24,10 +24,8 @@ function extractNameFromShippingAddress(shippingAddress: string): string {
   }
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     if (!authenticated) {

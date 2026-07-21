@@ -8,10 +8,8 @@ interface GraphData {
   total: number
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { storeId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ storeId: string }> }) {
+  const params = await props.params;
   const { storeId } = params
   const { searchParams } = new URL(req.url)
   const yearParam = searchParams.get('year')

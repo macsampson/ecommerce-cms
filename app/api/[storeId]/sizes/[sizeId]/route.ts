@@ -3,10 +3,8 @@ import { isAuthenticated } from '@/lib/auth'
 import { NextResponse } from "next/server"
 import { logger } from '@/lib/logger'
 
-export async function GET(
-  req: Request,
-  { params }: { params: { sizeId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ sizeId: string }> }) {
+  const params = await props.params;
   try {
     const size = await prismadb.size.findUnique({
       where: {
@@ -23,8 +21,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { sizeId: string; storeId: string } }
+  props: { params: Promise<{ sizeId: string; storeId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
     const body = await req.json()
@@ -70,8 +69,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; sizeId: string } }
+  props: { params: Promise<{ storeId: string; sizeId: string }> }
 ) {
+  const params = await props.params;
   try {
     const authenticated = await isAuthenticated()
 

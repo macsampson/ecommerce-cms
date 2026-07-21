@@ -15,7 +15,7 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## 🔗 Live Demo
 
-**[cargobay-demo.vercel.app](https://cargobay-demo.vercel.app/login)** — log in with `demo@example.com` / `Demo-558383d8!`
+**[cargobay-demo.vercel.app](https://cargobay-demo.vercel.app/login)**
 
 This is a separate, dedicated demo deployment with its own seeded database — not the deployment that ran the real business. It runs in **read-only demo mode**: browse the full dashboard with real seeded data (products, orders, customers, a populated revenue graph), but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) for how that works.
 

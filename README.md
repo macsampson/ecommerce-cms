@@ -1,8 +1,10 @@
-# Self-Hosted E-Commerce CMS
+# Cargobay
 
-[![CI](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/ecommerce-cms/actions/workflows/ci.yml)
+Self-hosted e-commerce CMS
+
+[![CI](https://github.com/macsampson/cargobay/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/cargobay/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://pocketcaps-cms-demo.vercel.app/login)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://cargobay-demo.vercel.app/login)
 
 A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
@@ -13,7 +15,7 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## 🔗 Live Demo
 
-**[pocketcaps-cms-demo.vercel.app](https://pocketcaps-cms-demo.vercel.app/login)** — log in with `demo@example.com` / `Demo-558383d8!`
+**[cargobay-demo.vercel.app](https://cargobay-demo.vercel.app/login)** — log in with `demo@example.com` / `Demo-558383d8!`
 
 This is a separate, dedicated demo deployment with its own seeded database — not the deployment that ran the real business. It runs in **read-only demo mode**: browse the full dashboard with real seeded data (products, orders, customers, a populated revenue graph), but every write request (create/edit/delete) is rejected at the middleware level so the demo can't be broken by visitors. See [Demo Mode](#demo-mode) for how that works.
 
@@ -120,7 +122,7 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 
 #### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/ecommerce-cms)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macsampson/cargobay)
 
 1. Click "Deploy with Vercel" and connect your GitHub
 2. Set up a Supabase database (free tier available)
@@ -130,8 +132,8 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 #### Option 2: Local Development
 
 ```bash
-git clone https://github.com/macsampson/ecommerce-cms
-cd ecommerce-cms
+git clone https://github.com/macsampson/cargobay
+cd cargobay
 
 npm install
 

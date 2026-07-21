@@ -25,10 +25,10 @@ export async function generateMetadata(
   const store = await getStore(params.storeId)
 
   return {
-    title: store ? `${store.name} — Admin` : 'Cargobay',
+    title: store ? `${store.name} — Admin` : 'Stockroom',
     description: store
       ? `Order, inventory, and fulfillment console for ${store.name}`
-      : 'Order, inventory, and fulfillment console for Cargobay'
+      : 'Order, inventory, and fulfillment console for Stockroom'
   }
 }
 

@@ -66,7 +66,7 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router), TypeScript
+- **Framework**: Next.js 16 (App Router), TypeScript
 - **Database**: PostgreSQL via Prisma (Supabase recommended)
 - **Auth**: Single-admin session auth with `iron-session` (encrypted, cookie-based) + bcrypt
 - **Payments**: Stripe
@@ -139,15 +139,18 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your configuration
 
-# Generate an admin password hash
-node scripts/generate-password-hash.js
+# Set the admin password (hashes it and writes ADMIN_PASSWORD_HASH into .env.local for you)
+node scripts/set-admin-password.js
 
 npm run dev:docker
+
+# Optional: seed sample products/categories so the dashboard isn't empty
+npm run seed-dev
 ```
 
 `npm run dev:docker` spins up a local Postgres via Docker Compose, runs migrations, and starts the dev server — no Supabase account needed. If you'd rather use the Supabase CLI (matches the hosted setup more closely), run `supabase start && npx prisma migrate deploy` instead, then `npm run dev`.
 
-Visit `http://localhost:3000/login` to access the admin dashboard.
+Visit `http://localhost:3000/login` to access the admin dashboard. On first login you'll be prompted to create your first store; run `npm run seed-dev` beforehand if you'd rather start from sample data instead of an empty store.
 
 ### Environment Configuration
 
@@ -160,7 +163,7 @@ DIRECT_URL="postgresql://..."
 
 # Admin Authentication
 ADMIN_EMAIL="your-email@example.com"
-ADMIN_PASSWORD_HASH="$2b$12$..." # Generate with scripts/generate-password-hash.js
+ADMIN_PASSWORD_HASH="$2b$12$..." # Set with scripts/set-admin-password.js (writes this for you — see Setup Guide)
 SESSION_SECRET="your-32-character-secret-key-here"
 
 # Local dev only — skips the login gate. Leave unset in every real
@@ -195,11 +198,13 @@ EXCHANGE_RATE_API_KEY=""
 **2. Authentication**
 
 ```bash
-node scripts/generate-password-hash.js
-# Enter your desired password, copy the hash to ADMIN_PASSWORD_HASH
+node scripts/set-admin-password.js
+# Enter your desired password — the hash is written straight to ADMIN_PASSWORD_HASH in .env.local
 ```
 
-This app is single-admin: one email + password hash configured via environment variables, not a user table.
+This app is single-admin: one email + password hash configured via environment variables, not a user table. Also set `ADMIN_EMAIL` yourself.
+
+> Don't hand-copy a bcrypt hash into `.env.local`: Next.js's env loader expands `$`-prefixed sequences, which silently corrupts a pasted hash (every bcrypt hash contains `$` delimiters). `scripts/set-admin-password.js` escapes this correctly for you — always prefer it over constructing `ADMIN_PASSWORD_HASH` by hand.
 
 **3. Payments**
 

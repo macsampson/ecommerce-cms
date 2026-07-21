@@ -21,10 +21,10 @@ const Navbar = async () => {
   })
 
   return (
-    <div className="border-b">
+    <div className="border-b border-border bg-card">
       {isDemoModeEnabled() && (
-        <div className="bg-yellow-500/90 px-2 py-1.5 text-center text-xs font-medium text-black sm:text-sm">
-          Public read-only demo — changes you make here won't be saved.
+        <div className="bg-amber text-amber-foreground px-2 py-1.5 text-center text-xs font-medium sm:text-sm">
+          Public read-only demo — changes you make here won&apos;t be saved.
         </div>
       )}
       <div className="flex h-16 items-center justify-between px-2 sm:px-4">

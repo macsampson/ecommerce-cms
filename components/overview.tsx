@@ -1,49 +1,78 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'
-import { useTheme } from 'next-themes'
+import React from 'react'
+import {
+  Bar,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip
+} from 'recharts'
 
 interface OverviewProps {
   data: any[]
 }
 
-const Overview: React.FC<OverviewProps> = ({ data }) => {
-  const { resolvedTheme } = useTheme()
-  const [barColor, setBarColor] = useState<string>('#3498db')
-
-  useEffect(() => {
-    // Wait for the DOM to update the theme class
-    const timeout = setTimeout(() => {
-      const root = document.documentElement
-      const style = getComputedStyle(root)
-      const primary = style.getPropertyValue('--primary').trim()
-      const color = primary.includes(' ') ? `hsl(${primary})` : primary
-      setBarColor(color)
-    }, 10) // 10ms is usually enough
-
-    return () => clearTimeout(timeout)
-  }, [resolvedTheme])
-
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null
+  const revenue = payload.find((p: any) => p.dataKey === 'total')?.value ?? 0
+  const orders = payload.find((p: any) => p.dataKey === 'orders')?.value ?? 0
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
+    <div className="rounded-md border border-border bg-popover text-popover-foreground px-3 py-2 text-xs shadow-md font-data">
+      <p className="font-semibold mb-1">{label}</p>
+      <p>Revenue: ${revenue.toLocaleString()}</p>
+      <p>Orders: {orders}</p>
+    </div>
+  )
+}
+
+const Overview: React.FC<OverviewProps> = ({ data }) => {
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <ComposedChart data={data}>
         <XAxis
           dataKey="name"
-          stroke="#888888"
+          stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
-          stroke="#888888"
+          yAxisId="revenue"
+          stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `$${value}`}
         />
-        <Bar dataKey="total" fill={barColor} radius={[4, 4, 0, 0]} />
-      </BarChart>
+        <YAxis
+          yAxisId="orders"
+          orientation="right"
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          allowDecimals={false}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
+        <Bar
+          yAxisId="revenue"
+          dataKey="total"
+          fill="hsl(var(--primary))"
+          radius={[3, 3, 0, 0]}
+          barSize={22}
+        />
+        <Line
+          yAxisId="orders"
+          type="monotone"
+          dataKey="orders"
+          stroke="hsl(var(--signal-teal))"
+          strokeWidth={2}
+          dot={false}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   )
 }

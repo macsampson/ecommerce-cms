@@ -10,6 +10,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader } from '@/components/ui/loader'
+import { BarChart3 } from 'lucide-react'
 
 interface DashboardOverviewProps {
   storeId: string
@@ -36,27 +38,48 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <CardTitle>Overview</CardTitle>
+        <div>
+          <CardTitle>Revenue &amp; order volume</CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Bars track monthly revenue, the line tracks paid order count
+          </p>
+        </div>
         <div className="w-40">
-          <Select
-            value={selectedYear?.toString()}
-            onValueChange={(val) => setSelectedYear(Number(val))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select year" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {years.length > 0 ? (
+            <Select
+              value={selectedYear?.toString()}
+              onValueChange={(val) => setSelectedYear(Number(val))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="p-2 sm:p-6">
-        {loading ? <div>Loading...</div> : <Overview data={graphData} />}
+        {years.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
+            <BarChart3 className="h-8 w-8" />
+            <p className="text-sm max-w-xs">
+              No paid orders yet — once your first sale clears, this chart
+              fills in month by month.
+            </p>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader />
+          </div>
+        ) : (
+          <Overview data={graphData} />
+        )}
       </CardContent>
     </Card>
   )

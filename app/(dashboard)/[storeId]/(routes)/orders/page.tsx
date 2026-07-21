@@ -6,13 +6,10 @@ import { useParams } from 'next/navigation'
 
 import { OrderClient } from './components/client'
 import { OrderColumn } from './components/columns' // Still needed by OrderClient
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-import { Filter } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { Loader } from '@/components/ui/loader'
+import { cn } from '@/lib/utils'
 
 // This type should match the structure returned by your API endpoint (ApiOrderSummary)
 // and be compatible with OrderColumn.
@@ -39,7 +36,6 @@ const OrdersPage = () => {
   const [filter, setFilter] = useState<'all' | 'abandoned' | 'completed'>(
     'completed'
   ) // default: hide abandoned
-  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false)
 
   const storeId = params.storeId
 
@@ -78,77 +74,54 @@ const OrdersPage = () => {
   })
 
   if (loading) {
-    // TODO: Replace with a proper loading spinner/skeleton component
-    return <div className="flex-1 space-y-4 p-8 pt-6">Loading orders...</div>
-  }
-
-  if (error) {
     return (
-      <div className="flex-1 space-y-4 p-8 pt-6 text-red-500">
-        Error: {error}
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 pt-24 text-muted-foreground">
+        <Loader />
+        <p className="text-sm">Tallying the order ledger…</p>
       </div>
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 pt-24 text-center">
+        <AlertTriangle className="h-8 w-8 text-crimson" />
+        <p className="font-medium">Couldn&apos;t load orders.</p>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Nothing was lost — this is a connection issue on this screen only.
+          Try again in a moment.
+        </p>
+        <Button size="sm" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
+  const tabs: { key: typeof filter; label: string }[] = [
+    { key: 'completed', label: 'Paid' },
+    { key: 'abandoned', label: 'Abandoned' },
+    { key: 'all', label: 'All' }
+  ]
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       <div className="flex-1 w-full max-w-full px-2 py-4 sm:px-4 md:px-8 md:py-6 mx-auto">
-        <div className="flex items-center gap-2 mb-4">
-          {/* Search bar and filter icon */}
-          <div className="flex items-center w-full max-w-xs sm:max-w-sm">
-            {/* The search bar is rendered inside DataTable, so we just align the filter icon here */}
-            <Popover
-              open={filterPopoverOpen}
-              onOpenChange={setFilterPopoverOpen}
+        <div className="inline-flex items-center rounded-md border border-border bg-muted/40 p-1 mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={cn(
+                'px-3 py-1.5 text-sm font-medium rounded-sm transition-colors',
+                filter === tab.key
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
             >
-              <PopoverTrigger asChild>
-                <Button
-                  variant={filter === 'all' ? 'outline' : 'default'}
-                  size="icon"
-                  className={
-                    filter !== 'all' ? 'bg-primary text-primary-foreground' : ''
-                  }
-                  aria-label="Filter orders"
-                >
-                  <Filter className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-48 p-0">
-                <div className="flex flex-col">
-                  <Button
-                    variant={filter === 'all' ? 'default' : 'ghost'}
-                    className="justify-start rounded-none"
-                    onClick={() => {
-                      setFilter('all')
-                      setFilterPopoverOpen(false)
-                    }}
-                  >
-                    All Orders
-                  </Button>
-                  <Button
-                    variant={filter === 'completed' ? 'default' : 'ghost'}
-                    className="justify-start rounded-none"
-                    onClick={() => {
-                      setFilter('completed')
-                      setFilterPopoverOpen(false)
-                    }}
-                  >
-                    Completed
-                  </Button>
-                  <Button
-                    variant={filter === 'abandoned' ? 'default' : 'ghost'}
-                    className="justify-start rounded-none"
-                    onClick={() => {
-                      setFilter('abandoned')
-                      setFilterPopoverOpen(false)
-                    }}
-                  >
-                    Abandoned
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+              {tab.label}
+            </button>
+          ))}
         </div>
         <OrderClient data={filteredOrders} />
       </div>

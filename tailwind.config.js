@@ -16,6 +16,11 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        data: ["var(--font-data)", "ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -49,6 +54,18 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        teal: {
+          DEFAULT: "hsl(var(--signal-teal))",
+          foreground: "hsl(var(--signal-teal-foreground))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--signal-amber))",
+          foreground: "hsl(var(--signal-amber-foreground))",
+        },
+        crimson: {
+          DEFAULT: "hsl(var(--signal-crimson))",
+          foreground: "hsl(var(--signal-crimson-foreground))",
         },
       },
       borderRadius: {

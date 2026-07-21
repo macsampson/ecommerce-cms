@@ -26,17 +26,30 @@ import {
 } from '@/components/ui/table'
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
+import { cn } from '@/lib/utils'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchKey: string
+  searchPlaceholder?: string
+  emptyState?: React.ReactNode
+  getRowClassName?: (row: TData) => string | undefined
+  getRowStyle?: (row: TData) => React.CSSProperties | undefined
+  renderDetail?: (row: TData) => React.ReactNode
+  onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  searchKey
+  searchKey,
+  searchPlaceholder,
+  emptyState,
+  getRowClassName,
+  getRowStyle,
+  renderDetail,
+  onRowClick
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [sorting, setSorting] = useState<SortingState>([
@@ -70,7 +83,7 @@ export function DataTable<TData, TValue>({
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Search"
+          placeholder={searchPlaceholder ?? 'Search'}
           value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
             table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -107,7 +120,6 @@ export function DataTable<TData, TValue>({
                     </TableHead>
                   )
                 })}
-                <TableHead className="md:hidden">Details</TableHead>
               </TableRow>
             ))}
           </TableHeader>
@@ -118,6 +130,16 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
+                    className={cn(
+                      getRowClassName?.(row.original),
+                      'cursor-pointer'
+                    )}
+                    style={getRowStyle?.(row.original)}
+                    onClick={() => {
+                      onRowClick?.(row.original)
+                      setModalData(row.original)
+                      setModalOpen(true)
+                    }}
                   >
                     {row.getVisibleCells().map((cell, i) => {
                       const cellClass =
@@ -140,19 +162,6 @@ export function DataTable<TData, TValue>({
                         </TableCell>
                       )
                     })}
-                    <TableCell className="md:hidden">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setModalData(row.original)
-                          setModalOpen(true)
-                        }}
-                      >
-                        Details
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 )
               })
@@ -160,9 +169,9 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-32 text-center text-muted-foreground"
                 >
-                  No results.
+                  {emptyState ?? 'No results.'}
                 </TableCell>
               </TableRow>
             )}
@@ -194,13 +203,15 @@ export function DataTable<TData, TValue>({
         description="Full row details"
       >
         <div className="space-y-2">
-          {modalData &&
-            Object.entries(modalData).map(([key, value]) => (
-              <div key={key} className="flex justify-between">
-                <span className="font-semibold">{key}</span>
-                <span className="break-all text-right">{String(value)}</span>
-              </div>
-            ))}
+          {modalData && renderDetail
+            ? renderDetail(modalData)
+            : modalData &&
+              Object.entries(modalData).map(([key, value]) => (
+                <div key={key} className="flex justify-between">
+                  <span className="font-semibold">{key}</span>
+                  <span className="break-all text-right">{String(value)}</span>
+                </div>
+              ))}
         </div>
       </Modal>
     </div>

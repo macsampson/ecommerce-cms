@@ -14,10 +14,14 @@ rl.question('Enter password to hash: ', async (password) => {
   
   try {
     const hash = await bcrypt.hash(password, 12)
+    // Next.js's env loader expands $VAR references, so bcrypt's literal `$`
+    // separators must be escaped or the hash gets silently mangled at load time.
+    const escapedHash = hash.replace(/\$/g, '\\$')
     console.log('\nYour password hash:')
     console.log(hash)
-    console.log('\nAdd this to your .env file as:')
-    console.log(`ADMIN_PASSWORD_HASH="${hash}"`)
+    console.log('\nAdd this to your .env file as (note the escaped $ characters — required for Next.js env loading):')
+    console.log(`ADMIN_PASSWORD_HASH="${escapedHash}"`)
+    console.log('\nPrefer scripts/set-admin-password.js — it writes this to .env.local for you and avoids copy-paste errors.')
   } catch (error) {
     console.error('Error generating hash:', error)
   }

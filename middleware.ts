@@ -63,6 +63,17 @@ export async function middleware(request: NextRequest) {
     return response
   }
   
+  // Public read-only demo: skip the login gate entirely. The demo's credentials
+  // are already published in the README, so requiring login adds friction
+  // without adding security — see isAuthenticated() in lib/auth.ts for the
+  // matching bypass used by server components and API routes.
+  if (process.env.DEMO_MODE === 'true') {
+    if (pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    return NextResponse.next()
+  }
+
   // Allow other public routes
   if (
     pathname.startsWith("/api/webhook") ||
@@ -76,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
   // Check for session cookie
   const sessionCookie = request.cookies.get("cms_session")
-  
+
   if (!sessionCookie || !sessionCookie.value) {
     // Redirect to login page
     const loginUrl = new URL("/login", request.url)

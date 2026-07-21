@@ -163,6 +163,10 @@ ADMIN_EMAIL="your-email@example.com"
 ADMIN_PASSWORD_HASH="$2b$12$..." # Generate with scripts/generate-password-hash.js
 SESSION_SECRET="your-32-character-secret-key-here"
 
+# Local dev only — skips the login gate. Leave unset in every real
+# deployment; auth is enforced by default (see Production Checklist below)
+DISABLE_AUTH_FOR_LOCAL_DEV="true"
+
 # Stripe Payments
 STRIPE_API_KEY="sk_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
@@ -207,6 +211,7 @@ Create a [Cloudinary](https://cloudinary.com) account (free tier available) and 
 
 ### Production Checklist
 
+- [ ] `DISABLE_AUTH_FOR_LOCAL_DEV` is **not** set (the login gate is bypassed if it's `"true"` — verify with `curl -I https://yourdomain.com/` shouldn't redirect anywhere without a session; hitting `/[storeId]` unauthenticated should redirect to `/login`)
 - [ ] Production database configured (Supabase/PostgreSQL)
 - [ ] `SESSION_SECRET` set to a secure 32+ character value
 - [ ] Stripe webhook endpoint configured

@@ -54,7 +54,7 @@
     "react-hot-toast": "^2.6.0",
     "react-spinners": "^0.13.8",
     "recharts": "^2.15.4",
-    "shippo": "^1.7.1",
+    "shippo": "^2.18.0",
     "stripe": "^14.1.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",

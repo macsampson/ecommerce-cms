@@ -6,8 +6,8 @@
 
 A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
-![CMS Dashboard](public/cms.gif)
-_Demo: managing products, orders, and billboards from the dashboard_
+![CMS Dashboard](public/overview.png)
+_Dashboard overview: revenue and order volume, inventory alerts, and Stripe webhook activity at a glance_
 
 > **Note:** This repo is the CMS/admin side of the platform — the customer-facing storefront that reads from this API lives in a separate repository.
 

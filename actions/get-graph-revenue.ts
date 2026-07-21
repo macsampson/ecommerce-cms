@@ -3,6 +3,7 @@ import prismadb from '@/lib/prismadb'
 interface GraphData {
   name: string
   total: number
+  orders: number
 }
 
 export const getGraphRevenue = async (storeId: string, year?: number) => {
@@ -31,10 +32,13 @@ export const getGraphRevenue = async (storeId: string, year?: number) => {
   })
 
   const monthlyRevenue: { [key: number]: number } = {}
+  const monthlyOrders: { [key: number]: number } = {}
 
   for (const order of paidOrders) {
     const month = new Date(order.createdAt).getMonth()
     if (!monthlyRevenue[month]) monthlyRevenue[month] = 0
+    if (!monthlyOrders[month]) monthlyOrders[month] = 0
+    monthlyOrders[month] += 1
 
     for (const orderItem of order.orderItems) {
       monthlyRevenue[month] += orderItem.priceInCents / 100
@@ -42,22 +46,23 @@ export const getGraphRevenue = async (storeId: string, year?: number) => {
   }
 
   const graphData: GraphData[] = [
-    { name: 'Jan', total: 0 },
-    { name: 'Feb', total: 0 },
-    { name: 'Mar', total: 0 },
-    { name: 'Apr', total: 0 },
-    { name: 'May', total: 0 },
-    { name: 'Jun', total: 0 },
-    { name: 'Jul', total: 0 },
-    { name: 'Aug', total: 0 },
-    { name: 'Sep', total: 0 },
-    { name: 'Oct', total: 0 },
-    { name: 'Nov', total: 0 },
-    { name: 'Dec', total: 0 }
+    { name: 'Jan', total: 0, orders: 0 },
+    { name: 'Feb', total: 0, orders: 0 },
+    { name: 'Mar', total: 0, orders: 0 },
+    { name: 'Apr', total: 0, orders: 0 },
+    { name: 'May', total: 0, orders: 0 },
+    { name: 'Jun', total: 0, orders: 0 },
+    { name: 'Jul', total: 0, orders: 0 },
+    { name: 'Aug', total: 0, orders: 0 },
+    { name: 'Sep', total: 0, orders: 0 },
+    { name: 'Oct', total: 0, orders: 0 },
+    { name: 'Nov', total: 0, orders: 0 },
+    { name: 'Dec', total: 0, orders: 0 }
   ]
 
   for (const month in monthlyRevenue) {
     graphData[parseInt(month)].total = monthlyRevenue[parseInt(month)]
+    graphData[parseInt(month)].orders = monthlyOrders[parseInt(month)] ?? 0
   }
 
   return graphData

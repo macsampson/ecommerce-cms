@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams } from 'next/navigation' // To get storeId
 
+import { AlertTriangle } from 'lucide-react'
 import { ProductClient } from './components/client'
 import { ProductColumn } from './components/columns' // Still needed by ProductClient
+import { Loader } from '@/components/ui/loader'
+import { Button } from '@/components/ui/button'
 
 // This type should match the structure returned by your API endpoint
 // and be compatible with ProductColumn.
@@ -64,14 +67,26 @@ const ProductsPage = () => {
   }, [storeId])
 
   if (loading) {
-    // TODO: Replace with a proper loading spinner/skeleton component
-    return <div className="flex-1 space-y-4 p-8 pt-6">Loading products...</div>
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 pt-24 text-muted-foreground">
+        <Loader />
+        <p className="text-sm">Pulling stock levels from the shelves…</p>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="flex-1 space-y-4 p-8 pt-6 text-red-500">
-        Error: {error}
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 pt-24 text-center">
+        <AlertTriangle className="h-8 w-8 text-crimson" />
+        <p className="font-medium">Couldn&apos;t reach the inventory ledger.</p>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          The store's stock data didn&apos;t load — your products are safe,
+          this is just a connection hiccup. Try again in a moment.
+        </p>
+        <Button size="sm" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
       </div>
     )
   }

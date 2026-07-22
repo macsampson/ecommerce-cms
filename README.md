@@ -5,7 +5,7 @@ Self-hosted e-commerce CMS
 [![CI](https://github.com/macsampson/stockroom/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/stockroom/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/macsampson/stockroom/actions/workflows/codeql.yml/badge.svg)](https://github.com/macsampson/stockroom/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-<a href="https://stockroom-demo.vercel.app/login" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
+<a href="https://stockroom-demo.vercel.app/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
 A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
@@ -15,7 +15,7 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## 🔗 Live Demo
 
-**<a href="https://stockroom-demo.vercel.app/login" target="_blank" rel="noopener noreferrer">stockroom-demo.vercel.app</a>**
+**<a href="https://stockroom-demo.vercel.app/" target="_blank" rel="noopener noreferrer">stockroom-demo.vercel.app</a>**
 
 
 ## Contents

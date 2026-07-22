@@ -58,7 +58,7 @@ export default async function DashboardLayout(
     redirect('/')
   }
 
-  const configWarnings = await getConfigWarnings()
+  const configWarnings = await getConfigWarnings(params.storeId)
 
   return (
     <>

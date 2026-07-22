@@ -3,6 +3,7 @@ import { ProductVariation } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { logger } from '@/lib/logger'
+import { getShippoApiKey, getChitchatsConfig } from '@/lib/shipping-config'
 
 // Helper function to format prices from cents to dollars with 2 decimal places
 const formatPrice = (priceInCents: number): string => {
@@ -229,7 +230,7 @@ export async function POST(req: Request) {
           {
             method: 'POST',
             headers: {
-              Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+              Authorization: `ShippoToken ${getShippoApiKey(shippingSettings)}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(shipmentObject)
@@ -268,12 +269,13 @@ export async function POST(req: Request) {
 
     const getChitChatsRates = async () => {
       try {
+        const chitchatsConfig = getChitchatsConfig(shippingSettings)
         const chitchatsResponse = await fetch(
-          `${process.env.CHITCHATS_API_URL}/api/v1/clients/${process.env.CHITCHATS_CLIENT_ID}/shipments`,
+          `${chitchatsConfig.apiUrl}/api/v1/clients/${chitchatsConfig.clientId}/shipments`,
           {
             method: 'POST',
             headers: {
-              Authorization: process.env.CHITCHATS_API_KEY!,
+              Authorization: chitchatsConfig.apiKey!,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -338,11 +340,11 @@ export async function POST(req: Request) {
         if (chitchatsData.shipment && chitchatsData.shipment.id) {
           try {
             await fetch(
-              `${process.env.CHITCHATS_API_URL}/api/v1/clients/${process.env.CHITCHATS_CLIENT_ID}/shipments/${chitchatsData.shipment.id}`,
+              `${chitchatsConfig.apiUrl}/api/v1/clients/${chitchatsConfig.clientId}/shipments/${chitchatsData.shipment.id}`,
               {
                 method: 'DELETE',
                 headers: {
-                  Authorization: process.env.CHITCHATS_API_KEY!
+                  Authorization: chitchatsConfig.apiKey!
                 }
               }
             )

@@ -273,10 +273,14 @@ model ShippingSettings {
   phone      String
   email      String
   shippoEnabled     Boolean @default(true) @map("shippo_enabled")
-  chitchatsEnabled  Boolean @default(true) @map("chitchats_enabled")
+  chitchatsEnabled  Boolean @default(false) @map("chitchats_enabled")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
   customsDeclaration Json? @map("customs_declaration")
+  shippoApiKey       String? @map("shippo_api_key")
+  chitchatsApiKey    String? @map("chitchats_api_key")
+  chitchatsApiUrl    String? @map("chitchats_api_url")
+  chitchatsClientId  String? @map("chitchats_client_id")
 
   @@unique([storeId])
   @@map("shipping_settings")

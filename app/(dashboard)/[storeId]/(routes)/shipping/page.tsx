@@ -29,6 +29,28 @@ export default function ShippingPage() {
   })
   const [shippoEnabled, setShippoEnabled] = useState(false)
   const [chitchatsEnabled, setChitchatsEnabled] = useState(false)
+  const [credentialsModalOpen, setCredentialsModalOpen] = useState(false)
+  const [credentialStatus, setCredentialStatus] = useState<{
+    shippoApiKeyMasked: string | null
+    shippoApiKeyFromEnv: boolean
+    chitchatsApiKeyMasked: string | null
+    chitchatsApiUrlSet: boolean
+    chitchatsClientIdSet: boolean
+    chitchatsFromEnv: boolean
+  }>({
+    shippoApiKeyMasked: null,
+    shippoApiKeyFromEnv: false,
+    chitchatsApiKeyMasked: null,
+    chitchatsApiUrlSet: false,
+    chitchatsClientIdSet: false,
+    chitchatsFromEnv: false
+  })
+  const [credentials, setCredentials] = useState({
+    shippoApiKey: '',
+    chitchatsApiKey: '',
+    chitchatsApiUrl: '',
+    chitchatsClientId: ''
+  })
   const [customsDeclaration, setCustomsDeclaration] = useState({
     certify: true,
     certify_signer: '',
@@ -48,7 +70,7 @@ export default function ShippingPage() {
   })
   const [customsModalOpen, setCustomsModalOpen] = useState(false)
 
-  useEffect(() => {
+  const fetchSettings = () => {
     axios
       .get(`/api/${storeId}/shipping-settings`)
       .then((res) => res.data)
@@ -59,9 +81,46 @@ export default function ShippingPage() {
           setChitchatsEnabled(data.chitchatsEnabled)
           if (data.customsDeclaration)
             setCustomsDeclaration({ ...data.customsDeclaration })
+          setCredentialStatus({
+            shippoApiKeyMasked: data.shippoApiKeyMasked ?? null,
+            shippoApiKeyFromEnv: Boolean(data.shippoApiKeyFromEnv),
+            chitchatsApiKeyMasked: data.chitchatsApiKeyMasked ?? null,
+            chitchatsApiUrlSet: Boolean(data.chitchatsApiUrlSet),
+            chitchatsClientIdSet: Boolean(data.chitchatsClientIdSet),
+            chitchatsFromEnv: Boolean(data.chitchatsFromEnv)
+          })
         }
       })
+  }
+
+  useEffect(() => {
+    fetchSettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId])
+
+  const saveCredentials = async () => {
+    const payload: Record<string, string> = {}
+    if (credentials.shippoApiKey) payload.shippoApiKey = credentials.shippoApiKey
+    if (credentials.chitchatsApiKey) payload.chitchatsApiKey = credentials.chitchatsApiKey
+    if (credentials.chitchatsApiUrl) payload.chitchatsApiUrl = credentials.chitchatsApiUrl
+    if (credentials.chitchatsClientId) payload.chitchatsClientId = credentials.chitchatsClientId
+
+    if (Object.keys(payload).length === 0) {
+      setCredentialsModalOpen(false)
+      return
+    }
+
+    await axios.put(`/api/${storeId}/shipping-settings`, payload)
+    setCredentials({
+      shippoApiKey: '',
+      chitchatsApiKey: '',
+      chitchatsApiUrl: '',
+      chitchatsClientId: ''
+    })
+    setCredentialsModalOpen(false)
+    toast.success('API credentials saved')
+    fetchSettings()
+  }
 
   const saveSettings = async (
     overrides: Partial<{
@@ -120,7 +179,12 @@ export default function ShippingPage() {
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">ChitChats</span>
+            <div>
+              <span className="text-sm text-foreground">ChitChats</span>
+              <div className="text-xs text-muted-foreground">
+                Optional — a Canadian courier specializing in parcels to the US.
+              </div>
+            </div>
             <Switch
               checked={chitchatsEnabled}
               onCheckedChange={handleChitchatsToggle}
@@ -128,6 +192,146 @@ export default function ShippingPage() {
           </div>
         </div>
       </section>
+      <Separator className="my-2" />
+      {/* API Credentials Section */}
+      <section className="bg-card border border-border rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <span className="text-xl font-bold flex items-center gap-2 text-primary">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                />
+              </svg>
+              API Credentials
+            </span>
+            <div className="text-xs text-muted-foreground mt-1">
+              Keys entered here override the SHIPPO_API_KEY{chitchatsEnabled ? ' / CHITCHATS_*' : ''} environment
+              variable{chitchatsEnabled ? 's' : ''}.
+            </div>
+          </div>
+          <button
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition"
+            onClick={() => setCredentialsModalOpen(true)}
+            aria-label="Edit API credentials"
+          >
+            <Edit className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-foreground">
+          <div>
+            <span className="font-semibold">Shippo API Key:</span>{' '}
+            {credentialStatus.shippoApiKeyMasked
+              ? `${credentialStatus.shippoApiKeyMasked}${
+                  credentialStatus.shippoApiKeyFromEnv ? ' (via environment variable)' : ''
+                }`
+              : 'Not set'}
+          </div>
+          {chitchatsEnabled && (
+            <>
+              <div>
+                <span className="font-semibold">Chit Chats API Key:</span>{' '}
+                {credentialStatus.chitchatsApiKeyMasked
+                  ? `${credentialStatus.chitchatsApiKeyMasked}${
+                      credentialStatus.chitchatsFromEnv ? ' (via environment variable)' : ''
+                    }`
+                  : 'Not set'}
+              </div>
+              <div>
+                <span className="font-semibold">Chit Chats API URL:</span>{' '}
+                {credentialStatus.chitchatsApiUrlSet ? 'Set' : 'Not set'}
+              </div>
+              <div>
+                <span className="font-semibold">Chit Chats Client ID:</span>{' '}
+                {credentialStatus.chitchatsClientIdSet ? 'Set' : 'Not set'}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+      <Modal
+        title="Edit API Credentials"
+        description="Only fields you fill in will be updated — leave a field blank to keep its current value."
+        isOpen={credentialsModalOpen}
+        onClose={() => setCredentialsModalOpen(false)}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            saveCredentials()
+          }}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-1 gap-2">
+            <Label>Shippo API Key</Label>
+            <Input
+              type="password"
+              value={credentials.shippoApiKey}
+              onChange={(e) =>
+                setCredentials({ ...credentials, shippoApiKey: e.target.value })
+              }
+              placeholder={
+                credentialStatus.shippoApiKeyMasked
+                  ? `Currently ${credentialStatus.shippoApiKeyMasked} — leave blank to keep`
+                  : 'Shippo API Key'
+              }
+            />
+            {chitchatsEnabled && (
+              <>
+                <Label>Chit Chats API Key</Label>
+                <Input
+                  type="password"
+                  value={credentials.chitchatsApiKey}
+                  onChange={(e) =>
+                    setCredentials({ ...credentials, chitchatsApiKey: e.target.value })
+                  }
+                  placeholder={
+                    credentialStatus.chitchatsApiKeyMasked
+                      ? `Currently ${credentialStatus.chitchatsApiKeyMasked} — leave blank to keep`
+                      : 'Chit Chats API Key'
+                  }
+                />
+                <Label>Chit Chats API URL</Label>
+                <Input
+                  value={credentials.chitchatsApiUrl}
+                  onChange={(e) =>
+                    setCredentials({ ...credentials, chitchatsApiUrl: e.target.value })
+                  }
+                  placeholder={
+                    credentialStatus.chitchatsApiUrlSet
+                      ? 'Currently set — leave blank to keep'
+                      : 'https://chitchats.com'
+                  }
+                />
+                <Label>Chit Chats Client ID</Label>
+                <Input
+                  value={credentials.chitchatsClientId}
+                  onChange={(e) =>
+                    setCredentials({ ...credentials, chitchatsClientId: e.target.value })
+                  }
+                  placeholder={
+                    credentialStatus.chitchatsClientIdSet
+                      ? 'Currently set — leave blank to keep'
+                      : 'Chit Chats Client ID'
+                  }
+                />
+              </>
+            )}
+          </div>
+          <Button type="submit" className="w-full mt-2">
+            Save
+          </Button>
+        </form>
+      </Modal>
       <Separator className="my-2" />
       {/* Sender Address Section */}
       <section className="bg-card border border-border rounded-xl shadow-sm p-6">

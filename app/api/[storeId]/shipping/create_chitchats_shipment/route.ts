@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import prismadb from '@/lib/prismadb'
+import { getChitchatsConfig } from '@/lib/shipping-config'
 
 // Define types for the request body, mirroring what you'd send from the frontend
 // These should align with the types used in your main shipping route (AddressType, CartItemType)
@@ -47,6 +49,8 @@ export async function POST(
   props: { params: Promise<{ storeId: string }> }
 ) {
   try {
+    const { storeId } = await props.params
+
     const {
       address,
       cartItems,
@@ -72,9 +76,14 @@ export async function POST(
       )
     }
 
-    const CHITCHATS_API_URL = process.env.CHITCHATS_API_URL
-    const CHITCHATS_CLIENT_ID = process.env.CHITCHATS_CLIENT_ID
-    const CHITCHATS_API_KEY = process.env.CHITCHATS_API_KEY
+    const shippingSettings = await prismadb.shippingSettings.findUnique({
+      where: { storeId }
+    })
+    const {
+      apiUrl: CHITCHATS_API_URL,
+      clientId: CHITCHATS_CLIENT_ID,
+      apiKey: CHITCHATS_API_KEY
+    } = getChitchatsConfig(shippingSettings)
 
     if (!CHITCHATS_API_URL || !CHITCHATS_CLIENT_ID || !CHITCHATS_API_KEY) {
       logger.error('Chit Chats API environment variables are not set')

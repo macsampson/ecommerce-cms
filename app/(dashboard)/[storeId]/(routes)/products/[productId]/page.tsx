@@ -33,6 +33,11 @@ const ProductPage = async (
       storeId: params.storeId
     }
   })
+  const billboards = await prismadb.billboard.findMany({
+    where: {
+      storeId: params.storeId
+    }
+  })
 
   const convertedProduct = product
     ? {
@@ -65,6 +70,7 @@ const ProductPage = async (
           categories={categories}
           sizes={sizes}
           colors={colors}
+          billboards={billboards}
           initialData={convertedProduct}
         />
       </div>

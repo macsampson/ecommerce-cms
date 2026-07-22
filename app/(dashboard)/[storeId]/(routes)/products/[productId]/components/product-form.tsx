@@ -5,7 +5,7 @@ import axios from 'axios'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'react-hot-toast'
-import { Trash } from 'lucide-react'
+import { Trash, Plus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 
 import { Input } from '@/components/ui/input'
@@ -42,8 +42,12 @@ import {
   BundleType,
   ImageType
 } from './productFormSchema'
+import { QuickCreateCategoryModal } from '@/components/modals/quick-create-category-modal'
+import { QuickCreateSizeModal } from '@/components/modals/quick-create-size-modal'
+import { QuickCreateColorModal } from '@/components/modals/quick-create-color-modal'
 
 import {
+  Billboard,
   Category,
   Color,
   Image,
@@ -69,13 +73,15 @@ interface ProductFormProps {
   categories: Category[]
   colors: Color[]
   sizes: Size[]
+  billboards: Billboard[]
 }
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   initialData,
-  categories,
-  sizes,
-  colors
+  categories: initialCategories,
+  sizes: initialSizes,
+  colors: initialColors,
+  billboards
 }) => {
   // console.log('initialData', initialData)
 
@@ -84,6 +90,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const [categories, setCategories] = useState<Category[]>(initialCategories)
+  const [sizes, setSizes] = useState<Size[]>(initialSizes)
+  const [colors, setColors] = useState<Color[]>(initialColors)
+
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [sizeModalOpen, setSizeModalOpen] = useState(false)
+  const [colorModalOpen, setColorModalOpen] = useState(false)
 
   const [images, setImages] = useState<ImageType[]>(
     initialData?.images.map((img) => ({
@@ -222,6 +236,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       console.error('Form submission error:', error)
       if (error.code === 'ECONNABORTED') {
         toast.error('Request timed out. Please try again.')
+      } else if (typeof error.response?.data === 'string' && error.response.data) {
+        toast.error(error.response.data)
       } else {
         toast.error('Something went wrong.')
       }
@@ -252,6 +268,40 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         onClose={() => setOpen(false)}
         onConfirm={onDelete}
         loading={loading}
+      />
+      <QuickCreateCategoryModal
+        isOpen={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        billboards={billboards}
+        onCreated={(category) => {
+          setCategories((prev) => [...prev, category])
+          form.setValue('categoryId', category.id, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+        }}
+      />
+      <QuickCreateSizeModal
+        isOpen={sizeModalOpen}
+        onClose={() => setSizeModalOpen(false)}
+        onCreated={(size) => {
+          setSizes((prev) => [...prev, size])
+          form.setValue('sizeId', size.id, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+        }}
+      />
+      <QuickCreateColorModal
+        isOpen={colorModalOpen}
+        onClose={() => setColorModalOpen(false)}
+        onCreated={(color) => {
+          setColors((prev) => [...prev, color])
+          form.setValue('colorId', color.id, {
+            shouldValidate: true,
+            shouldDirty: true
+          })
+        }}
       />
       <div className="flex items-center justify-between">
         <Heading title={title} description={formDescription} />
@@ -336,9 +386,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Category
-                    </FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">
+                        Category
+                      </FormLabel>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setCategoryModalOpen(true)}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" /> New
+                      </button>
+                    </div>
                     <Select
                       disabled={loading}
                       onValueChange={field.onChange}
@@ -478,22 +538,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 name="sizeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Size{' '}
-                      <span className="text-neutral-500 font-normal">
-                        (optional)
-                      </span>
-                    </FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">
+                        Size{' '}
+                        <span className="text-neutral-500 font-normal">
+                          (optional)
+                        </span>
+                      </FormLabel>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setSizeModalOpen(true)}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" /> New
+                      </button>
+                    </div>
                     <Select
                       disabled={loading}
                       onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
+                      value={field.value ?? ''}
                     >
                       <FormControl>
                         <SelectTrigger className="h-10">
                           <SelectValue
-                            defaultValue={field.value}
                             placeholder="Select a size"
                           />
                         </SelectTrigger>
@@ -515,22 +583,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 name="colorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Color{' '}
-                      <span className="text-neutral-500 font-normal">
-                        (optional)
-                      </span>
-                    </FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">
+                        Color{' '}
+                        <span className="text-neutral-500 font-normal">
+                          (optional)
+                        </span>
+                      </FormLabel>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setColorModalOpen(true)}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" /> New
+                      </button>
+                    </div>
                     <Select
                       disabled={loading}
                       onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
+                      value={field.value ?? ''}
                     >
                       <FormControl>
                         <SelectTrigger className="h-10">
                           <SelectValue
-                            defaultValue={field.value}
                             placeholder="Select a color"
                           />
                         </SelectTrigger>

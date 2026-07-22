@@ -17,7 +17,8 @@ import {
   Image as ImageIcon,
   Tag,
   Ruler,
-  Palette
+  Palette,
+  Code
 } from 'lucide-react'
 import { cn } from '@/lib/utils' // For conditional classes
 import { useState } from 'react'
@@ -103,6 +104,12 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId, storeName }) => {
       label: 'Activity log',
       icon: <Activity className="h-[18px] w-[18px] mr-3" />,
       active: pathname === `/${storeId}/activity`
+    },
+    {
+      href: `/${storeId}/api-docs`,
+      label: 'API / Developers',
+      icon: <Code className="h-[18px] w-[18px] mr-3" />,
+      active: pathname === `/${storeId}/api-docs`
     }
   ]
 

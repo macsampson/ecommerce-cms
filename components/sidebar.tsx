@@ -11,7 +11,13 @@ import {
   X,
   Truck,
   Percent,
-  Activity
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  Image as ImageIcon,
+  Tag,
+  Ruler,
+  Palette
 } from 'lucide-react'
 import { cn } from '@/lib/utils' // For conditional classes
 import { useState } from 'react'
@@ -24,6 +30,36 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ storeId, storeName }) => {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+
+  const catalogRoutes = [
+    {
+      href: `/${storeId}/billboards`,
+      label: 'Billboards',
+      icon: <ImageIcon className="h-[16px] w-[16px] mr-3" />,
+      active: pathname.startsWith(`/${storeId}/billboards`)
+    },
+    {
+      href: `/${storeId}/categories`,
+      label: 'Categories',
+      icon: <Tag className="h-[16px] w-[16px] mr-3" />,
+      active: pathname.startsWith(`/${storeId}/categories`)
+    },
+    {
+      href: `/${storeId}/sizes`,
+      label: 'Sizes',
+      icon: <Ruler className="h-[16px] w-[16px] mr-3" />,
+      active: pathname.startsWith(`/${storeId}/sizes`)
+    },
+    {
+      href: `/${storeId}/colors`,
+      label: 'Colors',
+      icon: <Palette className="h-[16px] w-[16px] mr-3" />,
+      active: pathname.startsWith(`/${storeId}/colors`)
+    }
+  ]
+
+  const catalogActive = catalogRoutes.some((route) => route.active)
+  const [catalogOpen, setCatalogOpen] = useState(catalogActive)
 
   const routes = [
     {
@@ -110,6 +146,50 @@ const Sidebar: React.FC<SidebarProps> = ({ storeId, storeName }) => {
             </li>
           ))}
         </ul>
+        <div className="mt-1">
+          <button
+            type="button"
+            onClick={() => setCatalogOpen((prev) => !prev)}
+            className={cn(
+              'w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
+              catalogActive
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )}
+            aria-expanded={catalogOpen}
+          >
+            <span className="flex items-center">
+              <Tag className="h-[18px] w-[18px] mr-3" />
+              Catalog
+            </span>
+            {catalogOpen ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
+          {catalogOpen && (
+            <ul className="space-y-1 mt-1 ml-3 pl-3 border-l border-border/60">
+              {catalogRoutes.map((route) => (
+                <li key={route.href}>
+                  <Link
+                    href={route.href}
+                    className={cn(
+                      'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      route.active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )}
+                    onClick={() => setOpen(false)}
+                  >
+                    {route.icon}
+                    <span>{route.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </nav>
       <div className="px-3 md:px-2 pt-3 border-t border-border/60">
         <p className="font-data text-[10px] text-muted-foreground tracking-wide">

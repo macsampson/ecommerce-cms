@@ -37,6 +37,7 @@ export const ProductClient: React.FC<ProductClientProps> = ({ data }) => {
           data={data}
           searchKey="name"
           searchPlaceholder="Search products…"
+          defaultSorting={[{ id: 'quantity', desc: true }]}
           getRowStyle={(row) => getStockRowStyle(row.quantity)}
           emptyState={
             <div className="flex flex-col items-center gap-2 py-6">

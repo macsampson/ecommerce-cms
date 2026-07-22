@@ -45,7 +45,7 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 ## Features
 
 **Store & Product Management**
-- Products with variations (size/color), image galleries via Cloudinary, categories
+- Products with variations (size/color), image galleries via Vercel Blob (Cloudinary supported as a legacy alternative), categories
 - Quantity-based bundle discounts
 - Time-boxed sales and promotions (store-wide or per-product), auto activated/deactivated on a schedule
 
@@ -69,7 +69,7 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 - **Auth**: Single-admin session auth with `iron-session` (encrypted, cookie-based) + bcrypt
 - **Payments**: Stripe
 - **Shipping**: Shippo & ChitChats APIs
-- **Images**: Cloudinary
+- **Images**: Vercel Blob, auto-provisioned by the Deploy to Vercel button (Cloudinary supported as a legacy alternative)
 - **UI**: Tailwind CSS, shadcn/ui (Radix primitives), Zustand, React Hook Form + Zod
 - **Logging**: Structured JSON logs via `pino` on the API layer
 - **Testing**: Jest
@@ -85,7 +85,7 @@ flowchart LR
     CMS -->|Prisma ORM| DB[(PostgreSQL<br/>Supabase)]
     CMS -->|Checkout + Webhook| Stripe[Stripe]
     CMS -->|Rates + Labels| Shippo[Shippo / ChitChats]
-    CMS -->|Image uploads| Cloudinary[Cloudinary]
+    CMS -->|Image uploads| Blob[Vercel Blob]
     Cron[Scheduled Cron Job] -->|Abandoned order cleanup<br/>Sale activation| CMS
 ```
 
@@ -118,11 +118,11 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 
 #### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom&project-name=stockroom&repository-name=stockroom&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D&env=STRIPE_API_KEY%2CSTRIPE_WEBHOOK_SECRET%2CNEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY%2CNEXT_PUBLIC_CLOUDINARY_CLOUD_NAME%2CALLOWED_ORIGINS&envDescription=Stripe+keys%2C+Cloudinary+cloud+name%2C+and+allowed+storefront+origins+-+see+the+Setup+Guide+below+for+where+to+get+each+one.+Admin+login+is+created+after+deploy+at+%2Fsetup%2C+not+here.&envLink=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom%23setup-guide)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom&project-name=stockroom&repository-name=stockroom&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D&env=STRIPE_API_KEY%2CSTRIPE_WEBHOOK_SECRET%2CNEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY%2CALLOWED_ORIGINS&envDescription=Stripe+keys+and+allowed+storefront+origins+-+see+the+Setup+Guide+below+for+where+to+get+each+one.+Admin+login+is+created+after+deploy+at+%2Fsetup%2C+not+here.+Image+storage+%28Vercel+Blob%29+is+provisioned+automatically.&envLink=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom%23setup-guide)
 
 1. Click "Deploy with Vercel" and connect your GitHub
-2. Vercel provisions a Neon Postgres database for you automatically (no separate Supabase/Neon account needed) and sets `DATABASE_URL`/`DATABASE_URL_UNPOOLED`
-3. You'll be prompted right there in the deploy flow for the remaining required values: Stripe keys, Cloudinary cloud name, and `ALLOWED_ORIGINS` — see the [Setup Guide](#setup-guide) below for where to get each one
+2. Vercel provisions a Neon Postgres database and a Vercel Blob store for you automatically (no separate Supabase/Neon or Cloudinary account needed) and sets `DATABASE_URL`/`DATABASE_URL_UNPOOLED`/`BLOB_READ_WRITE_TOKEN`
+3. You'll be prompted right there in the deploy flow for the remaining required values: Stripe keys and `ALLOWED_ORIGINS` — see the [Setup Guide](#setup-guide) below for where to get each one
 4. Database migrations run automatically as part of the Vercel build (see `vercel.json`'s `buildCommand`) — nothing to run by hand
 5. Visit your deployed URL — you'll land on `/setup` to create your admin email and password right in the browser (no hash-generating scripts, no env vars to hand-edit); after that you're logged in and prompted to create your first store
 6. Your CMS is live — see the [Production Checklist](#production-checklist) before pointing real customers at it
@@ -178,8 +178,11 @@ STRIPE_API_KEY="sk_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_..."
 
-# Image Storage (Cloudinary)
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
+# Image Storage — Vercel Blob is the default (auto-provisioned by the Deploy to
+# Vercel button); Cloudinary is supported as a legacy alternative and takes over
+# only if BLOB_READ_WRITE_TOKEN is unset
+BLOB_READ_WRITE_TOKEN=""
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=""
 
 # API Configuration
 ALLOWED_ORIGINS="https://yourdomain.com,https://yourstore.com"
@@ -214,7 +217,9 @@ Create a [Stripe](https://stripe.com) account, grab your API keys, and set up a 
 
 **4. Images**
 
-Create a [Cloudinary](https://cloudinary.com) account (free tier available) and set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
+**Deploy to Vercel button (default):** a Vercel Blob store is provisioned for you automatically, with `BLOB_READ_WRITE_TOKEN` set in your Vercel project already — nothing to create by hand. For local dev, run `vercel env pull .env.local` after linking the project to pull it down.
+
+**Legacy alternative:** create a [Cloudinary](https://cloudinary.com) account (free tier available) and set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`. Only used as a fallback when `BLOB_READ_WRITE_TOKEN` is unset — existing instances that already have Cloudinary configured keep working unchanged.
 
 ### Production Checklist
 
@@ -222,7 +227,7 @@ Create a [Cloudinary](https://cloudinary.com) account (free tier available) and 
 - [ ] Production database configured (Neon/Supabase/PostgreSQL) — migrations apply automatically on every Vercel build, including previews, so make sure preview deployments aren't pointed at a database you don't want auto-migrated
 - [ ] Admin account created via `/setup` (or `SESSION_SECRET`/`ADMIN_EMAIL`/`ADMIN_PASSWORD_HASH` set, for legacy env-var-based setups)
 - [ ] Stripe webhook endpoint configured
-- [ ] Cloudinary configured for image storage
+- [ ] Image storage configured (Vercel Blob, or legacy Cloudinary)
 - [ ] `ALLOWED_ORIGINS` set for your storefront domain(s)
 - [ ] Payment flow tested end-to-end
 - [ ] SSL certificate configured

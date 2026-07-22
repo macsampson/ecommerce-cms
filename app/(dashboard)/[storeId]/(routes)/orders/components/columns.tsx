@@ -1,7 +1,7 @@
 'use client'
 
 import { ColumnDef, Column } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, PackageCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { OrderStatusPipeline } from '@/components/order-status-pipeline'
 
@@ -33,6 +33,7 @@ export type OrderColumn = {
   address: string // Billing address
   isPaid: boolean
   isAbandoned: boolean
+  hasShippingLabel: boolean
   totalPrice: string
   products: string // This is a formatted string of products and their variations/quantities
   createdAt: string
@@ -67,11 +68,21 @@ export const columns: Col[] = [
     cellClassName: 'table-cell',
     headerClassName: 'table-cell',
     cell: ({ row }) => (
-      <OrderStatusPipeline
-        isPaid={row.original.isPaid}
-        isAbandoned={row.original.isAbandoned}
-        size="sm"
-      />
+      <div className="flex items-center gap-2">
+        <OrderStatusPipeline
+          isPaid={row.original.isPaid}
+          isAbandoned={row.original.isAbandoned}
+          size="sm"
+        />
+        {row.original.hasShippingLabel && (
+          <PackageCheck
+            className="h-4 w-4 text-emerald-600 shrink-0"
+            aria-label="Shipping label purchased"
+          >
+            <title>Shipping label purchased</title>
+          </PackageCheck>
+        )}
+      </div>
     )
   },
   {

@@ -18,6 +18,7 @@ export type ApiOrderSummary = {
   totalPrice: string // Formatted currency string
   isPaid: boolean
   isAbandoned: boolean
+  hasShippingLabel: boolean
   createdAt: string // Formatted date string 'yyyy-MM-dd hh:mm a'
 }
 
@@ -108,6 +109,7 @@ export async function GET(req: Request, props: { params: Promise<{ storeId: stri
           : 'N/A',
         isPaid: order.isPaid,
         isAbandoned: order.isAbandoned, // Assuming this field exists on the Order model
+        hasShippingLabel: order.shippingLabel !== null,
         createdAt: order.createdAt
           ? format(order.createdAt, 'yyyy-MM-dd hh:mm a')
           : 'N/A'

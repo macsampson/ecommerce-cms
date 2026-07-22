@@ -12,7 +12,7 @@ export const formSchema = z.object({
     .array(),
   price: z.coerce.number().min(1),
   quantity: z.coerce.number().min(0),
-  weight: z.coerce.number().min(0),
+  weight: z.coerce.number().min(0.01, 'Weight must be greater than 0 grams — carriers reject zero-weight parcels.'),
   description: z.string().min(1),
   variations: z
     .object({

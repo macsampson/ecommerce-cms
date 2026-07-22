@@ -202,6 +202,8 @@ model Order {
   customerName    String      @default("") @map("customer_name")
   store           Store       @relation(fields: [storeId], references: [id])
   orderItems      OrderItem[]
+  shipToAddress   Json?       @map("ship_to_address")
+  shippingLabel   Json?       @map("shipping_label")
 
   @@index([storeId])
   @@map("order")

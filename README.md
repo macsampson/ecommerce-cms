@@ -3,6 +3,7 @@
 Self-hosted e-commerce CMS
 
 [![CI](https://github.com/macsampson/stockroom/actions/workflows/ci.yml/badge.svg)](https://github.com/macsampson/stockroom/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/macsampson/stockroom/actions/workflows/codeql.yml/badge.svg)](https://github.com/macsampson/stockroom/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 <a href="https://stockroom-demo.vercel.app/login" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
@@ -237,3 +238,4 @@ Create a [Cloudinary](https://cloudinary.com) account (free tier available) and 
 ## License
 
 [MIT](LICENSE)
+

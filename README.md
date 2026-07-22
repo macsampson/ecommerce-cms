@@ -11,7 +11,6 @@ A self-hosted admin dashboard for running an online store, built as an alternati
 ![CMS Dashboard](public/overview.png)
 _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webhook activity at a glance_
 
-> **Note:** This repo is the CMS/admin side of the platform — the customer-facing storefront that reads from this API lives in a separate repository.
 
 ## 🔗 Live Demo
 

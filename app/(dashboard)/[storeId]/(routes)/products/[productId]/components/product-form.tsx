@@ -401,16 +401,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </div>
                     <Select
                       disabled={loading}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
+                      // Radix Select keeps a hidden native <select> in sync for form
+                      // semantics, but only registers <option>s once SelectContent has
+                      // actually been opened. Setting the value programmatically (quick
+                      // create) before that happens makes Radix "correct" it back to ''
+                      // a moment later — harmless to ignore since these dropdowns have
+                      // no way to legitimately select an empty value themselves.
+                      onValueChange={(value) => value && field.onChange(value)}
+                      value={field.value ?? ''}
                     >
                       <FormControl>
                         <SelectTrigger className="h-10">
-                          <SelectValue
-                            defaultValue={field.value}
-                            placeholder="Select a category"
-                          />
+                          <SelectValue placeholder="Select a category">
+                            {
+                              categories.find((c) => c.id === field.value)
+                                ?.name
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -556,14 +563,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </div>
                     <Select
                       disabled={loading}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => value && field.onChange(value)}
                       value={field.value ?? ''}
                     >
                       <FormControl>
                         <SelectTrigger className="h-10">
-                          <SelectValue
-                            placeholder="Select a size"
-                          />
+                          <SelectValue placeholder="Select a size">
+                            {sizes.find((s) => s.id === field.value)?.name}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -601,14 +608,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </div>
                     <Select
                       disabled={loading}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => value && field.onChange(value)}
                       value={field.value ?? ''}
                     >
                       <FormControl>
                         <SelectTrigger className="h-10">
-                          <SelectValue
-                            placeholder="Select a color"
-                          />
+                          <SelectValue placeholder="Select a color">
+                            {colors.find((c) => c.id === field.value)?.name}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

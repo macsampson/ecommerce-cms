@@ -29,7 +29,13 @@ export async function POST(req: Request, props: { params: Promise<{ storeId: str
 
     if (!name) return new NextResponse('Name is required', { status: 400 })
 
-    if (!images || !images.length) {
+    // Relaxed only under the same explicit opt-in used to bypass the login gate
+    // for local dev (see lib/auth.ts) — never on a real deployment, where a
+    // product with no images would silently break the storefront listing.
+    if (
+      process.env.DISABLE_AUTH_FOR_LOCAL_DEV !== 'true' &&
+      (!images || !images.length)
+    ) {
       return new NextResponse('At least one image is required', { status: 400 })
     }
 

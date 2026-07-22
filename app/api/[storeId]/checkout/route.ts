@@ -34,14 +34,11 @@ interface ShippingAddress {
   country: string
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-}
-
+// CORS headers (Access-Control-Allow-*) are added by middleware.ts, which echoes
+// back the request's Origin only if it's in ALLOWED_ORIGINS — do not set a
+// wildcard here, it would bypass that origin restriction.
 export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders })
+  return NextResponse.json({})
 }
 
 export async function POST(req: Request, props: { params: Promise<{ storeId: string }> }) {
@@ -52,8 +49,7 @@ export async function POST(req: Request, props: { params: Promise<{ storeId: str
 
     if (!allowed) {
       return new NextResponse('Too many requests. Please try again shortly.', {
-        status: 429,
-        headers: corsHeaders
+        status: 429
       })
     }
 
@@ -202,7 +198,7 @@ export async function POST(req: Request, props: { params: Promise<{ storeId: str
       }
     })
 
-    return NextResponse.json({ url: session.url }, { headers: corsHeaders })
+    return NextResponse.json({ url: session.url })
   } catch (error: any) {
     logger.info('[CHECKOUT_POST]', error)
     return new NextResponse('Internal error', { status: 500 })

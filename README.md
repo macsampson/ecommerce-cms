@@ -79,18 +79,25 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 
 ```mermaid
 flowchart LR
-    Admin[Admin Browser] -->|Login / Manage| CMS[Next.js CMS<br/>this repo]
-    Storefront[Customer Storefront<br/>separate repo] -->|REST API<br/>CORS-restricted| CMS
+    Admin[Admin Browser] -->|Session login<br/>Dashboard CRUD| CMS[Next.js CMS<br/>this repo]
+    Admin -->|1 . request signed upload token| CMS
+    Admin -->|2 . upload image bytes directly| Blob[Vercel Blob]
+    Admin -.->|legacy: direct upload| Cloudinary[Cloudinary]
 
-    CMS -->|Prisma ORM| DB[(PostgreSQL<br/>Neon / Supabase)]
-    CMS -->|Checkout + Webhook| Stripe[Stripe]
-    CMS -->|Rates + Labels| Shippo[Shippo / ChitChats]
-    CMS -->|Image uploads| Blob[Vercel Blob]
-    CMS -->|Currency conversion| ExchangeRate[ExchangeRate-API]
-    Cron[Scheduled Cron Job] -->|Abandoned order cleanup<br/>Sale activation| CMS
+    Storefront[Customer Storefront<br/>separate repo] -->|REST API reads<br/>+ checkout POST<br/>CORS-restricted| CMS
+
+    CMS <-->|Prisma ORM<br/>read/write| DB[(PostgreSQL<br/>Neon / Supabase)]
+
+    CMS -->|create Checkout Session| Stripe[Stripe]
+    Stripe -->|checkout.session.completed webhook<br/>signature-verified| CMS
+
+    CMS -->|rate quotes + label purchase| Shippo[Shippo / ChitChats]
+    CMS -->|currency lookup, cached 24h| ExchangeRate[ExchangeRate-API]
+
+    VercelCron[Vercel Cron Scheduler] -->|POST /api/cron, daily| CMS
 ```
 
-The CMS exposes a store-scoped REST API (`/api/[storeId]/...`) that the separate storefront app consumes — see the in-app **API / Developers** page (`/{storeId}/api-docs`) for the full endpoint reference with example requests/responses; `middleware.ts` enforces CORS against an allow-list for those routes while the dashboard itself sits behind session auth. Stripe webhooks create orders and decrement inventory; a cron job (`app/api/cron`) periodically releases inventory held by abandoned checkouts and flips sales in/out of `active` based on their scheduled dates. Exchange rates are fetched from ExchangeRate-API and cached in the database for 24 hours.
+The CMS exposes a store-scoped REST API (`/api/[storeId]/...`) that the separate storefront app consumes — see the in-app **API / Developers** page (`/{storeId}/api-docs`) for the full endpoint reference with example requests/responses; `middleware.ts` enforces CORS against an allow-list for those routes while the dashboard itself sits behind session auth. Image uploads (Vercel Blob and the legacy Cloudinary fallback) go directly from the admin's browser to storage — the CMS server only issues a short-lived signed token and never sees the file bytes. Stripe delivers an inbound, signature-verified webhook on `checkout.session.completed`, which is what actually creates the order and decrements inventory (the CMS's own call to Stripe only creates the Checkout Session that the customer is redirected to). Vercel's cron scheduler calls `POST /api/cron` daily, which releases inventory held by abandoned checkouts and flips sales in/out of `active` based on their scheduled dates. Exchange rates are fetched from ExchangeRate-API and cached in the database for 24 hours.
 
 ## Testing & CI
 

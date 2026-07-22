@@ -7,7 +7,7 @@ Self-hosted e-commerce CMS
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 <a href="https://stockroom-demo.vercel.app/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
-A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Full multi-store product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
+A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
 ![CMS Dashboard](public/overview.png)
 _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webhook activity at a glance_
@@ -41,12 +41,10 @@ I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify,
 - **Zero monthly fees** — host it yourself or deploy for free on Vercel
 - **No transaction limits** — keep 100% of your profits (minus payment processing)
 - **Full customization** — modify anything to fit your brand
-- **Multi-store capability** — run multiple brands from one installation
 
 ## Features
 
 **Store & Product Management**
-- Multiple stores from a single dashboard
 - Products with variations (size/color), image galleries via Cloudinary, categories
 - Quantity-based bundle discounts
 - Time-boxed sales and promotions (store-wide or per-product), auto activated/deactivated on a schedule

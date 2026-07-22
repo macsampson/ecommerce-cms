@@ -76,7 +76,17 @@ export default function ShippingPage() {
       .then((res) => res.data)
       .then((data) => {
         if (data) {
-          setSenderAddress({ ...data })
+          setSenderAddress({
+            name: data.name ?? '',
+            company: data.company ?? '',
+            street1: data.street1 ?? '',
+            city: data.city ?? '',
+            state: data.state ?? '',
+            zip: data.zip ?? '',
+            country: data.country ?? '',
+            phone: data.phone ?? '',
+            email: data.email ?? ''
+          })
           setShippoEnabled(data.shippoEnabled)
           setChitchatsEnabled(data.chitchatsEnabled)
           if (data.customsDeclaration)

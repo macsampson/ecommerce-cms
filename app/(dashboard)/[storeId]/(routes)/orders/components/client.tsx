@@ -6,6 +6,7 @@ import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
 import { OrderColumn, columns } from './columns'
 import { DataTable } from '@/components/ui/data-table'
+import { ShippingLabelSection } from './shipping-label-section'
 import {
   OrderStatusPipeline,
   getOrderStage,
@@ -68,6 +69,18 @@ const OrderDetail = ({ order }: { order: OrderColumn }) => {
         <pre className="whitespace-pre-wrap text-sm font-body bg-muted/40 rounded-md p-3 border border-border">
           {order.products || 'No line items recorded.'}
         </pre>
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+          Shipping Label
+        </p>
+        {order.isPaid ? (
+          <ShippingLabelSection orderId={order.id} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Available once payment is confirmed.
+          </p>
+        )}
       </div>
     </div>
   )

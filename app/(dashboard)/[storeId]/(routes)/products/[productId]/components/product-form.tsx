@@ -514,6 +514,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       <Input
                         type="number"
                         step="0.01"
+                        min="0.01"
                         disabled={loading}
                         placeholder="0.00"
                         className="h-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

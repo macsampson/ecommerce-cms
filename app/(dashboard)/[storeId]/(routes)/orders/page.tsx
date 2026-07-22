@@ -23,6 +23,7 @@ type ApiOrderData = {
   totalPrice: string
   isPaid: boolean
   isAbandoned: boolean
+  hasShippingLabel: boolean
   createdAt: string
   phoneNumber: string
   customerName: string

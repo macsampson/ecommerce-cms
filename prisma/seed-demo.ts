@@ -61,6 +61,7 @@ async function main() {
       name: 'Artisan Keycap — Aurora',
       priceInCents: 4500,
       quantity: 25,
+      weight: 15,
       categoryId: keycapsCategory.id,
       colorId: sageGreen.id,
       description: 'Hand-cast resin keycap with a shifting aurora effect.'
@@ -69,6 +70,7 @@ async function main() {
       name: 'Artisan Keycap — Ember',
       priceInCents: 4200,
       quantity: 12,
+      weight: 15,
       categoryId: keycapsCategory.id,
       colorId: charcoal.id,
       description: 'Warm gradient resin keycap, glows faintly under UV.'
@@ -77,6 +79,7 @@ async function main() {
       name: 'Keycap Set — Nordic',
       priceInCents: 8900,
       quantity: 8,
+      weight: 120,
       categoryId: keycapsCategory.id,
       colorId: charcoal.id,
       description: '104-key PBT dye-sub set in a muted Nordic palette.'
@@ -85,6 +88,7 @@ async function main() {
       name: 'Deskmat — Sage Forest',
       priceInCents: 3200,
       quantity: 18,
+      weight: 450,
       categoryId: deskMatsCategory.id,
       colorId: sageGreen.id,
       description: '900x400mm stitched-edge deskmat, water-resistant surface.'
@@ -93,13 +97,14 @@ async function main() {
       name: 'Deskmat — Midnight Charcoal',
       priceInCents: 3200,
       quantity: 0,
+      weight: 450,
       categoryId: deskMatsCategory.id,
       colorId: charcoal.id,
       description: '900x400mm stitched-edge deskmat, sold out — restocking soon.'
     }
   ]
 
-  const products: Record<string, { id: string; priceInCents: number }> = {}
+  const products: Record<string, { id: string; priceInCents: number; weight: number }> = {}
   for (const def of productDefs) {
     let product = await prisma.product.findFirst({ where: { storeId: store.id, name: def.name } })
     if (!product) {
@@ -108,6 +113,7 @@ async function main() {
           name: def.name,
           priceInCents: def.priceInCents,
           quantity: def.quantity,
+          weight: def.weight,
           description: def.description,
           storeId: store.id,
           categoryId: def.categoryId,
@@ -118,7 +124,7 @@ async function main() {
         }
       })
     }
-    products[def.name] = { id: product.id, priceInCents: product.priceInCents }
+    products[def.name] = { id: product.id, priceInCents: product.priceInCents, weight: Number(product.weight) }
   }
 
   const existingActiveSale = await prisma.sale.findFirst({ where: { storeId: store.id, name: 'Launch Week' } })
@@ -220,6 +226,7 @@ async function main() {
             productId: products[item.name].id,
             quantity: item.quantity,
             priceInCents: products[item.name].priceInCents,
+            weight: products[item.name].weight,
             name: item.name,
             createdAt
           }

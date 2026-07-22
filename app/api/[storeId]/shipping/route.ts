@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import prismadb from '@/lib/prismadb'
 import { logger } from '@/lib/logger'
 import { getShippoApiKey, getChitchatsConfig } from '@/lib/shipping-config'
+import { createShippoShipment, ShippoRate } from '@/lib/shippo'
 
 // Helper function to format prices from cents to dollars with 2 decimal places
 const formatPrice = (priceInCents: number): string => {
@@ -32,24 +33,6 @@ type CartItemType = {
   cartQuantity: number
   variations: Record<string, ProductVariation>
   bundlePrice?: number
-}
-
-type ShippoRate = {
-  object_id: string
-  provider: string
-  servicelevel: {
-    name: string
-    token: string
-    display_name: string
-  }
-  amount: string
-  currency: string
-  amount_local: string
-  currency_local: string
-  estimated_days: number
-  duration_terms: string
-  attributes: string[]
-  provider_image_200: string
 }
 
 type CustomsDeclarationInfo = {
@@ -225,18 +208,14 @@ export async function POST(req: Request) {
     // Create separate functions for each shipping provider
     const getShippoRates = async () => {
       try {
-        const shippoResponse = await fetch(
-          'https://api.goshippo.com/shipments/',
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `ShippoToken ${getShippoApiKey(shippingSettings)}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(shipmentObject)
-          }
-        )
-        const shippoData = await shippoResponse.json()
+        const shippoData = await createShippoShipment({
+          apiKey: getShippoApiKey(shippingSettings) as string,
+          addressFrom: shipmentObject.address_from,
+          addressTo: shipmentObject.address_to,
+          parcel: parcelData,
+          lineItems: lineItems,
+          customsDeclaration: customsDeclaration
+        })
 
         // logger.info('SHIPPO RATES: ', shippoData.rates)
 

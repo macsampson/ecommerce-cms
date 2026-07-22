@@ -8,6 +8,21 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// Single-admin app: at most one row ever exists. Created by the first-run
+// setup flow (see lib/auth.ts) so a new self-hoster doesn't have to hand-generate
+// a bcrypt hash and paste it into env vars — ADMIN_EMAIL/ADMIN_PASSWORD_HASH
+// remain supported as a fallback for existing env-var-based deployments.
+model AdminUser {
+  id             String   @id @default(uuid())
+  email          String   @unique @map("email")
+  passwordHash   String   @map("password_hash")
+  sessionSecret  String   @map("session_secret")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("admin_user")
+}
+
 model Store {
   id             String          @id @default(uuid())
   name           String          @map("name")

@@ -1,28 +1,47 @@
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { logger } from '@/lib/logger'
 import { isDemoModeEnabled } from '@/lib/demo-mode'
+import prismadb from '@/lib/prismadb'
 
 export interface SessionData {
   isAuthenticated: boolean
   createdAt: number
 }
 
-export const sessionOptions = {
-  password:
-    process.env.SESSION_SECRET ||
-    'complex_password_at_least_32_characters_long',
-  cookieName: 'cms_session',
-  cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 7 // 7 days
+// Resolved once per warm serverless instance. Priority: SESSION_SECRET env var
+// (for operators who set one explicitly) > the secret generated for the
+// database-backed admin account created via /setup > a legacy hardcoded
+// fallback, which should only ever be reachable for an env-var-configured
+// admin that predates this file (see login() below).
+let cachedSessionSecret: string | null = null
+
+async function resolveSessionSecret(): Promise<string> {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET
+  if (cachedSessionSecret) return cachedSessionSecret
+
+  const admin = await prismadb.adminUser.findFirst()
+  cachedSessionSecret =
+    admin?.sessionSecret || 'complex_password_at_least_32_characters_long'
+  return cachedSessionSecret
+}
+
+async function getSessionOptions() {
+  return {
+    password: await resolveSessionSecret(),
+    cookieName: 'cms_session',
+    cookieOptions: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    }
   }
 }
 
 export async function getSession() {
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
+  const session = await getIronSession<SessionData>(await cookies(), await getSessionOptions())
 
   // Set default session values
   if (!session.isAuthenticated) {
@@ -32,32 +51,63 @@ export async function getSession() {
   return session
 }
 
+// Whether an admin account exists yet, via either the database (created
+// through the first-run /setup flow) or the legacy env-var configuration.
+export async function isAdminConfigured(): Promise<boolean> {
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) return true
+  const admin = await prismadb.adminUser.findFirst()
+  return admin !== null
+}
+
+// Creates the single admin account. Only callable once — rejects if an admin
+// is already configured (database or env vars), so /setup can't be replayed
+// to take over an existing deployment.
+export async function createAdminAccount(
+  email: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  if (await isAdminConfigured()) {
+    return { success: false, error: 'An admin account is already configured' }
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12)
+  const sessionSecret = crypto.randomBytes(32).toString('hex')
+
+  await prismadb.adminUser.create({
+    data: { email, passwordHash, sessionSecret }
+  })
+  cachedSessionSecret = sessionSecret
+
+  return { success: true }
+}
+
 export async function login(email: string, password: string): Promise<boolean> {
-  const adminEmail = process.env.ADMIN_EMAIL
-  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
+  const admin = await prismadb.adminUser.findFirst()
 
-  if (!adminEmail || !adminPasswordHash) {
-    logger.error('Admin credentials not configured')
-    return false
+  if (admin) {
+    if (email !== admin.email) return false
+    const isValid = await bcrypt.compare(password, admin.passwordHash)
+    if (!isValid) return false
+  } else {
+    // Legacy env-var-configured admin (no database row from /setup).
+    const adminEmail = process.env.ADMIN_EMAIL
+    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
+
+    if (!adminEmail || !adminPasswordHash) {
+      logger.error('Admin credentials not configured')
+      return false
+    }
+
+    if (email !== adminEmail) return false
+    const isValid = await bcrypt.compare(password, adminPasswordHash)
+    if (!isValid) return false
   }
 
-  // Check email
-  if (email !== adminEmail) {
-    return false
-  }
-
-  // Check password
-  const isValid = await bcrypt.compare(password, adminPasswordHash)
-
-  if (isValid) {
-    const session = await getSession()
-    session.isAuthenticated = true
-    session.createdAt = Date.now()
-    await session.save()
-    return true
-  }
-
-  return false
+  const session = await getSession()
+  session.isAuthenticated = true
+  session.createdAt = Date.now()
+  await session.save()
+  return true
 }
 
 export async function logout() {

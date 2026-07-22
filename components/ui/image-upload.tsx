@@ -1,7 +1,9 @@
 'use client'
 
 import { CldUploadWidget } from 'next-cloudinary'
-import { useEffect, useState } from 'react'
+import { upload } from '@vercel/blob/client'
+import { useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
@@ -31,6 +33,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [isMounted, setIsMounted] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -53,6 +57,36 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       ordering: maxOrdering + 1
     }
     onChange([...value, newImage])
+  }
+
+  const handleBlobFilesSelected = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files
+    e.target.value = ''
+    if (!files || files.length === 0) return
+
+    setIsUploading(true)
+    try {
+      let maxOrdering =
+        value.length > 0 ? Math.max(...value.map((img) => img.ordering)) : -1
+      const uploaded: typeof value = []
+
+      for (const file of Array.from(files)) {
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload'
+        })
+        maxOrdering += 1
+        uploaded.push({ url: blob.url, credit: '', ordering: maxOrdering })
+      }
+
+      onChange([...value, ...uploaded])
+    } catch (error) {
+      toast.error('Failed to upload image')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleCreditChange = (url: string, credit: string) => {
@@ -109,6 +143,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   if (!isMounted) {
     return null
   }
+
+  // Vercel Blob is the default storage backend when its token is provisioned
+  // (e.g. via the "Deploy to Vercel" button's bundled Blob store) — see
+  // NEXT_PUBLIC_BLOB_ENABLED in next.config.js, which mirrors the server-only
+  // BLOB_READ_WRITE_TOKEN at build time so the client can branch on it.
+  // Cloudinary remains a legacy fallback for instances that predate Blob support.
+  const blobConfigured = process.env.NEXT_PUBLIC_BLOB_ENABLED === 'true'
 
   // CldUploadWidget throws synchronously during render if this is unset — not
   // on click — which would otherwise crash the whole product form. Guard it
@@ -222,6 +263,31 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             </span>
           </div>
         </Button>
+      ) : blobConfigured ? (
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp"
+            multiple
+            className="hidden"
+            onChange={handleBlobFilesSelected}
+          />
+          <Button
+            type="button"
+            disabled={disabled || isUploading}
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="h-32 w-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors"
+          >
+            <div className="flex flex-col items-center space-y-2">
+              <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {isUploading ? 'Uploading...' : 'Add Images'}
+              </span>
+            </div>
+          </Button>
+        </>
       ) : !cloudinaryConfigured ? (
         <Button
           type="button"
@@ -232,7 +298,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <div className="flex flex-col items-center space-y-2">
             <ImagePlus className="h-8 w-8 text-muted-foreground" />
             <span className="text-sm text-muted-foreground text-center px-4">
-              Image upload not configured — set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+              Image upload not configured — add a Blob store, or set
+              NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
             </span>
           </div>
         </Button>

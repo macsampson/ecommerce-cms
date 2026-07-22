@@ -2,6 +2,13 @@
 const nextConfig = {
   serverExternalPackages: ['pino', 'pino-pretty'],
 
+  // Vercel injects BLOB_READ_WRITE_TOKEN server-side only; mirror its presence
+  // into a NEXT_PUBLIC_ var at build time so the (client) image-upload component
+  // can tell whether a Blob store is provisioned without exposing the token itself.
+  env: {
+    NEXT_PUBLIC_BLOB_ENABLED: process.env.BLOB_READ_WRITE_TOKEN ? 'true' : 'false'
+  },
+
   async headers() {
     // Read the ALLOWED_ORIGINS environment variable and convert it to an array
     const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -40,6 +47,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com'
       }
     ]
   }

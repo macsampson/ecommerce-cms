@@ -50,10 +50,10 @@ export async function getConfigWarnings(storeId?: string): Promise<ConfigWarning
     })
   }
 
-  if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN && !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
     warnings.push({
-      key: 'CLOUDINARY',
-      message: 'Cloudinary is not configured — image uploads will fail. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME.'
+      key: 'IMAGE_STORAGE',
+      message: 'No image storage is configured — image uploads will fail. Add a Vercel Blob store, or set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME for the legacy Cloudinary integration.'
     })
   }
 

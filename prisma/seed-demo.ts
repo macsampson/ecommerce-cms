@@ -1,8 +1,36 @@
 import { PrismaClient } from '@prisma/client'
+import { put } from '@vercel/blob'
 
 const prisma = new PrismaClient()
 
 const DEMO_STORE_NAME = 'Demo Store'
+
+// Fetches a source image and re-hosts it on Vercel Blob so the demo doesn't hotlink
+// third-party URLs at request time. Falls back to the source URL directly when no
+// Blob store is configured (e.g. local dev without `vercel env pull`), so seeding
+// still works without one. `addRandomSuffix: false` + `allowOverwrite: true` keep
+// this idempotent — re-running the seed reuses the same blob instead of piling up
+// duplicates, matching the find-or-create pattern used everywhere else in this file.
+async function resolveDemoImageUrl(key: string, sourceUrl: string): Promise<string> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return sourceUrl
+  }
+
+  const response = await fetch(sourceUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch demo image "${key}" from ${sourceUrl}: ${response.status}`)
+  }
+  const buffer = Buffer.from(await response.arrayBuffer())
+
+  const blob = await put(`demo/${key}.jpg`, buffer, {
+    access: 'public',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: 'image/jpeg'
+  })
+
+  return blob.url
+}
 
 // Idempotent (safe to re-run): finds-or-creates everything by name, scoped to the
 // one demo store, so running this again after a demo visitor manages to mutate
@@ -17,11 +45,15 @@ async function main() {
 
   let billboard = await prisma.billboard.findFirst({ where: { storeId: store.id } })
   if (!billboard) {
+    const imageUrl = await resolveDemoImageUrl(
+      'billboard-welcome',
+      'https://images.unsplash.com/photo-1543966888-6e858b90d30d?w=1600'
+    )
     billboard = await prisma.billboard.create({
       data: {
         storeId: store.id,
         label: 'Welcome to the Demo Store',
-        imageUrl: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=1600',
+        imageUrl,
         landingPage: true
       }
     })
@@ -64,7 +96,10 @@ async function main() {
       weight: 15,
       categoryId: keycapsCategory.id,
       colorId: sageGreen.id,
-      description: 'Hand-cast resin keycap with a shifting aurora effect.'
+      description: 'Hand-cast resin keycap with a shifting aurora effect.',
+      imageKey: 'keycap-aurora',
+      imageSource: 'https://images.unsplash.com/photo-1661588027544-c5e3a4794e99?w=1200',
+      imageCredit: 'Photo by JL Cabrera on Unsplash'
     },
     {
       name: 'Artisan Keycap — Ember',
@@ -73,7 +108,10 @@ async function main() {
       weight: 15,
       categoryId: keycapsCategory.id,
       colorId: charcoal.id,
-      description: 'Warm gradient resin keycap, glows faintly under UV.'
+      description: 'Warm gradient resin keycap, glows faintly under UV.',
+      imageKey: 'keycap-ember',
+      imageSource: 'https://images.unsplash.com/photo-1756388371735-cc845c578200?w=1200',
+      imageCredit: 'Photo by Gavin Phillips on Unsplash'
     },
     {
       name: 'Keycap Set — Nordic',
@@ -82,7 +120,10 @@ async function main() {
       weight: 120,
       categoryId: keycapsCategory.id,
       colorId: charcoal.id,
-      description: '104-key PBT dye-sub set in a muted Nordic palette.'
+      description: '104-key PBT dye-sub set in a muted Nordic palette.',
+      imageKey: 'keycap-set-nordic',
+      imageSource: 'https://images.unsplash.com/photo-1548347663-f4f0925846e0?w=1200',
+      imageCredit: 'Photo by Ali Yılmaz on Unsplash'
     },
     {
       name: 'Deskmat — Sage Forest',
@@ -91,7 +132,10 @@ async function main() {
       weight: 450,
       categoryId: deskMatsCategory.id,
       colorId: sageGreen.id,
-      description: '900x400mm stitched-edge deskmat, water-resistant surface.'
+      description: '900x400mm stitched-edge deskmat, water-resistant surface.',
+      imageKey: 'deskmat-sage-forest',
+      imageSource: 'https://images.unsplash.com/photo-1650661926447-9efb2610f64c?w=1200',
+      imageCredit: 'Photo by Faraaz Zuberi on Unsplash'
     },
     {
       name: 'Deskmat — Midnight Charcoal',
@@ -100,7 +144,10 @@ async function main() {
       weight: 450,
       categoryId: deskMatsCategory.id,
       colorId: charcoal.id,
-      description: '900x400mm stitched-edge deskmat, sold out — restocking soon.'
+      description: '900x400mm stitched-edge deskmat, sold out — restocking soon.',
+      imageKey: 'deskmat-midnight-charcoal',
+      imageSource: 'https://images.unsplash.com/photo-1609980829355-b37d3a06f02c?w=1200',
+      imageCredit: 'Photo by Andre Tan on Unsplash'
     }
   ]
 
@@ -125,6 +172,14 @@ async function main() {
       })
     }
     products[def.name] = { id: product.id, priceInCents: product.priceInCents, weight: Number(product.weight) }
+
+    const hasImage = await prisma.image.findFirst({ where: { productId: product.id } })
+    if (!hasImage) {
+      const url = await resolveDemoImageUrl(def.imageKey, def.imageSource)
+      await prisma.image.create({
+        data: { productId: product.id, url, credit: def.imageCredit, ordering: 0 }
+      })
+    }
   }
 
   const existingActiveSale = await prisma.sale.findFirst({ where: { storeId: store.id, name: 'Launch Week' } })

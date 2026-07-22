@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   getRowStyle?: (row: TData) => React.CSSProperties | undefined
   renderDetail?: (row: TData) => React.ReactNode
   onRowClick?: (row: TData) => void
+  defaultSorting?: SortingState
 }
 
 export function DataTable<TData, TValue>({
@@ -49,15 +50,11 @@ export function DataTable<TData, TValue>({
   getRowClassName,
   getRowStyle,
   renderDetail,
-  onRowClick
+  onRowClick,
+  defaultSorting = []
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = useState<SortingState>([
-    {
-      id: 'quantity',
-      desc: true
-    }
-  ])
+  const [sorting, setSorting] = useState<SortingState>(defaultSorting)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalData, setModalData] = useState<TData | null>(null)
 

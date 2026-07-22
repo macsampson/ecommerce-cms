@@ -91,5 +91,10 @@
     "ts-node": "^10.9.2",
     "typescript": "^5",
     "wait-on": "^7.2.0"
+  },
+  "allowScripts": {
+    "prisma": true,
+    "@prisma/client": true,
+    "@prisma/engines": true
   }
 }

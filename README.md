@@ -82,14 +82,15 @@ flowchart LR
     Admin[Admin Browser] -->|Login / Manage| CMS[Next.js CMS<br/>this repo]
     Storefront[Customer Storefront<br/>separate repo] -->|REST API<br/>CORS-restricted| CMS
 
-    CMS -->|Prisma ORM| DB[(PostgreSQL<br/>Supabase)]
+    CMS -->|Prisma ORM| DB[(PostgreSQL<br/>Neon / Supabase)]
     CMS -->|Checkout + Webhook| Stripe[Stripe]
     CMS -->|Rates + Labels| Shippo[Shippo / ChitChats]
     CMS -->|Image uploads| Blob[Vercel Blob]
+    CMS -->|Currency conversion| ExchangeRate[ExchangeRate-API]
     Cron[Scheduled Cron Job] -->|Abandoned order cleanup<br/>Sale activation| CMS
 ```
 
-The CMS exposes a store-scoped REST API (`/api/[storeId]/...`) that the separate storefront app consumes; `middleware.ts` enforces CORS against an allow-list for those routes while the dashboard itself sits behind session auth. Stripe webhooks create orders and decrement inventory; a cron job (`app/api/cron`) periodically releases inventory held by abandoned checkouts and flips sales in/out of `active` based on their scheduled dates.
+The CMS exposes a store-scoped REST API (`/api/[storeId]/...`) that the separate storefront app consumes — see the in-app **API / Developers** page (`/{storeId}/api-docs`) for the full endpoint reference with example requests/responses; `middleware.ts` enforces CORS against an allow-list for those routes while the dashboard itself sits behind session auth. Stripe webhooks create orders and decrement inventory; a cron job (`app/api/cron`) periodically releases inventory held by abandoned checkouts and flips sales in/out of `active` based on their scheduled dates. Exchange rates are fetched from ExchangeRate-API and cached in the database for 24 hours.
 
 ## Testing & CI
 

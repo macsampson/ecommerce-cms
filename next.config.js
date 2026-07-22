@@ -51,6 +51,13 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '*.public.blob.vercel-storage.com'
+      },
+      {
+        // Demo seed data hotlinks these directly when no Blob store is configured
+        // (see resolveDemoImageUrl in prisma/seed-demo.ts) — not used for real
+        // store uploads.
+        protocol: 'https',
+        hostname: 'images.unsplash.com'
       }
     ]
   }

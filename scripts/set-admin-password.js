@@ -15,7 +15,8 @@ rl.question('Enter password: ', async (password) => {
   const hash = await bcrypt.hash(password, 12)
   // Next.js's env loader expands $VAR references, so bcrypt's literal `$`
   // separators must be escaped or the hash gets silently mangled at load time.
-  const escapedHash = hash.replace(/\$/g, '\\$')
+  // Backslashes are escaped first so the two replacements can't collide.
+  const escapedHash = hash.replace(/\\/g, '\\\\').replace(/\$/g, '\\$')
   const envPath = path.join(process.cwd(), '.env.local')
   let contents = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : ''
 

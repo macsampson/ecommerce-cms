@@ -19,6 +19,12 @@ const EXCHANGE_RATE_API_KEY = process.env.EXCHANGE_RATE_API_KEY
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
+// ISO 4217 codes are always three uppercase letters. baseCurrency comes straight
+// from an unauthenticated query param and gets interpolated into the outbound
+// fetch URL, so this shape check is what keeps it from being used to smuggle
+// path traversal / arbitrary segments into that request (SSRF).
+const CURRENCY_CODE_PATTERN = /^[A-Z]{3}$/
+
 const defaultExchangeRates: Record<string, number> = {
   USD: 1,
   CAD: 1.38,
@@ -94,7 +100,15 @@ export async function GET(
 ) {
   try {
     const { searchParams } = new URL(req.url)
-    const baseCurrency = searchParams.get('base') || 'USD'
+    const requestedCurrency = searchParams.get('base') || 'USD'
+
+    if (!CURRENCY_CODE_PATTERN.test(requestedCurrency)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid base currency code' },
+        { status: 400 }
+      )
+    }
+    const baseCurrency = requestedCurrency
 
     const exchangeRates = await fetchExchangeRates(baseCurrency)
 

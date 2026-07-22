@@ -68,14 +68,7 @@
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "^3.15.0"
     },
-    "minimatch": {
-      "brace-expansion": "^2.1.2"
-    },
-    "eslint": {
-      "minimatch": {
-        "brace-expansion": "^1.1.16"
-      }
-    }
+    "brace-expansion": "^2.1.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

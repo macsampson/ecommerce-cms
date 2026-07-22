@@ -41,6 +41,7 @@ export default function RootLayout({
           <ModalProvider />
           {children}
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

@@ -8,7 +8,6 @@ import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
 import { SizeColumn, columns } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
-import ApiList from "@/components/ui/api-list"
 
 interface SizesClientProps {
   data: SizeColumn[]
@@ -38,15 +37,6 @@ export const SizesClient: React.FC<SizesClientProps> = ({ data }) => {
         columns={columns}
         data={data}
         searchKey="name"
-      />
-      <Heading
-        title="API"
-        description="API calls for sizes"
-      />
-      <Separator />
-      <ApiList
-        entityName="sizes"
-        entityIdName="sizeId"
       />
     </>
   )

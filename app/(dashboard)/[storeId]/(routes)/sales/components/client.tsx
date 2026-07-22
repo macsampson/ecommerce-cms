@@ -8,7 +8,6 @@ import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
 import { SaleColumn, columns } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
-import ApiList from "@/components/ui/api-list"
 
 interface SaleClientProps {
   data: SaleColumn[]
@@ -38,15 +37,6 @@ export const SaleClient: React.FC<SaleClientProps> = ({ data }) => {
         columns={columns}
         data={data}
         searchKey="name"
-      />
-      <Heading
-        title="API"
-        description="API calls for Sales"
-      />
-      <Separator />
-      <ApiList
-        entityName="sales"
-        entityIdName="saleId"
       />
     </>
   )

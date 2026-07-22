@@ -8,7 +8,6 @@ import { Heading } from '@/components/ui/heading'
 import { Separator } from '@/components/ui/separator'
 import { BillboardColumn, columns } from './columns'
 import { DataTable } from '@/components/ui/data-table'
-import ApiList from '@/components/ui/api-list'
 import {
   Form,
   FormField,
@@ -115,11 +114,6 @@ export const BillboardClient: React.FC<BillboardClientProps> = ({
       <Separator />
 
       <CarouselForm initialImages={carouselImages} />
-
-      <Separator />
-      <Heading title="API" description="API calls for billboards" />
-      <Separator />
-      <ApiList entityName="billboards" entityIdName="billboardId" />
     </>
   )
 }

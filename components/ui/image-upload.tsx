@@ -110,6 +110,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     return null
   }
 
+  // CldUploadWidget throws synchronously during render if this is unset — not
+  // on click — which would otherwise crash the whole product form. Guard it
+  // the same way the demo-mode branch below guards against mounting the widget.
+  const cloudinaryConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  )
+
   return (
     <div className="space-y-4">
       {sortedImages.length > 0 && (
@@ -212,6 +219,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <ImagePlus className="h-8 w-8 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
               Image upload disabled in read-only demo
+            </span>
+          </div>
+        </Button>
+      ) : !cloudinaryConfigured ? (
+        <Button
+          type="button"
+          disabled
+          variant="outline"
+          className="h-32 w-full border-2 border-dashed border-muted-foreground/25"
+        >
+          <div className="flex flex-col items-center space-y-2">
+            <ImagePlus className="h-8 w-8 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground text-center px-4">
+              Image upload not configured — set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
             </span>
           </div>
         </Button>

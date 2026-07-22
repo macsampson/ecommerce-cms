@@ -4,6 +4,8 @@ import Navbar from '@/components/navbar'
 import prismadb from '@/lib/prismadb'
 import { isAuthenticated } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { getConfigWarnings } from '@/lib/config-check'
+import { ConfigWarningsBanner } from '@/components/config-warnings-banner'
 
 import Sidebar from '@/components/sidebar' // Import the Sidebar component
 
@@ -56,12 +58,15 @@ export default async function DashboardLayout(
     redirect('/')
   }
 
+  const configWarnings = await getConfigWarnings()
+
   return (
     <>
       <Navbar />
       <div className="flex pt-16 min-h-screen">
         <Sidebar storeId={params.storeId} storeName={store.name} />
         <main className="flex-1 min-w-0 p-2 sm:p-4 md:pl-[272px] md:pr-4">
+          <ConfigWarningsBanner warnings={configWarnings} />
           {children}
         </main>
       </div>

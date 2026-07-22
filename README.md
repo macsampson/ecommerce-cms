@@ -108,7 +108,7 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 - Session-based auth with encrypted, `httpOnly` cookies (`iron-session`)
 - Stripe webhook signatures verified before processing any order, with idempotency handling so a redelivered event can't create a duplicate order or double-decrement inventory
 - SQL injection protection via Prisma's parameterized queries
-- Passwords hashed with bcrypt; credentials configured via environment variables, never committed
+- Passwords hashed with bcrypt; admin account created via a first-run `/setup` screen and stored in the database (env-var-based credentials still supported for legacy/scripted setups), never committed
 - CORS allow-list (`ALLOWED_ORIGINS`) restricting which origins can call the store-scoped API
 - Rate limiting on login and checkout (in-memory, per-IP — see [lib/rate-limit.ts](lib/rate-limit.ts) for the tradeoffs of that approach on serverless)
 
@@ -120,13 +120,14 @@ Tests concentrate on the money-critical paths most likely to break silently: the
 
 #### Option 1: Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom&project-name=stockroom&repository-name=stockroom&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D&env=ADMIN_EMAIL%2CADMIN_PASSWORD_HASH%2CSESSION_SECRET%2CSTRIPE_API_KEY%2CSTRIPE_WEBHOOK_SECRET%2CNEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY%2CNEXT_PUBLIC_CLOUDINARY_CLOUD_NAME%2CALLOWED_ORIGINS&envDescription=Admin+login%2C+session+secret%2C+Stripe+keys%2C+Cloudinary+cloud+name%2C+and+allowed+storefront+origins+-+see+the+Setup+Guide+below+for+where+to+get+each+one&envLink=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom%23setup-guide)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom&project-name=stockroom&repository-name=stockroom&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%5D&env=STRIPE_API_KEY%2CSTRIPE_WEBHOOK_SECRET%2CNEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY%2CNEXT_PUBLIC_CLOUDINARY_CLOUD_NAME%2CALLOWED_ORIGINS&envDescription=Stripe+keys%2C+Cloudinary+cloud+name%2C+and+allowed+storefront+origins+-+see+the+Setup+Guide+below+for+where+to+get+each+one.+Admin+login+is+created+after+deploy+at+%2Fsetup%2C+not+here.&envLink=https%3A%2F%2Fgithub.com%2Fmacsampson%2Fstockroom%23setup-guide)
 
 1. Click "Deploy with Vercel" and connect your GitHub
 2. Vercel provisions a Neon Postgres database for you automatically (no separate Supabase/Neon account needed) and sets `DATABASE_URL`/`DATABASE_URL_UNPOOLED`
-3. You'll be prompted right there in the deploy flow for the remaining required values: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, Stripe keys, Cloudinary cloud name, and `ALLOWED_ORIGINS` — see the [Setup Guide](#setup-guide) below for where to get each one (run `node scripts/set-admin-password.js` locally first to get `ADMIN_PASSWORD_HASH`)
-4. After the first deploy finishes, run `npm run deploy` locally (with the same `DATABASE_URL`/`DATABASE_URL_UNPOOLED` values from your Vercel project) to apply database migrations — see the [Production Checklist](#production-checklist)
-5. Your CMS is live
+3. You'll be prompted right there in the deploy flow for the remaining required values: Stripe keys, Cloudinary cloud name, and `ALLOWED_ORIGINS` — see the [Setup Guide](#setup-guide) below for where to get each one
+4. Database migrations run automatically as part of the Vercel build (see `vercel.json`'s `buildCommand`) — nothing to run by hand
+5. Visit your deployed URL — you'll land on `/setup` to create your admin email and password right in the browser (no hash-generating scripts, no env vars to hand-edit); after that you're logged in and prompted to create your first store
+6. Your CMS is live — see the [Production Checklist](#production-checklist) before pointing real customers at it
 
 > Prefer Supabase, or already have a Postgres instance? Skip the bundled database prompt in the deploy flow and set `DATABASE_URL`/`DIRECT_URL` yourself instead — see [Database](#1-database) below.
 
@@ -140,10 +141,8 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Edit .env.local with your configuration
-
-# Set the admin password (hashes it and writes ADMIN_PASSWORD_HASH into .env.local for you)
-node scripts/set-admin-password.js
+# Edit .env.local with your configuration — admin credentials aren't set here,
+# see below
 
 npm run dev:docker
 
@@ -153,7 +152,7 @@ npm run seed-dev
 
 `npm run dev:docker` spins up a local Postgres via Docker Compose, runs migrations, and starts the dev server — no Supabase account needed. If you'd rather use the Supabase CLI (matches the hosted setup more closely), run `supabase start && npx prisma migrate deploy` instead, then `npm run dev`.
 
-Visit `http://localhost:3000/login` to access the admin dashboard. On first login you'll be prompted to create your first store; run `npm run seed-dev` beforehand if you'd rather start from sample data instead of an empty store.
+Visit `http://localhost:3000` — on a fresh database you'll land on `/setup` to create your admin email and password (this only happens once; the account is stored in the database, not env vars). After that you're logged in and prompted to create your first store; run `npm run seed-dev` beforehand if you'd rather start from sample data instead of an empty store.
 
 ### Environment Configuration
 
@@ -164,10 +163,13 @@ Create a `.env.local` file with these variables:
 DATABASE_URL="postgresql://..."
 DIRECT_URL="postgresql://..."
 
-# Admin Authentication
-ADMIN_EMAIL="your-email@example.com"
-ADMIN_PASSWORD_HASH="$2b$12$..." # Set with scripts/set-admin-password.js (writes this for you — see Setup Guide)
-SESSION_SECRET="your-32-character-secret-key-here"
+# Admin Authentication — usually not needed. Visit /setup on first run to
+# create your admin account and session secret right in the browser; they're
+# stored in the database, not here. These env vars are a legacy fallback for
+# scripting/CI use — see Setup Guide below.
+# ADMIN_EMAIL="your-email@example.com"
+# ADMIN_PASSWORD_HASH="$2b$12$..."
+# SESSION_SECRET="your-32-character-secret-key-here"
 
 # Local dev only — skips the login gate. Leave unset in every real
 # deployment; auth is enforced by default (see Production Checklist below)
@@ -194,22 +196,19 @@ EXCHANGE_RATE_API_KEY=""
 
 **1. Database**
 
-**Deploy to Vercel button (default):** a Neon Postgres database is provisioned for you automatically, with `DATABASE_URL`/`DATABASE_URL_UNPOOLED` set in your Vercel project already — nothing to create by hand. After deploying, run `npm run deploy` locally (pointed at the same database) to apply migrations.
+**Deploy to Vercel button (default):** a Neon Postgres database is provisioned for you automatically, with `DATABASE_URL`/`DATABASE_URL_UNPOOLED` set in your Vercel project already — nothing to create by hand. Migrations run automatically on every Vercel build (`vercel.json`'s `buildCommand` runs `prisma migrate deploy` before `next build`), including preview deployments — it's a no-op if there's nothing new to apply, so this is safe to leave as-is.
 
-**Supabase:** create a project at [supabase.com](https://supabase.com), copy the database URLs into `DATABASE_URL`/`DIRECT_URL`, then run `npx prisma migrate deploy`.
+**Supabase:** create a project at [supabase.com](https://supabase.com), copy the database URLs into `DATABASE_URL`/`DIRECT_URL` in your Vercel project. Migrations still run automatically on deploy via the same `buildCommand`.
 
-**Self-hosted PostgreSQL:** point `DATABASE_URL`/`DIRECT_URL` at your own instance and run the same migration command.
+**Self-hosted PostgreSQL:** point `DATABASE_URL`/`DIRECT_URL` at your own instance. If you're not deploying through Vercel's build (e.g. Docker/bare metal), run `npm run deploy` yourself before starting the app.
 
 **2. Authentication**
 
-```bash
-node scripts/set-admin-password.js
-# Enter your desired password — the hash is written straight to ADMIN_PASSWORD_HASH in .env.local
-```
+Visit `/setup` on your deployed URL (or `http://localhost:3000` locally) the first time — it's a plain form for an admin email and password. Submitting it creates the admin account and a random session-encryption secret in the database, and logs you straight in. `/setup` only works once; visiting it again after an admin exists redirects to `/login`.
 
-This app is single-admin: one email + password hash configured via environment variables, not a user table. Also set `ADMIN_EMAIL` yourself.
+This app is single-admin: one account, no invite flow, no user table beyond that single row. There is intentionally no in-app way to change the email/password later — to reset lost credentials, delete the row from the `admin_user` table and revisit `/setup`.
 
-> Don't hand-copy a bcrypt hash into `.env.local`: Next.js's env loader expands `$`-prefixed sequences, which silently corrupts a pasted hash (every bcrypt hash contains `$` delimiters). `scripts/set-admin-password.js` escapes this correctly for you — always prefer it over constructing `ADMIN_PASSWORD_HASH` by hand.
+**Legacy / scripted setups:** you can still configure the admin via `ADMIN_EMAIL` + `ADMIN_PASSWORD_HASH` + `SESSION_SECRET` env vars instead (useful for CI or infra-as-code) — set all three and `/setup` is skipped automatically in favor of them. Generate the hash with `node scripts/set-admin-password.js` (writes `ADMIN_PASSWORD_HASH` straight into `.env.local`, correctly escaped — Next.js's env loader expands `$`-prefixed sequences, which silently corrupts a hand-pasted bcrypt hash).
 
 **3. Payments**
 
@@ -222,8 +221,8 @@ Create a [Cloudinary](https://cloudinary.com) account (free tier available) and 
 ### Production Checklist
 
 - [ ] `DISABLE_AUTH_FOR_LOCAL_DEV` is **not** set (the login gate is bypassed if it's `"true"` — verify with `curl -I https://yourdomain.com/` shouldn't redirect anywhere without a session; hitting `/[storeId]` unauthenticated should redirect to `/login`)
-- [ ] Production database configured (Supabase/PostgreSQL)
-- [ ] `SESSION_SECRET` set to a secure 32+ character value
+- [ ] Production database configured (Neon/Supabase/PostgreSQL) — migrations apply automatically on every Vercel build, including previews, so make sure preview deployments aren't pointed at a database you don't want auto-migrated
+- [ ] Admin account created via `/setup` (or `SESSION_SECRET`/`ADMIN_EMAIL`/`ADMIN_PASSWORD_HASH` set, for legacy env-var-based setups)
 - [ ] Stripe webhook endpoint configured
 - [ ] Cloudinary configured for image storage
 - [ ] `ALLOWED_ORIGINS` set for your storefront domain(s)

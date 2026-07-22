@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
   // without adding security — see isAuthenticated() in lib/auth.ts for the
   // matching bypass used by server components and API routes.
   if (process.env.DEMO_MODE === 'true') {
-    if (pathname.startsWith('/login')) {
+    if (pathname.startsWith('/login') || pathname.startsWith('/setup')) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     return NextResponse.next()
@@ -78,18 +78,21 @@ export async function middleware(request: NextRequest) {
   // bypass in lib/auth.ts. Explicit opt-in rather than keying off NODE_ENV,
   // so a misconfigured or non-Vercel deployment fails closed.
   if (process.env.DISABLE_AUTH_FOR_LOCAL_DEV === 'true') {
-    if (pathname.startsWith('/login')) {
+    if (pathname.startsWith('/login') || pathname.startsWith('/setup')) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     return NextResponse.next()
   }
 
-  // Allow other public routes
+  // Allow other public routes. /setup is reachable pre-auth (it's how the
+  // first admin account gets created); the route itself redirects away once
+  // an admin is already configured — see app/setup/page.tsx.
   if (
     pathname.startsWith("/api/webhook") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/login") ||
+    pathname.startsWith("/setup") ||
     pathname.includes(".")
   ) {
     return NextResponse.next()

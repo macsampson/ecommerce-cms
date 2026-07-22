@@ -7,6 +7,8 @@ import { ModalProvider } from '@/providers/modal-provider'
 import './globals.css'
 import { ThemeProvider } from '@/providers/theme-provider'
 
+import { Analytics } from "@vercel/analytics/next"
+
 const body = Inter({ subsets: ['latin'], variable: '--font-body' })
 const display = Space_Grotesk({
   subsets: ['latin'],

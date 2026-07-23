@@ -17,6 +17,13 @@ type OrderAddressFields = {
   emailAddress: string
 }
 
+// Canadian postal codes ("V6B 1A1") are conventionally written as two
+// space-separated halves, each alternating letter/digit/letter and
+// digit/letter/digit — indistinguishable from a zip by "last token" alone,
+// so it's checked for explicitly before falling back to the single-token case.
+const CANADIAN_POSTAL_FIRST_HALF = /^[A-Za-z]\d[A-Za-z]$/
+const CANADIAN_POSTAL_SECOND_HALF = /^\d[A-Za-z]\d$/
+
 /**
  * Order.shippingAddress is stored as a flattened string, built at checkout
  * time (see app/api/webhook/route.ts) as:
@@ -37,9 +44,22 @@ export function parseShippingAddress(
   let state = ''
   let zip = ''
   const stateZipParts = stateZip.split(/\s+/).filter(Boolean)
-  if (stateZipParts.length > 0) {
-    zip = stateZipParts[stateZipParts.length - 1]
-    state = stateZipParts.slice(0, -1).join(' ')
+  if (stateZipParts.length >= 2) {
+    const last = stateZipParts[stateZipParts.length - 1]
+    const secondLast = stateZipParts[stateZipParts.length - 2]
+
+    if (
+      CANADIAN_POSTAL_FIRST_HALF.test(secondLast) &&
+      CANADIAN_POSTAL_SECOND_HALF.test(last)
+    ) {
+      zip = `${secondLast} ${last}`
+      state = stateZipParts.slice(0, -2).join(' ')
+    } else {
+      zip = last
+      state = stateZipParts.slice(0, -1).join(' ')
+    }
+  } else if (stateZipParts.length === 1) {
+    zip = stateZipParts[0]
   }
 
   return {

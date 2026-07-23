@@ -1,12 +1,14 @@
-import { GET, PATCH, DELETE } from './route'
+import { GET, PATCH, DELETE, OPTIONS } from './route'
 import prismadb from '@/lib/prismadb'
 import { isAuthenticated } from '@/lib/auth'
+import axios from 'axios'
 
 jest.mock('@/lib/auth')
 jest.mock('axios', () => ({ post: jest.fn(() => Promise.resolve()) }))
 
 const prismaMock = prismadb as any
 const authMock = isAuthenticated as jest.Mock
+const axiosPostMock = axios.post as jest.Mock
 
 const baseParams = { params: Promise.resolve({ storeId: 'store-1', productId: 'p1' }) }
 
@@ -109,6 +111,7 @@ describe('PATCH /api/[storeId]/products/[productId]', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     authMock.mockResolvedValue(true)
+    axiosPostMock.mockResolvedValue(undefined)
     prismaMock.store.findFirst.mockResolvedValue({ id: 'store-1', userId: 'single-user' })
     prismaMock.product.findUnique.mockResolvedValue({
       id: 'p1',
@@ -203,6 +206,243 @@ describe('PATCH /api/[storeId]/products/[productId]', () => {
     )
     expect(response.status).toBe(500)
   })
+
+  it('returns 400 when price is missing', async () => {
+    const response = await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify({ ...validBody, price: undefined }) }),
+      baseParams
+    )
+    expect(response.status).toBe(400)
+  })
+
+  it('returns 400 when categoryId is missing', async () => {
+    const response = await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify({ ...validBody, categoryId: undefined }) }),
+      baseParams
+    )
+    expect(response.status).toBe(400)
+  })
+
+  it('returns 400 when weight is missing', async () => {
+    const response = await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify({ ...validBody, weight: undefined }) }),
+      baseParams
+    )
+    expect(response.status).toBe(400)
+  })
+
+  it('updates an existing variation (has an id) and converts its dollar price to cents', async () => {
+    prismaMock.productVariation.update.mockResolvedValue({})
+
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          variations: [{ id: 'var-1', name: 'Red / M', price: 5.5, quantity: 3 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.productVariation.update).toHaveBeenCalledWith({
+      where: { id: 'var-1' },
+      data: { name: 'Red / M', priceInCents: 550, quantity: 3 }
+    })
+    // Only the surviving variation id should be excluded from the delete-the-rest cleanup
+    expect(prismaMock.productVariation.deleteMany).toHaveBeenCalledWith({
+      where: { productId: 'p1', id: { notIn: ['var-1'] } }
+    })
+  })
+
+  it('creates a new variation (no id) via createMany', async () => {
+    prismaMock.productVariation.createMany.mockResolvedValue({ count: 1 })
+
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          variations: [{ name: 'Blue / L', price: 6, quantity: 2 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.productVariation.createMany).toHaveBeenCalledWith({
+      data: [{ name: 'Blue / L', priceInCents: 600, productId: 'p1', quantity: 2 }]
+    })
+    expect(prismaMock.productVariation.update).not.toHaveBeenCalled()
+  })
+
+  it('does not call createMany for variations when there are none to create', async () => {
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({ ...validBody, variations: [] })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.productVariation.createMany).not.toHaveBeenCalled()
+  })
+
+  it('updates an existing bundle (has an id)', async () => {
+    prismaMock.bundle.update.mockResolvedValue({})
+
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          bundles: [{ id: 'bundle-1', minQuantity: 3, discount: 10 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.bundle.update).toHaveBeenCalledWith({
+      where: { id: 'bundle-1' },
+      data: { minQuantity: 3, discountPercentage: 10 }
+    })
+    expect(prismaMock.bundle.deleteMany).toHaveBeenCalledWith({
+      where: { productId: 'p1', id: { notIn: ['bundle-1'] } }
+    })
+  })
+
+  it('creates a new bundle (no id) via createMany', async () => {
+    prismaMock.bundle.createMany.mockResolvedValue({ count: 1 })
+
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          bundles: [{ minQuantity: 5, discount: 15 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.bundle.createMany).toHaveBeenCalledWith({
+      data: [{ minQuantity: 5, discountPercentage: 15, productId: 'p1' }]
+    })
+    expect(prismaMock.bundle.update).not.toHaveBeenCalled()
+  })
+
+  it('does not call createMany for bundles when there are none to create', async () => {
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({ ...validBody, bundles: [] })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.bundle.createMany).not.toHaveBeenCalled()
+  })
+
+  it('updates metadata on an existing image (has an id) instead of recreating it', async () => {
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          images: [{ id: 'img-1', url: 'https://x/1.png', credit: 'photographer', ordering: 2 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.image.update).toHaveBeenCalledWith({
+      where: { id: 'img-1' },
+      data: { credit: 'photographer', ordering: 2 }
+    })
+    expect(prismaMock.image.createMany).not.toHaveBeenCalled()
+    expect(prismaMock.image.deleteMany).toHaveBeenCalledWith({
+      where: { productId: 'p1', id: { notIn: ['img-1'] } }
+    })
+  })
+
+  it('creates new images (no id) via createMany, without updating existing ones', async () => {
+    await PATCH(
+      new Request('http://localhost/x', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...validBody,
+          images: [{ url: 'https://x/2.png', credit: '', ordering: 0 }]
+        })
+      }),
+      baseParams
+    )
+
+    expect(prismaMock.image.createMany).toHaveBeenCalledWith({
+      data: [{ url: 'https://x/2.png', credit: '', ordering: 0, productId: 'p1' }]
+    })
+    expect(prismaMock.image.update).not.toHaveBeenCalled()
+  })
+
+  // NOTE: REVALIDATE_URL is built from process.env.FRONTEND_STORE_URL as a
+  // module-level constant at import time, so setting the env var inside a
+  // test can't retroactively change the URL this module already captured
+  // (same class of issue as ALLOWED_ORIGINS in middleware.ts). This asserts
+  // the payload/headers and the gating condition, not the exact captured URL.
+  it('fires a fire-and-forget revalidation request when FRONTEND_STORE_URL and REVALIDATE_TOKEN are set', async () => {
+    process.env.FRONTEND_STORE_URL = 'https://storefront.example.com'
+    process.env.REVALIDATE_TOKEN = 'revalidate-secret'
+
+    await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify(validBody) }),
+      baseParams
+    )
+
+    expect(axiosPostMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/revalidate'),
+      { tag: 'product' },
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer revalidate-secret' })
+      })
+    )
+
+    delete process.env.FRONTEND_STORE_URL
+    delete process.env.REVALIDATE_TOKEN
+  })
+
+  it('does not attempt revalidation when FRONTEND_STORE_URL or REVALIDATE_TOKEN is missing', async () => {
+    delete process.env.FRONTEND_STORE_URL
+    delete process.env.REVALIDATE_TOKEN
+
+    await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify(validBody) }),
+      baseParams
+    )
+
+    expect(axiosPostMock).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 when productId is missing from params', async () => {
+    const response = await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify(validBody) }),
+      { params: Promise.resolve({ storeId: 'store-1', productId: '' }) }
+    )
+    expect(response.status).toBe(400)
+  })
+
+  it('does not let a revalidation failure fail the request (swallowed error)', async () => {
+    process.env.FRONTEND_STORE_URL = 'https://storefront.example.com'
+    process.env.REVALIDATE_TOKEN = 'revalidate-secret'
+    axiosPostMock.mockReturnValue(Promise.reject(new Error('revalidate down')))
+
+    const response = await PATCH(
+      new Request('http://localhost/x', { method: 'PATCH', body: JSON.stringify(validBody) }),
+      baseParams
+    )
+
+    expect(response.status).toBe(200)
+
+    delete process.env.FRONTEND_STORE_URL
+    delete process.env.REVALIDATE_TOKEN
+  })
 })
 
 describe('DELETE /api/[storeId]/products/[productId]', () => {
@@ -238,5 +478,21 @@ describe('DELETE /api/[storeId]/products/[productId]', () => {
 
     const response = await DELETE(new Request('http://localhost/x'), baseParams)
     expect(response.status).toBe(500)
+  })
+
+  it('returns 400 when productId is missing from params', async () => {
+    const response = await DELETE(new Request('http://localhost/x'), {
+      params: Promise.resolve({ storeId: 'store-1', productId: '' })
+    })
+    expect(response.status).toBe(400)
+  })
+})
+
+describe('OPTIONS /api/[storeId]/products/[productId]', () => {
+  it('returns CORS headers', async () => {
+    const response = await OPTIONS()
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('PATCH')
   })
 })

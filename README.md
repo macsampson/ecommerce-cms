@@ -7,7 +7,7 @@ Self-hosted e-commerce CMS
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 <a href="https://stockroom-demo.vercel.app/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="Live Demo"></a>
 
-A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy/Shopify's monthly and transaction fees. Product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
+A self-hosted admin dashboard for running an online store, built as an alternative to paying Etsy's monthly and transaction fees. Product management, Stripe payments, and live shipping-rate/label integrations with Shippo and ChitChats.
 
 ![CMS Dashboard](public/overview.png)
 _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webhook activity at a glance_
@@ -35,7 +35,7 @@ _Dashboard overview: revenue and order volume, inventory alerts, and Stripe webh
 
 ## Why This Project?
 
-I was tired of paying monthly fees and per-transaction cuts to Etsy and Shopify, so I built this instead. It gives you:
+I was tired of paying monthly fees and per-transaction cuts to Etsy, so I built this instead. It gives you:
 
 - **Complete ownership** of your store and customer data
 - **Zero monthly fees** — host it yourself or deploy for free on Vercel

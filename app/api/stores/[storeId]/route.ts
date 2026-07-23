@@ -40,7 +40,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ storeId: s
   try {
     const authenticated = await isAuthenticated()
 
-    if (!authenticated) return new NextResponse("Unauthorized", { status: 401 })
+    if (!authenticated) return new NextResponse("Unauthenticated", { status: 401 })
 
     if (!params.storeId)
       return new NextResponse("Missing storeId", { status: 400 })

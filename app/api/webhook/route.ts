@@ -153,19 +153,17 @@ export async function POST(req: Request) {
                 })
                 orderItems.push(orderItem)
 
-                // Reduce variation inventory
+                // Reduce variation inventory. Done as a single atomic, clamped
+                // UPDATE (rather than reading variation.quantity and writing
+                // Math.max(0, ...) back) so two concurrent webhook deliveries
+                // for different orders can't both read the same quantity and
+                // both decrement from it, over-selling stock.
                 if (variation.quantity !== null) {
-                  await prismadb.productVariation.update({
-                    where: {
-                      id: variationId
-                    },
-                    data: {
-                      quantity: Math.max(
-                        0,
-                        variation.quantity - variationData.cartQuantity
-                      )
-                    }
-                  })
+                  await prismadb.$executeRawUnsafe(
+                    'UPDATE product_variation SET quantity = GREATEST(quantity - $1, 0) WHERE id = $2',
+                    variationData.cartQuantity,
+                    variationId
+                  )
                 }
               }
             }
@@ -183,16 +181,17 @@ export async function POST(req: Request) {
             })
             orderItems.push(orderItem)
 
-            // Update main product inventory
+            // Update main product inventory. Done as a single atomic, clamped
+            // UPDATE (rather than reading product.quantity and writing
+            // Math.max(0, ...) back) so two concurrent webhook deliveries for
+            // different orders can't both read the same quantity and both
+            // decrement from it, over-selling stock.
             if (product.quantity !== null) {
-              await prismadb.product.update({
-                where: {
-                  id: productId
-                },
-                data: {
-                  quantity: Math.max(0, product.quantity - item.quantity)
-                }
-              })
+              await prismadb.$executeRawUnsafe(
+                'UPDATE product SET quantity = GREATEST(quantity - $1, 0) WHERE id = $2',
+                item.quantity,
+                productId
+              )
             }
           }
         }

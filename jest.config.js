@@ -17,6 +17,17 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // For global mocks
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'app/api/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
+    'actions/**/*.{ts,tsx}',
+    'middleware.ts',
+    '!**/*.d.ts',
+    '!**/route.test.ts',
+    '!**/*.test.ts',
+  ],
+  coverageReporters: ['text', 'text-summary', 'lcov'],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

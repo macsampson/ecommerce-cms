@@ -23,6 +23,10 @@ export async function GET(req: Request, props: { params: Promise<{ sessionId: st
       const { name, email } = session.customer_details
       return new NextResponse(JSON.stringify({ name, email }))
     }
+
+    return new NextResponse('Customer details not found for this session', {
+      status: 404
+    })
   } catch (error: any) {
     return new NextResponse(error.message, { status: error.statusCode })
   }

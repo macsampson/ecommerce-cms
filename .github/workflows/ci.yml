@@ -3,8 +3,12 @@ name: CI & Deploy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
 
 # A newer push/PR update supersedes whatever's still running for the same
 # ref, so cancel it rather than let it burn minutes to a result nobody needs.

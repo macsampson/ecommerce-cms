@@ -51,160 +51,160 @@ export async function OPTIONS() {
 
 // Handle POST request for shipping rate calculation
 export async function POST(req: Request) {
-  const {
-    address,
-    cartItems,
-    currency
-  }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
-    await req.json()
-
-  // logger.info('CART ITEMS: ', cartItems)
-
-  const url = new URL(req.url)
-  const storeId = url.pathname.split('/')[2]
-
-  // Calculate total weight and price
-  const totalWeight = cartItems.reduce(
-    (acc, cartItem) => acc + Number(cartItem.weight) * cartItem.cartQuantity,
-    0
-  )
-
-  const totalPrice = cartItems.reduce((acc, cartItem) => {
-    // logger.info(cartItem)
-
-    // Use bundlePrice if available (already calculated by frontend), otherwise calculate from base price
-    if (cartItem.bundlePrice) {
-      // logger.info('USING BUNDLE PRICE: ', cartItem.bundlePrice)
-      return acc + cartItem.bundlePrice
-    }
-
-    const itemPrice = cartItem.priceInCents * cartItem.cartQuantity
-    // logger.info('USING ITEM PRICE: ', itemPrice)
-    // logger.info('PRICE: ', cartItem.priceInCents)
-    // logger.info('QUANTITY: ', cartItem.cartQuantity)
-
-    return acc + itemPrice
-  }, 0)
-
-  // logger.info('TOTAL PRICE: ', totalPrice)
-
-  // Create line items for Shippo
-  const lineItems = cartItems.map((cartItem) => ({
-    title: cartItem.name,
-    sku: cartItem.id,
-    quantity: cartItem.cartQuantity,
-    total_price: formatPrice(
-      cartItem.bundlePrice || cartItem.priceInCents * cartItem.cartQuantity
-    ),
-    currency: currency,
-    weight: (Number(cartItem.weight) * cartItem.cartQuantity).toString(),
-    weight_unit: 'g',
-    mass_unit: 'g',
-    manufacture_country: 'CA'
-  }))
-
-  // logger.info('TOTAL WEIGHT: ', totalWeight)
-
-  // Create parcel data
-  const parcelData = {
-    length: '23',
-    width: '16',
-    height: '5',
-    distance_unit: 'cm',
-    weight: totalWeight.toString(),
-    weight_unit: 'g',
-    mass_unit: 'g'
-  }
-
-  // Get sender address from database
-  const shippingSettings = await prismadb.shippingSettings.findUnique({
-    where: {
-      storeId: storeId
-    }
-  })
-
-  if (!shippingSettings) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Sender address not found'
-      },
-      { status: 404 }
-    )
-  }
-  // Create customs declaration for international shipping
-
-  const customsDeclarationInfo =
-    shippingSettings.customsDeclaration as CustomsDeclarationInfo
-
-  // logger.info(customsDeclarationInfo)
-
-  if (!customsDeclarationInfo) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Customs declaration not found'
-      },
-      { status: 404 }
-    )
-  }
-
-  const customsDeclaration =
-    address.country !== 'CA'
-      ? {
-          ...customsDeclarationInfo,
-          items: customsDeclarationInfo.items.map((item: any) => ({
-            ...item,
-            net_weight: totalWeight.toString(),
-            quantity: cartItems.reduce(
-              (acc, cartItem) => acc + cartItem.cartQuantity,
-              0
-            ),
-            value_amount: formatPrice(totalPrice),
-            value_currency: currency
-          }))
-        }
-      : undefined
-
-  // logger.info('CUSTOMS DECLARATION: ', customsDeclaration)
-
-  const shippoEnabled = shippingSettings.shippoEnabled
-  const chitchatsEnabled = shippingSettings.chitchatsEnabled
-
-  // Create shipment object
-  const shipmentObject = {
-    address_from: {
-      name: shippingSettings.name,
-      company: shippingSettings.company,
-      street1: shippingSettings.street1,
-      city: shippingSettings.city,
-      state: shippingSettings.state,
-      zip: shippingSettings.zip,
-      country: shippingSettings.country,
-      phone: shippingSettings.phone,
-      email: shippingSettings.email,
-      is_residential: false // or true, depending on your business
-    },
-    address_to: {
-      name: `${address.firstName} ${address.lastName}`,
-      street1: address.street,
-      city: address.city,
-      state: address.state,
-      zip: address.zip,
-      country: address.country,
-      email: address.email,
-      phone: address.phone,
-      is_residential: true
-    },
-    parcels: [parcelData],
-    async: false,
-    customs_declaration: customsDeclaration,
-    line_items: lineItems
-  }
-
-  // logger.info('shipmentObject: ', shipmentObject)
-
   try {
+    const {
+      address,
+      cartItems,
+      currency
+    }: { address: AddressType; cartItems: CartItemType[]; currency: string } =
+      await req.json()
+
+    // logger.info('CART ITEMS: ', cartItems)
+
+    const url = new URL(req.url)
+    const storeId = url.pathname.split('/')[2]
+
+    // Calculate total weight and price
+    const totalWeight = cartItems.reduce(
+      (acc, cartItem) => acc + Number(cartItem.weight) * cartItem.cartQuantity,
+      0
+    )
+
+    const totalPrice = cartItems.reduce((acc, cartItem) => {
+      // logger.info(cartItem)
+
+      // Use bundlePrice if available (already calculated by frontend), otherwise calculate from base price
+      if (cartItem.bundlePrice) {
+        // logger.info('USING BUNDLE PRICE: ', cartItem.bundlePrice)
+        return acc + cartItem.bundlePrice
+      }
+
+      const itemPrice = cartItem.priceInCents * cartItem.cartQuantity
+      // logger.info('USING ITEM PRICE: ', itemPrice)
+      // logger.info('PRICE: ', cartItem.priceInCents)
+      // logger.info('QUANTITY: ', cartItem.cartQuantity)
+
+      return acc + itemPrice
+    }, 0)
+
+    // logger.info('TOTAL PRICE: ', totalPrice)
+
+    // Create line items for Shippo
+    const lineItems = cartItems.map((cartItem) => ({
+      title: cartItem.name,
+      sku: cartItem.id,
+      quantity: cartItem.cartQuantity,
+      total_price: formatPrice(
+        cartItem.bundlePrice || cartItem.priceInCents * cartItem.cartQuantity
+      ),
+      currency: currency,
+      weight: (Number(cartItem.weight) * cartItem.cartQuantity).toString(),
+      weight_unit: 'g',
+      mass_unit: 'g',
+      manufacture_country: 'CA'
+    }))
+
+    // logger.info('TOTAL WEIGHT: ', totalWeight)
+
+    // Create parcel data
+    const parcelData = {
+      length: '23',
+      width: '16',
+      height: '5',
+      distance_unit: 'cm',
+      weight: totalWeight.toString(),
+      weight_unit: 'g',
+      mass_unit: 'g'
+    }
+
+    // Get sender address from database
+    const shippingSettings = await prismadb.shippingSettings.findUnique({
+      where: {
+        storeId: storeId
+      }
+    })
+
+    if (!shippingSettings) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Sender address not found'
+        },
+        { status: 404 }
+      )
+    }
+    // Create customs declaration for international shipping
+
+    const customsDeclarationInfo =
+      shippingSettings.customsDeclaration as CustomsDeclarationInfo
+
+    // logger.info(customsDeclarationInfo)
+
+    if (!customsDeclarationInfo) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Customs declaration not found'
+        },
+        { status: 404 }
+      )
+    }
+
+    const customsDeclaration =
+      address.country !== 'CA'
+        ? {
+            ...customsDeclarationInfo,
+            items: customsDeclarationInfo.items.map((item: any) => ({
+              ...item,
+              net_weight: totalWeight.toString(),
+              quantity: cartItems.reduce(
+                (acc, cartItem) => acc + cartItem.cartQuantity,
+                0
+              ),
+              value_amount: formatPrice(totalPrice),
+              value_currency: currency
+            }))
+          }
+        : undefined
+
+    // logger.info('CUSTOMS DECLARATION: ', customsDeclaration)
+
+    const shippoEnabled = shippingSettings.shippoEnabled
+    const chitchatsEnabled = shippingSettings.chitchatsEnabled
+
+    // Create shipment object
+    const shipmentObject = {
+      address_from: {
+        name: shippingSettings.name,
+        company: shippingSettings.company,
+        street1: shippingSettings.street1,
+        city: shippingSettings.city,
+        state: shippingSettings.state,
+        zip: shippingSettings.zip,
+        country: shippingSettings.country,
+        phone: shippingSettings.phone,
+        email: shippingSettings.email,
+        is_residential: false // or true, depending on your business
+      },
+      address_to: {
+        name: `${address.firstName} ${address.lastName}`,
+        street1: address.street,
+        city: address.city,
+        state: address.state,
+        zip: address.zip,
+        country: address.country,
+        email: address.email,
+        phone: address.phone,
+        is_residential: true
+      },
+      parcels: [parcelData],
+      async: false,
+      customs_declaration: customsDeclaration,
+      line_items: lineItems
+    }
+
+    // logger.info('shipmentObject: ', shipmentObject)
+
     // Create separate functions for each shipping provider
     const getShippoRates = async () => {
       try {
@@ -378,63 +378,6 @@ export async function POST(req: Request) {
       success: true,
       rates: allRates
     })
-
-    // logger.info('shipmentData: ', shipmentData.rates)
-
-    // Format rates for frontend display
-    // const formattedRates = shipmentData.rates
-    // .filter((rate: ShippoRate) => {
-    // For US addresses, only show 'Tracked Packet - USA'
-    // if (address.country === 'US') {
-    //   return (
-    //     rate.servicelevel.name === 'Tracked Packet - USA' ||
-    //     rate.servicelevel.name === 'Expedited Parcel USA'
-    //   )
-    // }
-    // // For Canadian addresses, show all available rates with valid estimated days
-    // if (address.country === 'CA') {
-    //   return (
-    //     rate.servicelevel?.name &&
-    //     rate.estimated_days !== null &&
-    //     rate.estimated_days !== undefined &&
-    //     rate.servicelevel.name !== 'Xpresspost' &&
-    //     rate.servicelevel.name !== 'Regular Parcel'
-    //   )
-    // }
-    // // For other countries, show all available rates with valid estimated days
-    // return (
-    //   rate.servicelevel?.name &&
-    //   rate.estimated_days !== null &&
-    //   rate.estimated_days !== undefined
-    // )
-    // })
-    //   .map((rate: ShippoRate) => ({
-    //     id: rate.object_id,
-    //     title:
-    //       rate.servicelevel.display_name ||
-    //       `${rate.provider} ${rate.servicelevel.name}`,
-    //     description:
-    //       rate.duration_terms ||
-    //       `${rate.estimated_days} day${
-    //         rate.estimated_days !== 1 ? 's' : ''
-    //       } delivery`,
-    //     amount: rate.amount,
-    //     currency: rate.currency,
-    //     amount_local: rate.amount_local,
-    //     currency_local: rate.currency_local,
-    //     estimated_days: rate.estimated_days,
-    //     attributes: rate.attributes,
-    //     provider_image: rate.provider_image_200
-    //   }))
-    //   .sort(
-    //     (a: ShippoRate, b: ShippoRate) =>
-    //       parseFloat(a.amount) - parseFloat(b.amount)
-    //   )
-
-    // return NextResponse.json({
-    //   success: true,
-    //   rates: formattedRates
-    // })
   } catch (error) {
     logger.error('Shipping rate error:', error)
     return NextResponse.json(
@@ -446,89 +389,3 @@ export async function POST(req: Request) {
     )
   }
 }
-
-//   // Send request to Shippo API to get live rates
-//   try {
-//     const response = await fetch('https://api.goshippo.com/live-rates', {
-//       method: 'POST',
-//       headers: {
-//         Authorization: `ShippoToken ${process.env.SHIPPO_API_KEY}`,
-//         'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify(shipmentObject)
-//     })
-
-//     const data: ShippoRatesResponse = await response.json()
-//     logger.info('data: ', data)
-
-//     // Format the rates for frontend display
-//     if (data.results && data.results.length > 0) {
-//       let rates = data.results
-
-//       // If shipping to Canada but no domestic rates returned, add fallback options
-//       if (
-//         address.country === 'CA' &&
-//         (!rates.length || rates[0].title.includes('USA'))
-//       ) {
-//         rates = [
-//           {
-//             title: 'Canada Post Regular Parcel',
-//             description: 'Domestic shipping within Canada',
-//             amount: '2.00',
-//             currency: 'CAD',
-//             amount_local: '2.00',
-//             currency_local: 'CAD',
-//             estimated_days: 5
-//           },
-//           {
-//             title: 'Canada Post Expedited Parcel',
-//             description: 'Faster domestic shipping within Canada',
-//             amount: '13.00',
-//             currency: 'CAD',
-//             amount_local: '13.00',
-//             currency_local: 'CAD',
-//             estimated_days: 3
-//           }
-//         ]
-//       }
-
-//       const formattedRates = rates.map((rate) => ({
-//         id: `${rate.title}-${rate.amount}`.toLowerCase().replace(/\s+/g, '-'), // Create a unique ID
-//         title: rate.title,
-//         amount: rate.amount,
-//         currency: rate.currency,
-//         amount_local: rate.amount_local,
-//         currency_local: rate.currency_local,
-//         estimated_days: rate.estimated_days,
-//         description: rate.description
-//       }))
-
-//       // Sort rates by price
-//       formattedRates.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount))
-
-//       // logger.info('formattedRates: ', formattedRates)
-
-//       return NextResponse.json({
-//         success: true,
-//         rates: formattedRates
-//       })
-//     } else {
-//       return NextResponse.json(
-//         {
-//           success: false,
-//           error: 'No shipping rates available'
-//         },
-//         { status: 400 }
-//       )
-//     }
-//   } catch (error) {
-//     logger.error('Shipping rate error:', error)
-//     return NextResponse.json(
-//       {
-//         success: false,
-//         error: 'Failed to fetch shipping rates'
-//       },
-//       { status: 500 }
-//     )
-//   }
-// }
